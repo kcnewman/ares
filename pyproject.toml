@@ -1,0 +1,7 @@
+[project]
+name = "ares"
+version = "0.1.0"
+description = "ARES; a system to help estimate likely rent ranges for residential properties based on current online asking prices in the GA region"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
