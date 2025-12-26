@@ -5,5 +5,9 @@ description = "ARES; a system to help estimate likely rent ranges for residentia
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "matplotlib>=3.10.8",
+    "notebook>=7.5.1",
+    "numpy>=2.4.0",
     "pandas>=2.3.3",
+    "seaborn>=0.13.2",
 ]
