@@ -1,22 +1,23 @@
 
 # Phase 1: Data Reality Check Summary
-**Generated:** 2025-12-26 16:48:47
+**Generated:** 2025-12-27 11:37:49
 
 ## Dataset Overview
-- **Total rows:** 15,166
-- **Total columns:** 51
+- **Total rows:** 14,869
+- **Total columns:** 52
 - **Date range:** N/A to N/A
 
 ## Data Quality Issues
-- **Columns with missing data:** 22
+- **Number of columns with missing data:** 22
+- **Missing data columns:** Property Address, Condition, Estate Name, Property Size, Agency Fee, Toilets, Service Charge Fee, Service Charge Covers, Pets, Facilities, Service Charge, Caution Fee, Minimum Rental Period, Subtype, Listing by, New Property, Total Rooms, Parking Space, Smoking, Parties, Broker Fee, Housing Quality
 - **Highest missing %:** 99.99%
 - **Exact duplicate rows:** 0 (0.00%)
 
 ## Price Distribution
-- **Mean price:** $253,096.12
+- **Mean price:** $257,748.05
 - **Median price:** $5,000.00
 - **Price range:** $150.00 - $1,655,500,000.00
-- **Log price std:** 1.3191
+- **Log price std:** 1.3206
 
 ## Spatial Coverage
 - **Total neighborhoods:** 85
@@ -46,11 +47,8 @@
 
 
 ## Files Generated
-- `schema_inspection.csv`
-- `missing_values.png`
-- `missing_pattern.png`
+- `data_schema.csv`
 - `price_distributions.png`
 - `neighborhood_summary.csv`
-- `neighborhood_analysis.png`
 - `neighborhood_monthly.csv` (if date available)
 - `duplicate_listings.png` (if duplicates found)
