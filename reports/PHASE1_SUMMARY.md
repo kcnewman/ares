@@ -1,6 +1,6 @@
 
 # Phase 1: Data Reality Check Summary
-**Generated:** 2025-12-26 15:20:18
+**Generated:** 2025-12-26 16:48:47
 
 ## Dataset Overview
 - **Total rows:** 15,166
@@ -19,9 +19,9 @@
 - **Log price std:** 1.3191
 
 ## Spatial Coverage
-- **Total neighborhoods:** 312
-- **Data-poor neighborhoods (<50 listings):** 251
-- **Data-poor neighborhoods (<100 listings):** 276
+- **Total neighborhoods:** 85
+- **Data-poor neighborhoods (<50 listings):** 40
+- **Data-poor neighborhoods (<100 listings):** 54
 
 ## Key Questions to Answer
 

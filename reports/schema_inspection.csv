@@ -3,7 +3,7 @@ Unnamed: 0,int64,15166,0,0.00%,"[0, 1, 2]"
 url,object,15166,0,0.00%,['https://jiji.com.gh/kwabenya/houses-apartments-for-rent/4b
 fetch_date,object,15166,0,0.00%,"['2025-12-25 20:38:06.320962', '2025-12-25 20:38:06.316186',"
 title,object,8524,0,0.00%,"['4bdrm House in Acp, Kwabenya for rent', '2bdrm Apartment i"
-location,object,312,0,0.00%,"['Ga West Municipal, Kwabenya', 'Dansoman', 'Madina']"
+location,object,85,0,0.00%,"['Ga West Municipal', 'Dansoman', 'Madina']"
 house_type,object,20,0,0.00%,"['House', 'Apartment', 'Apartment']"
 bathrooms,int64,18,0,0.00%,"[4, 1, 1]"
 bedrooms,int64,17,0,0.00%,"[4, 2, 1]"
