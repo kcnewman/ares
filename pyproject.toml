@@ -5,7 +5,6 @@ description = "ARES; a system to help estimate likely rent ranges for residentia
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "notebook>=7.5.1",
     "scipy>=1.16.3",
     "seaborn>=0.13.2",
     "statsmodels>=0.14.6",
@@ -34,4 +33,5 @@ dependencies = [
     "tqdm",
     "joblib",
     "types-PyYAML",
+    "notebook>=7.5.1",
 ]
