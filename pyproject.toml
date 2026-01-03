@@ -35,6 +35,8 @@ dependencies = [
     "notebook>=7.5.1",
     "googlemaps>=4.10.0",
     "beartype>=0.22.9",
+    "geopandas>=1.1.2",
+    "folium>=0.20.0",
 ]
 
 [build-system]
