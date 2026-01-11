@@ -1,0 +1,618 @@
+{
+    "West Legon": {
+        "lat": 5.6495001,
+        "lng": -0.2100343
+    },
+    "East Legon": {
+        "lat": 5.6358281,
+        "lng": -0.1613592
+    },
+    "Ga South Municipal": {
+        "lat": 5.666671,
+        "lng": -0.4313729
+    },
+    "Airport Residential Area": {
+        "lat": 5.606104699999999,
+        "lng": -0.1860362
+    },
+    "Tema Metropolitan": {
+        "lat": 5.6563118,
+        "lng": -0.009326599999999999
+    },
+    "Adjiriganor": {
+        "lat": 5.6510376,
+        "lng": -0.1354586
+    },
+    "Ashaley Botwe": {
+        "lat": 5.6802129,
+        "lng": -0.1372479
+    },
+    "Adenta": {
+        "lat": 5.7141674,
+        "lng": -0.15418
+    },
+    "Oyarifa": {
+        "lat": 5.755537899999999,
+        "lng": -0.1740052
+    },
+    "Teshie": {
+        "lat": 5.5831665,
+        "lng": -0.1046082
+    },
+    "Dome": {
+        "lat": null,
+        "lng": null
+    },
+    "Spintex": {
+        "lat": 5.6376136,
+        "lng": -0.1266064
+    },
+    "Weija": {
+        "lat": 5.5666403,
+        "lng": -0.3334778
+    },
+    "Tantra Hills": {
+        "lat": 5.6442137,
+        "lng": -0.2480426
+    },
+    "Other": {
+        "lat": null,
+        "lng": null
+    },
+    "Ashaiman Municipal": {
+        "lat": 5.6983973,
+        "lng": -0.0279867
+    },
+    "Achimota": {
+        "lat": 5.612781,
+        "lng": -0.234345
+    },
+    "Roman Ridge": {
+        "lat": 5.6024006,
+        "lng": -0.1951648
+    },
+    "Ga East Municipal": {
+        "lat": 5.6983581,
+        "lng": -0.2150873
+    },
+    "Ga West Municipal": {
+        "lat": 5.7088147,
+        "lng": -0.3560076
+    },
+    "Kasoa": {
+        "lat": 5.5344155,
+        "lng": -0.4252737
+    },
+    "Accra Metropolitan": {
+        "lat": 5.5459415,
+        "lng": -0.2103988
+    },
+    "Cantonments": {
+        "lat": 5.5767652,
+        "lng": -0.1784836
+    },
+    "Dzorwulu": {
+        "lat": 5.6141232,
+        "lng": -0.1956471
+    },
+    "Amrahia": {
+        "lat": 5.764173899999999,
+        "lng": -0.139333
+    },
+    "Ablekuma": {
+        "lat": 5.5511744,
+        "lng": -0.2526163
+    },
+    "Sowutwuom": {
+        "lat": 5.625094300000001,
+        "lng": -0.2724254
+    },
+    "Old Ashomang": {
+        "lat": 5.7062442,
+        "lng": -0.2361929
+    },
+    "Haatso": {
+        "lat": 5.6694251,
+        "lng": -0.203367
+    },
+    "Burma Camp": {
+        "lat": 5.5958462,
+        "lng": -0.1518394
+    },
+    "Abelemkpe": {
+        "lat": 5.6087022,
+        "lng": -0.2164185
+    },
+    "Lapaz": {
+        "lat": 5.609507499999999,
+        "lng": -0.2507539
+    },
+    "Labadi": {
+        "lat": 5.564659199999999,
+        "lng": -0.1565747
+    },
+    "Tesano": {
+        "lat": 5.605703399999999,
+        "lng": -0.2353967
+    },
+    "Nungua": {
+        "lat": null,
+        "lng": null
+    },
+    "Abokobi": {
+        "lat": null,
+        "lng": null
+    },
+    "Ashomang Estate": {
+        "lat": 5.7062442,
+        "lng": -0.2361929
+    },
+    "North Legon": {
+        "lat": 5.6825806,
+        "lng": -0.1916501
+    },
+    "Agbogba": {
+        "lat": 5.6944159,
+        "lng": -0.2021951
+    },
+    "Osu": {
+        "lat": 5.5570305,
+        "lng": -0.1762717
+    },
+    "Madina": {
+        "lat": 24.4672132,
+        "lng": 39.6024496
+    },
+    "Dansoman": {
+        "lat": 5.5427477,
+        "lng": -0.2565425
+    },
+    "Pokuase": {
+        "lat": 5.700273,
+        "lng": -0.302078
+    },
+    "Kaneshie": {
+        "lat": 5.576118,
+        "lng": -0.2444038
+    },
+    "Labone": {
+        "lat": 5.5682665,
+        "lng": -0.1717396
+    },
+    "Gbawe": {
+        "lat": 5.5773983,
+        "lng": -0.3136781
+    },
+    "Odorkor": {
+        "lat": 5.5804557,
+        "lng": -0.2633237
+    },
+    "Ofankor": {
+        "lat": 5.6634097,
+        "lng": -0.2653998
+    },
+    "Alajo": {
+        "lat": 5.598731100000001,
+        "lng": -0.2170443
+    },
+    "Oyibi": {
+        "lat": 5.812958099999999,
+        "lng": -0.1179155
+    },
+    "Nima": {
+        "lat": 5.5820038,
+        "lng": -0.1984173
+    },
+    "Anyaa": {
+        "lat": null,
+        "lng": null
+    },
+    "Ridge": {
+        "lat": null,
+        "lng": null
+    },
+    "Taifa-Burkina": {
+        "lat": 5.6663422,
+        "lng": -0.2522717
+    },
+    "Awoshie": {
+        "lat": 5.586607799999999,
+        "lng": -0.2772644
+    },
+    "Danfa": {
+        "lat": 5.7589264,
+        "lng": -0.1612029
+    },
+    "North Industrial Area": {
+        "lat": 5.582692499999999,
+        "lng": -0.224065
+    },
+    "Santa Maria": {
+        "lat": 36.9788003,
+        "lng": -25.1059054
+    },
+    "Dodowa": {
+        "lat": 5.8828665,
+        "lng": -0.098043
+    },
+    "Mamprobi": {
+        "lat": 5.5367445,
+        "lng": -0.2420576
+    },
+    "Kokomlemle": {
+        "lat": 5.5758396,
+        "lng": -0.2086447
+    },
+    "Kotobabi": {
+        "lat": 5.5997705,
+        "lng": -0.2045388
+    },
+    "Lartebiokorshie": {
+        "lat": 5.553278199999999,
+        "lng": -0.24014
+    },
+    "Kwashieman": {
+        "lat": 5.5937587,
+        "lng": -0.2690565
+    },
+    "Circle": {
+        "lat": null,
+        "lng": null
+    },
+    "Mataheko": {
+        "lat": 5.566114199999999,
+        "lng": -0.2476103
+    },
+    "Ningo-Prampram": {
+        "lat": 5.772109500000001,
+        "lng": 0.1120696
+    },
+    "Nii Boi Town": {
+        "lat": 5.6166572,
+        "lng": -0.2500087
+    },
+    "Korle Gonno": {
+        "lat": 5.5328145,
+        "lng": -0.2268113
+    },
+    "Darkuman": {
+        "lat": 5.5905595,
+        "lng": -0.2502697
+    },
+    "McCarthy Hill": {
+        "lat": 5.564278799999999,
+        "lng": -0.297229
+    },
+    "Adabraka": {
+        "lat": 5.5630028,
+        "lng": -0.2115709
+    },
+    "Asylum Down": {
+        "lat": 5.5682553,
+        "lng": -0.2068827
+    },
+    "greater accra, amasaman, abease": {
+        "lat": 5.7038601,
+        "lng": -0.3085652
+    },
+    "cantonments": {
+        "lat": 5.5767652,
+        "lng": -0.1784836
+    },
+    "danfa": {
+        "lat": 5.7589264,
+        "lng": -0.1612029
+    },
+    "ashaley botwe": {
+        "lat": 5.6802129,
+        "lng": -0.1372479
+    },
+    "weija": {
+        "lat": 5.5666403,
+        "lng": -0.3334778
+    },
+    "nima": {
+        "lat": 5.5820038,
+        "lng": -0.1984173
+    },
+    "spintex": {
+        "lat": 5.6376136,
+        "lng": -0.1266064
+    },
+    "dzorwulu": {
+        "lat": 5.6141232,
+        "lng": -0.1956471
+    },
+    "adjiriganor": {
+        "lat": 5.6510376,
+        "lng": -0.1354586
+    },
+    "ofankor": {
+        "lat": 5.6634097,
+        "lng": -0.2653998
+    },
+    "accra metropolitan": {
+        "lat": 5.5459415,
+        "lng": -0.2103988
+    },
+    "ga east municipal": {
+        "lat": 5.6983581,
+        "lng": -0.2150873
+    },
+    "labadi": {
+        "lat": 5.564659199999999,
+        "lng": -0.1565747
+    },
+    "dansoman": {
+        "lat": 5.5427477,
+        "lng": -0.2565425
+    },
+    "burma camp": {
+        "lat": 5.5958462,
+        "lng": -0.1518394
+    },
+    "teshie": {
+        "lat": 5.5831665,
+        "lng": -0.1046082
+    },
+    "kasoa": {
+        "lat": 5.5344155,
+        "lng": -0.4252737
+    },
+    "oyarifa": {
+        "lat": 5.755537899999999,
+        "lng": -0.1740052
+    },
+    "ashomang estate": {
+        "lat": 5.7062442,
+        "lng": -0.2361929
+    },
+    "gbawe": {
+        "lat": 5.5773983,
+        "lng": -0.3136781
+    },
+    "airport residential area": {
+        "lat": 5.606104699999999,
+        "lng": -0.1860362
+    },
+    "labone": {
+        "lat": 5.5682665,
+        "lng": -0.1717396
+    },
+    "east legon": {
+        "lat": 5.6358281,
+        "lng": -0.1613592
+    },
+    "nungua": {
+        "lat": null,
+        "lng": null
+    },
+    "ablekuma": {
+        "lat": 5.5511744,
+        "lng": -0.2526163
+    },
+    "tema metropolitan": {
+        "lat": 5.6563118,
+        "lng": -0.009326599999999999
+    },
+    "agbogba": {
+        "lat": 5.6944159,
+        "lng": -0.2021951
+    },
+    "haatso": {
+        "lat": 5.6694251,
+        "lng": -0.203367
+    },
+    "ga west municipal": {
+        "lat": 5.7088147,
+        "lng": -0.3560076
+    },
+    "adenta": {
+        "lat": 5.7141674,
+        "lng": -0.15418
+    },
+    "tantra hills": {
+        "lat": 5.6442137,
+        "lng": -0.2480426
+    },
+    "achimota": {
+        "lat": 5.612781,
+        "lng": -0.234345
+    },
+    "osu": {
+        "lat": 5.5570305,
+        "lng": -0.1762717
+    },
+    "north legon": {
+        "lat": 5.6825806,
+        "lng": -0.1916501
+    },
+    "taifa-burkina": {
+        "lat": 5.6663422,
+        "lng": -0.2522717
+    },
+    "ashaiman municipal": {
+        "lat": 5.6983973,
+        "lng": -0.0279867
+    },
+    "west legon": {
+        "lat": 5.6495001,
+        "lng": -0.2100343
+    },
+    "abelemkpe": {
+        "lat": 5.6087022,
+        "lng": -0.2164185
+    },
+    "abokobi": {
+        "lat": null,
+        "lng": null
+    },
+    "dodowa": {
+        "lat": 5.8828665,
+        "lng": -0.098043
+    },
+    "dome": {
+        "lat": null,
+        "lng": null
+    },
+    "madina": {
+        "lat": 24.4672132,
+        "lng": 39.6024496
+    },
+    "kaneshie": {
+        "lat": 5.576118,
+        "lng": -0.2444038
+    },
+    "oyibi": {
+        "lat": 5.812958099999999,
+        "lng": -0.1179155
+    },
+    "kokomlemle": {
+        "lat": 5.5758396,
+        "lng": -0.2086447
+    },
+    "pokuase": {
+        "lat": 5.700273,
+        "lng": -0.302078
+    },
+    "lapaz": {
+        "lat": 5.609507499999999,
+        "lng": -0.2507539
+    },
+    "kwashieman": {
+        "lat": 5.5937587,
+        "lng": -0.2690565
+    },
+    "mataheko": {
+        "lat": 5.566114199999999,
+        "lng": -0.2476103
+    },
+    "nii boi town": {
+        "lat": 5.6166572,
+        "lng": -0.2500087
+    },
+    "ga south municipal": {
+        "lat": 5.666671,
+        "lng": -0.4313729
+    },
+    "tesano": {
+        "lat": 5.605703399999999,
+        "lng": -0.2353967
+    },
+    "roman ridge": {
+        "lat": 5.6024006,
+        "lng": -0.1951648
+    },
+    "north industrial area": {
+        "lat": 5.582692499999999,
+        "lng": -0.224065
+    },
+    "lartebiokorshie": {
+        "lat": 5.553278199999999,
+        "lng": -0.24014
+    },
+    "ridge": {
+        "lat": null,
+        "lng": null
+    },
+    "awoshie": {
+        "lat": 5.586607799999999,
+        "lng": -0.2772644
+    },
+    "amrahia": {
+        "lat": 5.764173899999999,
+        "lng": -0.139333
+    },
+    "alajo": {
+        "lat": 5.598731100000001,
+        "lng": -0.2170443
+    },
+    "sowutwuom": {
+        "lat": 5.625094300000001,
+        "lng": -0.2724254
+    },
+    "mamprobi": {
+        "lat": 5.5367445,
+        "lng": -0.2420576
+    },
+    "odorkor": {
+        "lat": 5.5804557,
+        "lng": -0.2633237
+    },
+    "anyaa": {
+        "lat": null,
+        "lng": null
+    },
+    "ningo-prampram": {
+        "lat": 5.772109500000001,
+        "lng": 0.1120696
+    },
+    "adabraka": {
+        "lat": 5.5630028,
+        "lng": -0.2115709
+    },
+    "kotobabi": {
+        "lat": 5.5997705,
+        "lng": -0.2045388
+    },
+    "santa maria": {
+        "lat": 36.9788003,
+        "lng": -25.1059054
+    },
+    "asylum down": {
+        "lat": 5.5682553,
+        "lng": -0.2068827
+    },
+    "other": {
+        "lat": null,
+        "lng": null
+    },
+    "old ashomang": {
+        "lat": 5.7062442,
+        "lng": -0.2361929
+    },
+    "korle gonno": {
+        "lat": 5.5328145,
+        "lng": -0.2268113
+    },
+    "mccarthy hill": {
+        "lat": 5.564278799999999,
+        "lng": -0.297229
+    },
+    "circle": {
+        "lat": null,
+        "lng": null
+    },
+    "darkuman": {
+        "lat": 5.5905595,
+        "lng": -0.2502697
+    },
+    "nungua central": {
+        "lat": 5.611622,
+        "lng": -0.0863581
+    },
+    "abokobi station": {
+        "lat": 5.7305617,
+        "lng": -0.205085
+    },
+    "dome market": {
+        "lat": 5.6439941,
+        "lng": -0.2373383
+    },
+    "greater accra regional hospital": {
+        "lat": 5.5613725,
+        "lng": -0.1986759
+    },
+    "anyaa market": {
+        "lat": 5.6001948,
+        "lng": -0.2865327
+    },
+    "accra": {
+        "lat": 5.559284600000001,
+        "lng": -0.1974306
+    },
+    "nkrumah circle": {
+        "lat": 5.5560681,
+        "lng": -0.2119593
+    }
+}
