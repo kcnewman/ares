@@ -1,6 +1,6 @@
 from ares.constants import *
 from ares.utils.common import read_yaml, create_directories
-from ares.entity.config_entity import DataValidationConfig
+from ares.entity.config_entity import DataValidationConfig, DataSplitConfig
 
 
 class ConfigurationManager:
@@ -27,5 +27,15 @@ class ConfigurationManager:
             STATUS_FILE=config.STATUS_FILE,
             data_dir=config.data_dir,
             all_schema=schema,
+        )
+        return data_validation_config
+
+    def get_data_split_config(self) -> DataSplitConfig:
+        config = self.config.data_split
+
+        create_directories([config.root_dir])
+
+        data_validation_config = DataSplitConfig(
+            root_dir=config.root_dir, data_path=config.data_path
         )
         return data_validation_config

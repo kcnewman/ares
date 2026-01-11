@@ -4,3 +4,9 @@ data_validation:
   root_dir: artifacts/pipeline/data_validation
   data_dir: artifacts/data/01-raw/raw.csv
   STATUS_FILE: artifacts/pipeline/data_validation/status.txt
+
+
+data_split:
+  root_dir: artifacts/pipeline/data_split
+  data_path: artifacts/data/01-raw/raw.csv
+  
