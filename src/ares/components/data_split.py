@@ -10,7 +10,7 @@ class DataSplit:
         self.config = config
 
     def split(self):
-        data = pd.read_csv(self.config.data_path)
+        data = pd.read_csv(self.config.data_dir)
 
         MIN_LISTINGS = 50
         locality_counts = data["locality"].value_counts()

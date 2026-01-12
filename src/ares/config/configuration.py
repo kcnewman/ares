@@ -35,7 +35,7 @@ class ConfigurationManager:
 
         create_directories([config.root_dir])
 
-        data_validation_config = DataSplitConfig(
-            root_dir=config.root_dir, data_path=config.data_path
+        data_split_config = DataSplitConfig(
+            root_dir=config.root_dir, data_dir=config.data_dir
         )
-        return data_validation_config
+        return data_split_config

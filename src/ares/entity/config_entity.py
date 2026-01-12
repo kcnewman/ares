@@ -13,4 +13,12 @@ class DataValidationConfig:
 @dataclass(frozen=True)
 class DataSplitConfig:
     root_dir: Path
-    data_path: Path
+    data_dir: Path
+
+@dataclass(frozen=True)
+class DataProcessingConfig:
+    root_dir: Path
+    data_dir: Path
+    train: Path
+    test: Path
+    geocode_cache: Path

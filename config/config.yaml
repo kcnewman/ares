@@ -10,3 +10,10 @@ data_split:
   root_dir: artifacts/pipeline/data_split
   data_path: artifacts/data/01-raw/raw.csv
   
+
+data_processing:
+  root_dir: artifacts/pipeline/data_preprocess
+  data_dir: artifacts/data/01-raw/raw.csv
+  train: artifacts/pipeline/data_split/train.csv
+  test: artifacts/pipeline/data_split/eval.csv
+  geocode_cache: artifacts/cache/geocode_cache.json
