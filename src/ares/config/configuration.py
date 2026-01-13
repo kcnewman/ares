@@ -1,14 +1,19 @@
-from ares.constants import *
+from pathlib import Path
+import ares.constants as const
 from ares.utils.common import read_yaml, create_directories
-from ares.entity.config_entity import DataValidationConfig, DataSplitConfig
+from ares.entity.config_entity import (
+    DataValidationConfig,
+    DataSplitConfig,
+    DataProcessingConfig,
+)
 
 
 class ConfigurationManager:
     def __init__(
         self,
-        config_filepath=CONFIG_FILE_PATH,
-        params_filepath=PARAMS_FILE_PATH,
-        schema_filepath=SCHEMA_FILE_PATH,
+        config_filepath=const.CONFIG_FILE_PATH,
+        params_filepath=const.PARAMS_FILE_PATH,
+        schema_filepath=const.SCHEMA_FILE_PATH,
     ):
         self.config = read_yaml(config_filepath)
         self.params = read_yaml(params_filepath)
@@ -39,3 +44,17 @@ class ConfigurationManager:
             root_dir=config.root_dir, data_dir=config.data_dir
         )
         return data_split_config
+
+    def get_data_processing_config(self) -> DataProcessingConfig:
+        config = self.config.data_processing
+
+        create_directories([config.root_dir])
+
+        data_processing_config = DataProcessingConfig(
+            root_dir=config.root_dir,
+            data_dir=config.data_dir,
+            train=config.train,
+            test=config.test,
+            geocode_cache=Path(config.geocode_cache),
+        )
+        return data_processing_config

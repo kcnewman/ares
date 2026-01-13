@@ -8,7 +8,7 @@ data_validation:
 
 data_split:
   root_dir: artifacts/pipeline/data_split
-  data_path: artifacts/data/01-raw/raw.csv
+  data_dir: artifacts/data/01-raw/raw.csv
   
 
 data_processing:

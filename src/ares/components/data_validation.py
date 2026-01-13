@@ -1,5 +1,3 @@
-import os
-from ares import logger
 from ares.entity.config_entity import DataValidationConfig
 import pandas as pd
 
