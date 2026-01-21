@@ -30,10 +30,10 @@ class DataProcessor:
             logger.info(f"Error geocoding {x}: {e}")
         return (None, None)
 
-    def __create_cache(self, df):
+    def __create_cache(self, data):
         """Save geocode data as json"""
         cache = {}
-        locs = df["loc"].unique()
+        locs = data["loc"].unique()
         for i, loc in enumerate(locs, 1):
             lat, lng = self.__code(loc)
             cache[loc] = {"lat": lat, "lng": lng}
@@ -167,3 +167,6 @@ class DataProcessor:
         self.train = self.__rename_columns(self.train)
         self.test = self.__rename_columns(self.test)
         self.__save()
+
+        logger.info(f"Train shape: {self.train.shape}")
+        logger.info(f"Test shape: {self.test.shape}")

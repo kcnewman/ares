@@ -28,5 +28,5 @@ class DataSplit:
         eval.to_csv(os.path.join(self.config.root_dir, "eval.csv"), index=False)
 
         logger.info("Splited data into training and evaluation sets")
-        logger.info(train.shape)
-        logger.info(eval.shape)
+        logger.info(f"Train shape: {train.shape}")
+        logger.info(f"Test shape: {eval.shape}")

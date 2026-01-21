@@ -26,10 +26,10 @@ def read_yaml(path_to_yaml: Path) -> ConfigBox:
     try:
         with open(path_to_yaml) as yaml_file:
             content = yaml.safe_load(yaml_file)
-            logger.info(f"yaml file: {path_to_yaml} loaded successfully")
+            logger.info(f"YAML file: {path_to_yaml} loaded successfully")
             return ConfigBox(content)
     except BoxValueError:
-        raise ValueError("yaml file is empty")
+        raise ValueError("YAML file is empty")
     except Exception as e:
         raise e
 
@@ -58,7 +58,7 @@ def save_json(path: Path, data: dict):
     """
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
-    logger.info(f"JSON file saved at; {path}")
+    logger.info(f"JSON file saved at: {path}")
 
 
 @beartype
@@ -86,7 +86,7 @@ def save_bins(data: Any, path: Path):
         path (Path): path to save
     """
     joblib.dump(value=data, filename=path)
-    logger.info(f"Binary file saved ar: {path}")
+    logger.info(f"Binary file saved at: {path}")
 
 
 @beartype

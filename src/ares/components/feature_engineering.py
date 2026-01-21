@@ -3,6 +3,7 @@ import numpy as np
 import os
 from ares.utils.common import load_json, save_json
 from ares.entity.config_entity import FeatureEngineeringConfig
+from ares import logger
 
 
 class EngineerFeatures:
@@ -223,3 +224,6 @@ class EngineerFeatures:
         self.test = self.__add_features(self.test)
         self.__select_columns()
         self.__save()
+
+        logger.info(f"Train shape: {self.train.shape}")
+        logger.info(f"Test shape: {self.test.shape}")
