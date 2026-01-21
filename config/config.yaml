@@ -6,7 +6,7 @@ data_validation:
   STATUS_FILE: artifacts/data_validation/status.txt
 
 data_split:
-  root_dir: artifacts/pipeline/data_split
+  root_dir: artifacts/data_split
   data_dir: artifacts/data/raw.csv
   
 data_processing:
