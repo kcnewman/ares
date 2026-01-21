@@ -5,6 +5,7 @@ from ares.entity.config_entity import (
     DataValidationConfig,
     DataSplitConfig,
     DataProcessingConfig,
+    FeatureEngineeringConfig,
 )
 
 
@@ -58,3 +59,17 @@ class ConfigurationManager:
             geocode_cache=Path(config.geocode_cache),
         )
         return data_processing_config
+
+    def get_feature_engineering_config(self) -> FeatureEngineeringConfig:
+        config = self.config.feature_engineering
+
+        create_directories([config.root_dir])
+
+        feature_engineering_config = FeatureEngineeringConfig(
+            root_dir=Path(config.root_dir),
+            train=config.train,
+            test=config.test,
+            locality_class=Path(config.locality_class),
+            unit_density=Path(config.unit_density),
+        )
+        return feature_engineering_config

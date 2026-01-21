@@ -58,7 +58,7 @@ def save_json(path: Path, data: dict):
     """
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
-    logger.info(f"Json file saved at; {path}")
+    logger.info(f"JSON file saved at; {path}")
 
 
 @beartype

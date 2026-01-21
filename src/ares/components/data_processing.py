@@ -18,7 +18,7 @@ class DataProcessor:
         self.train = pd.read_csv(self.config.train)
         self.test = pd.read_csv(self.config.test)
 
-    def code(self, x):
+    def __code(self, x):
         """Geocode a location x using Google Maps API"""
         try:
             result = maps.geocode(x.lower(), region="gh")  # type: ignore
@@ -30,41 +30,41 @@ class DataProcessor:
             logger.info(f"Error geocoding {x}: {e}")
         return (None, None)
 
-    def create_cache(self, df):
+    def __create_cache(self, df):
         """Save geocode data as json"""
         cache = {}
         locs = df["loc"].unique()
         for i, loc in enumerate(locs, 1):
-            lat, lng = self.code(loc)
+            lat, lng = self.__code(loc)
             cache[loc] = {"lat": lat, "lng": lng}
 
         save_json(self.config.geocode_cache, cache)
         return cache
 
-    def get_lat_lng(self, location, geocodes_cache):
+    def __get_lat_lng(self, location, geocodes_cache):
         """Fetch the latitude and longitude of a location"""
         location_lower = location.lower()
         if location_lower in geocodes_cache:
             result = geocodes_cache[location_lower]
             return (result["lat"], result["lng"])
         else:
-            lat, lng = self.code(location_lower)
+            lat, lng = self.__code(location_lower)
             geocodes_cache[location_lower] = {"lat": lat, "lng": lng}
             save_json(self.config.geocode_cache, geocodes_cache)
             return (lat, lng)
 
-    def apply_lat_lng(self):
+    def __apply_lat_lng(self):
         try:
             geocodes_cache = load_json(self.config.geocode_cache)
         except FileNotFoundError:
             self.config.geocode_cache.parent.mkdir(parents=True, exist_ok=True)
-            geocodes_cache = self.create_cache(self.config.data_dir)
+            geocodes_cache = self.__create_cache(self.config.data_dir)
 
         self.train[["lat", "lng"]] = self.train["loc"].apply(
-            lambda x: pd.Series(self.get_lat_lng(x, geocodes_cache))
+            lambda x: pd.Series(self.__get_lat_lng(x, geocodes_cache))
         )
         self.test[["lat", "lng"]] = self.test["loc"].apply(
-            lambda x: pd.Series(self.get_lat_lng(x, geocodes_cache))
+            lambda x: pd.Series(self.__get_lat_lng(x, geocodes_cache))
         )
 
         missing_train = self.train.loc[self.train["lat"].isna(), "loc"].unique()
@@ -74,7 +74,7 @@ class DataProcessor:
         logger.info(f"Still missing {len(total_missing)} lat/lng for: {total_missing}")
         return self
 
-    def drop_duplicates(self):
+    def __drop_duplicates(self):
         before = self.train.shape[0] + self.test.shape[0]
         self.train = self.train.drop_duplicates(subset="url")
         self.test = self.test.drop_duplicates(subset="url")
@@ -83,7 +83,7 @@ class DataProcessor:
         logger.info(f"Dropped {before - after} duplicate rows")
         return self
 
-    def trim_price(self):
+    def __trim_price(self):
         x = np.log(self.train["price"])
         q1, q3 = np.percentile(x, [25, 75])
         iqr = q3 - q1
@@ -107,7 +107,7 @@ class DataProcessor:
 
         return self
 
-    def clean_condition(self):
+    def __clean_condition(self):
         self.train.Condition = self.train.Condition.map(
             {
                 "Newly-Built": "New",
@@ -126,7 +126,7 @@ class DataProcessor:
         )
         return self
 
-    def select_columns(self):
+    def __select_columns(self):
         drop_list = ["fetch_date", "Property Size", "locality_grouped"]
         self.train = self.train.drop(columns=drop_list)
         self.test = self.test.drop(columns=drop_list)
@@ -135,7 +135,13 @@ class DataProcessor:
         logger.info(f"{features} feature columns selected")
         return self
 
-    def rename_columns(self, data):
+    def __drop_missing(self):
+        self.train = self.train.dropna()
+        self.test = self.test.dropna()
+
+        return self
+
+    def __rename_columns(self, data):
         for col in data.columns.to_list():
             data.rename(
                 columns={col: col.lower().replace(" ", "_").replace("-", "_")},
@@ -143,7 +149,7 @@ class DataProcessor:
             )
         return data
 
-    def save(self):
+    def __save(self):
         self.train.to_csv(
             os.path.join(self.config.root_dir, "preprocessed_train.csv"), index=False
         )
@@ -151,12 +157,13 @@ class DataProcessor:
             os.path.join(self.config.root_dir, "preprocessed_eval.csv"), index=False
         )
 
-    def process(self):
-        self.apply_lat_lng()
-        self.drop_duplicates()
-        self.trim_price()
-        self.clean_condition()
-        self.select_columns()
-        self.train = self.rename_columns(self.train)
-        self.test = self.rename_columns(self.test)
-        self.save()
+    def transform(self):
+        self.__apply_lat_lng()
+        self.__drop_duplicates()
+        self.__trim_price()
+        self.__clean_condition()
+        self.__select_columns()
+        self.__drop_missing()
+        self.train = self.__rename_columns(self.train)
+        self.test = self.__rename_columns(self.test)
+        self.__save()

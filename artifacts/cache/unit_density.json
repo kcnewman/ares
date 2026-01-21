@@ -1,0 +1,22 @@
+{
+    "Room & Parlour": "shared",
+    "Bedsitter": "shared",
+    "Shared Apartment": "shared",
+    "Apartment": "multi_unit",
+    "Studio Apartment": "multi_unit",
+    "Mini Flat": "multi_unit",
+    "Block of Flats": "multi_unit",
+    "Condo": "multi_unit",
+    "Maisonette": "multi_unit",
+    "Penthouse": "multi_unit",
+    "House": "single_unit",
+    "Duplex": "single_unit",
+    "Bungalow": "single_unit",
+    "Mansion": "single_unit",
+    "Farm House": "single_unit",
+    "Villa": "single_unit",
+    "Chalet": "single_unit",
+    "Townhouse / Terrace": "single_unit",
+    "Townhouse/Terrace": "single_unit",
+    "Townhouse": "single_unit"
+}

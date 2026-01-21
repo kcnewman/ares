@@ -14,7 +14,7 @@ class DataProcessingPipeline:
             config = ConfigurationManager()
             data_processsing_config = config.get_data_processing_config()
             data_processing = DataProcessor(config=data_processsing_config)
-            data_processing.process()
+            data_processing.transform()
         except Exception as e:
             raise e
 

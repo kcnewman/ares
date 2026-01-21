@@ -1,19 +1,27 @@
 artifacts_root: artifacts
 
 data_validation:
-  root_dir: artifacts/pipeline/data_validation
-  data_dir: artifacts/data/01-raw/raw.csv
-  STATUS_FILE: artifacts/pipeline/data_validation/status.txt
-
+  root_dir: artifacts/data_validation
+  data_dir: artifacts/data/raw.csv
+  STATUS_FILE: artifacts/data_validation/status.txt
 
 data_split:
   root_dir: artifacts/pipeline/data_split
-  data_dir: artifacts/data/01-raw/raw.csv
+  data_dir: artifacts/data/raw.csv
+  
+data_processing:
+  root_dir: artifacts/data_processing
+  data_dir: artifacts/data/raw.csv
+  train: artifacts/data_split/train.csv
+  test: artifacts/data_split/eval.csv
+  geocode_cache: artifacts/cache/geocode_cache.json
+
+feature_engineering:
+  root_dir: artifacts/feature_engineering
+  train: artifacts/data_processing/preprocessed_train.csv
+  test: artifacts/data_processing/preprocessed_eval.csv
+  locality_class: artifacts/cache/locality_class.json
+  unit_density: artifacts/cache/unit_density.json
+  
   
 
-data_processing:
-  root_dir: artifacts/pipeline/data_preprocess
-  data_dir: artifacts/data/01-raw/raw.csv
-  train: artifacts/pipeline/data_split/train.csv
-  test: artifacts/pipeline/data_split/eval.csv
-  geocode_cache: artifacts/cache/geocode_cache.json

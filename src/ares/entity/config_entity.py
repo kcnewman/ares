@@ -15,6 +15,7 @@ class DataSplitConfig:
     root_dir: Path
     data_dir: Path
 
+
 @dataclass(frozen=True)
 class DataProcessingConfig:
     root_dir: Path
@@ -22,3 +23,12 @@ class DataProcessingConfig:
     train: Path
     test: Path
     geocode_cache: Path
+
+
+@dataclass(frozen=True)
+class FeatureEngineeringConfig:
+    root_dir: Path
+    train: Path
+    test: Path
+    locality_class: Path
+    unit_density: Path
