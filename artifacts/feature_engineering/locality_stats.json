@@ -1,0 +1,367 @@
+{
+    "Abelemkpe": {
+        "loc_std_dev": 1.186063162692275,
+        "loc_trust_score": 0.5370370370370371,
+        "loc_tier_code": 2
+    },
+    "Ablekuma": {
+        "loc_std_dev": 0.7763495079135813,
+        "loc_trust_score": 0.7767857142857143,
+        "loc_tier_code": 3
+    },
+    "Abokobi": {
+        "loc_std_dev": 0.9372256306234175,
+        "loc_trust_score": 0.5901639344262295,
+        "loc_tier_code": 2
+    },
+    "Accra Metropolitan": {
+        "loc_std_dev": 1.001269599152879,
+        "loc_trust_score": 0.931787175989086,
+        "loc_tier_code": 3
+    },
+    "Achimota": {
+        "loc_std_dev": 1.1012278022597888,
+        "loc_trust_score": 0.8721227621483376,
+        "loc_tier_code": 3
+    },
+    "Adabraka": {
+        "loc_std_dev": 1.1869759608671686,
+        "loc_trust_score": 0.0196078431372549,
+        "loc_tier_code": 0
+    },
+    "Adenta": {
+        "loc_std_dev": 0.7247259830711019,
+        "loc_trust_score": 0.9340369393139841,
+        "loc_tier_code": 3
+    },
+    "Adjiriganor": {
+        "loc_std_dev": 0.9529731993428504,
+        "loc_trust_score": 0.8997995991983968,
+        "loc_tier_code": 3
+    },
+    "Agbogba": {
+        "loc_std_dev": 0.8765789828593467,
+        "loc_trust_score": 0.5145631067961165,
+        "loc_tier_code": 2
+    },
+    "Airport Residential Area": {
+        "loc_std_dev": 0.8679067734982703,
+        "loc_trust_score": 1.0,
+        "loc_tier_code": 3
+    },
+    "Alajo": {
+        "loc_std_dev": 1.075760738208438,
+        "loc_trust_score": 0.13793103448275862,
+        "loc_tier_code": 0
+    },
+    "Amrahia": {
+        "loc_std_dev": 1.084311053038889,
+        "loc_trust_score": 0.34210526315789475,
+        "loc_tier_code": 1
+    },
+    "Anyaa": {
+        "loc_std_dev": 1.0122293544074505,
+        "loc_trust_score": 0.3670886075949367,
+        "loc_tier_code": 1
+    },
+    "Ashaiman Municipal": {
+        "loc_std_dev": 1.0740648937554829,
+        "loc_trust_score": 0.6688741721854304,
+        "loc_tier_code": 2
+    },
+    "Ashaley Botwe": {
+        "loc_std_dev": 0.8451507854755413,
+        "loc_trust_score": 0.9079189686924494,
+        "loc_tier_code": 3
+    },
+    "Ashomang Estate": {
+        "loc_std_dev": 0.8204087123786725,
+        "loc_trust_score": 0.6951219512195121,
+        "loc_tier_code": 2
+    },
+    "Asylum Down": {
+        "loc_std_dev": 1.2113647491802653,
+        "loc_trust_score": 0.09090909090909091,
+        "loc_tier_code": 0
+    },
+    "Awoshie": {
+        "loc_std_dev": 0.9690390947334686,
+        "loc_trust_score": 0.4186046511627907,
+        "loc_tier_code": 1
+    },
+    "Burma Camp": {
+        "loc_std_dev": 1.067956999488104,
+        "loc_trust_score": 0.40476190476190477,
+        "loc_tier_code": 1
+    },
+    "Cantonments": {
+        "loc_std_dev": 0.5067603052978433,
+        "loc_trust_score": 1.0,
+        "loc_tier_code": 3
+    },
+    "Circle": {
+        "loc_std_dev": 1.1629838927058243,
+        "loc_trust_score": 0.05660377358490566,
+        "loc_tier_code": 0
+    },
+    "Danfa": {
+        "loc_std_dev": 0.9297955553407115,
+        "loc_trust_score": 0.358974358974359,
+        "loc_tier_code": 1
+    },
+    "Dansoman": {
+        "loc_std_dev": 0.9369520175687487,
+        "loc_trust_score": 0.7695852534562212,
+        "loc_tier_code": 3
+    },
+    "Darkuman": {
+        "loc_std_dev": 1.1579045041078848,
+        "loc_trust_score": 0.12280701754385964,
+        "loc_tier_code": 0
+    },
+    "Dodowa": {
+        "loc_std_dev": 1.0386287131068688,
+        "loc_trust_score": 0.34210526315789475,
+        "loc_tier_code": 1
+    },
+    "Dome": {
+        "loc_std_dev": 0.7473039579811681,
+        "loc_trust_score": 0.8533724340175953,
+        "loc_tier_code": 3
+    },
+    "Dzorwulu": {
+        "loc_std_dev": 1.0132763922428702,
+        "loc_trust_score": 0.7685185185185185,
+        "loc_tier_code": 3
+    },
+    "East Legon": {
+        "loc_std_dev": 0.9491452707032463,
+        "loc_trust_score": 0.9649859943977591,
+        "loc_tier_code": 3
+    },
+    "Ga East Municipal": {
+        "loc_std_dev": 1.0060137138424647,
+        "loc_trust_score": 0.7237569060773481,
+        "loc_tier_code": 2
+    },
+    "Ga South Municipal": {
+        "loc_std_dev": 0.8234427955216024,
+        "loc_trust_score": 0.6268656716417911,
+        "loc_tier_code": 2
+    },
+    "Ga West Municipal": {
+        "loc_std_dev": 0.8849685454831262,
+        "loc_trust_score": 0.8727735368956743,
+        "loc_tier_code": 3
+    },
+    "Gbawe": {
+        "loc_std_dev": 0.8961132400201863,
+        "loc_trust_score": 0.5689655172413793,
+        "loc_tier_code": 2
+    },
+    "Haatso": {
+        "loc_std_dev": 0.7615979360030828,
+        "loc_trust_score": 0.7933884297520661,
+        "loc_tier_code": 3
+    },
+    "Kaneshie": {
+        "loc_std_dev": 1.1778262894387619,
+        "loc_trust_score": 0.2857142857142857,
+        "loc_tier_code": 1
+    },
+    "Kasoa": {
+        "loc_std_dev": 0.7191172337510509,
+        "loc_trust_score": 0.8546511627906976,
+        "loc_tier_code": 3
+    },
+    "Kokomlemle": {
+        "loc_std_dev": 1.1556873995471475,
+        "loc_trust_score": 0.10714285714285714,
+        "loc_tier_code": 0
+    },
+    "Korle Gonno": {
+        "loc_std_dev": 1.1869759608671686,
+        "loc_trust_score": 0.0196078431372549,
+        "loc_tier_code": 0
+    },
+    "Kotobabi": {
+        "loc_std_dev": 1.0788998981852,
+        "loc_trust_score": 0.1935483870967742,
+        "loc_tier_code": 0
+    },
+    "Kwashieman": {
+        "loc_std_dev": 1.1036833605417438,
+        "loc_trust_score": 0.23076923076923078,
+        "loc_tier_code": 0
+    },
+    "Labadi": {
+        "loc_std_dev": 0.9888608204431286,
+        "loc_trust_score": 0.5798319327731093,
+        "loc_tier_code": 2
+    },
+    "Labone": {
+        "loc_std_dev": 0.6429751530884334,
+        "loc_trust_score": 1.0,
+        "loc_tier_code": 3
+    },
+    "Lapaz": {
+        "loc_std_dev": 0.8602892501096531,
+        "loc_trust_score": 0.6240601503759399,
+        "loc_tier_code": 2
+    },
+    "Lartebiokorshie": {
+        "loc_std_dev": 1.182746101009452,
+        "loc_trust_score": 0.18032786885245902,
+        "loc_tier_code": 0
+    },
+    "Madina": {
+        "loc_std_dev": 1.02336487562134,
+        "loc_trust_score": 0.5867768595041323,
+        "loc_tier_code": 2
+    },
+    "Mamprobi": {
+        "loc_std_dev": 1.1023044778738817,
+        "loc_trust_score": 0.16666666666666666,
+        "loc_tier_code": 0
+    },
+    "Mataheko": {
+        "loc_std_dev": 1.158367872717408,
+        "loc_trust_score": 0.09090909090909091,
+        "loc_tier_code": 0
+    },
+    "McCarthy Hill": {
+        "loc_std_dev": 1.102326525736721,
+        "loc_trust_score": 0.20634920634920634,
+        "loc_tier_code": 0
+    },
+    "Nii Boi Town": {
+        "loc_std_dev": 1.1396862526455265,
+        "loc_trust_score": 0.07407407407407407,
+        "loc_tier_code": 0
+    },
+    "Nima": {
+        "loc_std_dev": 1.153474262583428,
+        "loc_trust_score": 0.038461538461538464,
+        "loc_tier_code": 0
+    },
+    "Ningo-Prampram": {
+        "loc_std_dev": 1.065102389905908,
+        "loc_trust_score": 0.2753623188405797,
+        "loc_tier_code": 1
+    },
+    "North Industrial Area": {
+        "loc_std_dev": 1.1070540381351663,
+        "loc_trust_score": 0.3333333333333333,
+        "loc_tier_code": 1
+    },
+    "North Legon": {
+        "loc_std_dev": 0.9046954914225749,
+        "loc_trust_score": 0.6323529411764706,
+        "loc_tier_code": 2
+    },
+    "Nungua": {
+        "loc_std_dev": 0.8842408876203605,
+        "loc_trust_score": 0.6527777777777778,
+        "loc_tier_code": 2
+    },
+    "Odorkor": {
+        "loc_std_dev": 1.179070168027625,
+        "loc_trust_score": 0.18032786885245902,
+        "loc_tier_code": 0
+    },
+    "Ofankor": {
+        "loc_std_dev": 0.8071261207561781,
+        "loc_trust_score": 0.609375,
+        "loc_tier_code": 2
+    },
+    "Old Ashomang": {
+        "loc_std_dev": 1.0862053742914068,
+        "loc_trust_score": 0.1935483870967742,
+        "loc_tier_code": 0
+    },
+    "Osu": {
+        "loc_std_dev": 1.0879601191435788,
+        "loc_trust_score": 0.5689655172413793,
+        "loc_tier_code": 2
+    },
+    "Other": {
+        "loc_std_dev": 1.121997721677226,
+        "loc_trust_score": 0.23076923076923078,
+        "loc_tier_code": 0
+    },
+    "Oyarifa": {
+        "loc_std_dev": 0.7853375082681692,
+        "loc_trust_score": 0.8903508771929824,
+        "loc_tier_code": 3
+    },
+    "Oyibi": {
+        "loc_std_dev": 0.905021547340747,
+        "loc_trust_score": 0.6951219512195121,
+        "loc_tier_code": 2
+    },
+    "Pokuase": {
+        "loc_std_dev": 0.8404521628785456,
+        "loc_trust_score": 0.771689497716895,
+        "loc_tier_code": 3
+    },
+    "Ridge": {
+        "loc_std_dev": 0.453406113027775,
+        "loc_trust_score": 1.0,
+        "loc_tier_code": 3
+    },
+    "Roman Ridge": {
+        "loc_std_dev": 1.1789977207552111,
+        "loc_trust_score": 1.0,
+        "loc_tier_code": 3
+    },
+    "Santa Maria": {
+        "loc_std_dev": 1.106416473807175,
+        "loc_trust_score": 0.23076923076923078,
+        "loc_tier_code": 0
+    },
+    "Sowutwuom": {
+        "loc_std_dev": 0.9395362248740547,
+        "loc_trust_score": 0.494949494949495,
+        "loc_tier_code": 1
+    },
+    "Spintex": {
+        "loc_std_dev": 0.9113436157205355,
+        "loc_trust_score": 0.9540863177226814,
+        "loc_tier_code": 3
+    },
+    "Taifa-Burkina": {
+        "loc_std_dev": 1.005866910131075,
+        "loc_trust_score": 0.5614035087719298,
+        "loc_tier_code": 2
+    },
+    "Tantra Hills": {
+        "loc_std_dev": 0.9190876457175794,
+        "loc_trust_score": 0.6666666666666666,
+        "loc_tier_code": 2
+    },
+    "Tema Metropolitan": {
+        "loc_std_dev": 0.9710726826573478,
+        "loc_trust_score": 0.9285714285714286,
+        "loc_tier_code": 3
+    },
+    "Tesano": {
+        "loc_std_dev": 0.9517219195824178,
+        "loc_trust_score": 0.5283018867924528,
+        "loc_tier_code": 2
+    },
+    "Teshie": {
+        "loc_std_dev": 1.1794491941687588,
+        "loc_trust_score": 0.9534450651769087,
+        "loc_tier_code": 3
+    },
+    "Weija": {
+        "loc_std_dev": 0.7574824110454297,
+        "loc_trust_score": 0.8949579831932774,
+        "loc_tier_code": 3
+    },
+    "West Legon": {
+        "loc_std_dev": 0.9379625843218597,
+        "loc_trust_score": 0.7641509433962265,
+        "loc_tier_code": 3
+    }
+}
