@@ -13,7 +13,7 @@ class DataSplitPipeline:
 
     def main(self):
         try:
-            with open(Path("artifacts/pipeline/data_validation/status.txt"), "r") as f:
+            with open(Path("artifacts/data_validation/status.txt"), "r") as f:
                 status = f.read().split(" ")[-1]
 
             if status == "True":
