@@ -9,10 +9,15 @@
         "loc_trust_score": 0.7767857142857143,
         "loc_tier_code": 3
     },
-    "abokobi": {
+    "abokobi station": {
         "loc_std_dev": 0.9377806908216963,
         "loc_trust_score": 0.5901639344262295,
         "loc_tier_code": 2
+    },
+    "accra": {
+        "loc_std_dev": 1.123039526972457,
+        "loc_trust_score": 0.23076923076923078,
+        "loc_tier_code": 0
     },
     "accra metropolitan": {
         "loc_std_dev": 1.0007997323387192,
@@ -59,7 +64,7 @@
         "loc_trust_score": 0.34210526315789475,
         "loc_tier_code": 1
     },
-    "anyaa": {
+    "anyaa market": {
         "loc_std_dev": 1.0130865359794763,
         "loc_trust_score": 0.3670886075949367,
         "loc_tier_code": 1
@@ -99,11 +104,6 @@
         "loc_trust_score": 1.0,
         "loc_tier_code": 3
     },
-    "circle": {
-        "loc_std_dev": 1.1642615784452586,
-        "loc_trust_score": 0.05660377358490566,
-        "loc_tier_code": 0
-    },
     "danfa": {
         "loc_std_dev": 0.9306637264200707,
         "loc_trust_score": 0.358974358974359,
@@ -124,7 +124,7 @@
         "loc_trust_score": 0.34210526315789475,
         "loc_tier_code": 1
     },
-    "dome": {
+    "dome market": {
         "loc_std_dev": 0.7475025425682357,
         "loc_trust_score": 0.8533724340175953,
         "loc_tier_code": 3
@@ -158,6 +158,11 @@
         "loc_std_dev": 0.8966970102287211,
         "loc_trust_score": 0.5689655172413793,
         "loc_tier_code": 2
+    },
+    "greater accra regional hospital": {
+        "loc_std_dev": 0.8662848741082212,
+        "loc_trust_score": 0.43820224719101125,
+        "loc_tier_code": 1
     },
     "haatso": {
         "loc_std_dev": 0.7648809802459067,
@@ -249,6 +254,11 @@
         "loc_trust_score": 0.2753623188405797,
         "loc_tier_code": 1
     },
+    "nkrumah circle": {
+        "loc_std_dev": 1.1642615784452586,
+        "loc_trust_score": 0.05660377358490566,
+        "loc_tier_code": 0
+    },
     "north industrial area": {
         "loc_std_dev": 1.1079569360577,
         "loc_trust_score": 0.3333333333333333,
@@ -259,7 +269,7 @@
         "loc_trust_score": 0.6323529411764706,
         "loc_tier_code": 2
     },
-    "nungua": {
+    "nungua central": {
         "loc_std_dev": 0.8847111469550134,
         "loc_trust_score": 0.6527777777777778,
         "loc_tier_code": 2
@@ -284,11 +294,6 @@
         "loc_trust_score": 0.5689655172413793,
         "loc_tier_code": 2
     },
-    "other": {
-        "loc_std_dev": 1.123039526972457,
-        "loc_trust_score": 0.23076923076923078,
-        "loc_tier_code": 0
-    },
     "oyarifa": {
         "loc_std_dev": 0.7854860112159543,
         "loc_trust_score": 0.8903508771929824,
@@ -302,11 +307,6 @@
     "pokuase": {
         "loc_std_dev": 0.8407613744958516,
         "loc_trust_score": 0.771689497716895,
-        "loc_tier_code": 3
-    },
-    "ridge": {
-        "loc_std_dev": 0.453406113027775,
-        "loc_trust_score": 1.0,
         "loc_tier_code": 3
     },
     "roman ridge": {

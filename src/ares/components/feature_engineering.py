@@ -55,11 +55,11 @@ class EngineerFeatures:
         data = self._map_locality_class(data)
 
         data["class_pi"] = data["loc_class"].map(self.class_pi)
-        data["loc_pi"] = data["locality"].map(self.loc_pi)
+        data["loc_pi"] = data["loc"].map(self.loc_pi)
 
         # Map Bayesian stats
         for stat in ["loc_std_dev", "loc_trust_score", "loc_tier_code"]:
-            data[stat] = data["locality"].map(
+            data[stat] = data["loc"].map(
                 lambda x: self.stats_map.get(x, {}).get(stat, np.nan)
             )
 
@@ -83,17 +83,17 @@ class EngineerFeatures:
         }
 
         self.class_pi = self.train.groupby("loc_class")["log_price"].median().to_dict()
-        self.loc_pi = self.train.groupby("locality")["log_price"].median().to_dict()
+        self.loc_pi = self.train.groupby("loc")["log_price"].median().to_dict()
 
         # Build Smoothed Locality Stats
         locality_agg = (
-            self.train.groupby("locality")["log_price"]
+            self.train.groupby("loc")["log_price"]
             .agg(n_listings="size", std_log="std")
             .reset_index()
         )
 
         self.stats_map = {
-            row["locality"]: self._compute_bayesian_stats(row)
+            row["loc"]: self._compute_bayesian_stats(row)
             for _, row in locality_agg.iterrows()
         }
 
@@ -143,7 +143,7 @@ class EngineerFeatures:
 
     def _map_locality_class(self, data: pd.DataFrame):
         data["loc_class"] = (
-            data["locality"].map(self.mappings["location_class"]).fillna("other")
+            data["loc"].map(self.mappings["location_class"]).fillna("other")
         )
         return data
 
@@ -163,7 +163,7 @@ class EngineerFeatures:
 
     def _compute_bayesian_stats(self, row, K=50):
         """Logic for smoothing. Used during fit."""
-        loc = row["locality"]
+        loc = row["loc"]
         n = row["n_listings"]
 
         w = 1.0 if loc in self.lists["elite_areas"] else n / (n + K)
