@@ -145,6 +145,11 @@ class EngineerFeatures:
         data["loc_class"] = (
             data["locality"].map(self.mappings["location_class"]).fillna("other")
         )
+
+        data["loc_class"] = pd.Categorical(
+            data["loc_class"], categories=self.lists["location_classes"]
+        )
+
         return data
 
     def _add_amenity_features(self, data: pd.DataFrame):

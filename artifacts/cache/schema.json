@@ -58,7 +58,11 @@
     "dist_to_east_legon_center", 
     "min_dist_to_hub",
     "log_price"          
-]
+],
+  "location_classes": [
+        "prime", "established", "high_density", 
+        "developing_commuter", "industrial_traffic", "satellite_hub", "other"
+    ]
   },
   "mappings": {
     "condition_transform": {
