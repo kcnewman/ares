@@ -163,6 +163,8 @@ class EngineerFeatures:
         return 6371 * d
 
     def _map_locality_class(self, data: pd.DataFrame):
+        if "loc_class" in data.columns:
+            return data
         data["loc_class"] = (
             data["loc"].map(self.mappings["location_class"]).fillna("other")
         )
@@ -199,7 +201,12 @@ class EngineerFeatures:
 
     def transform(self):
         """Trigger for training pipeline."""
+        self.train["log_price"] = np.log(self.train["price"])
+        self.train = self._map_locality_class(self.train)
+        self.train = self._add_amenity_features(self.train)
+
         self.fit_and_save_stats()
+
         self.train = self.run_pipeline(self.train)
         self.test = self.run_pipeline(self.test)
 
