@@ -216,4 +216,6 @@ class EngineerFeatures:
         self.test.to_csv(
             os.path.join(self.config.root_dir, "features_test.csv"), index=False
         )
-        logger.info(f"Pipeline complete. Features: {self.train.columns.tolist()}")
+        logger.info(
+            f"Pipeline complete. Train: {self.train.shape}, Test: {self.test.shape}"
+        )
