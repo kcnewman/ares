@@ -1,3 +1,12 @@
+"""
+Feature engineering: data encoding and transformation is done here.
+
+- Reads cleaned train/eval CSVs
+- Applies feature engineering
+- Saves feature-engineered CSVs
+- ALSO saves fitted encoders for inference
+"""
+
 import pandas as pd
 import numpy as np
 import os
@@ -9,202 +18,196 @@ from ares import logger
 class EngineerFeatures:
     def __init__(self, config: FeatureEngineeringConfig):
         self.config = config
+
         self.train = pd.read_csv(self.config.train)
         self.test = pd.read_csv(self.config.test)
-        self.locality_class = load_json(self.config.locality_class)
-        self.unit_density = load_json(self.config.unit_density)
+
+        self.schema = load_json(self.config.schema)
+        self.geocode_cache = load_json(self.config.geocode_cache)
+        self.mappings = self.schema["mappings"]
+        self.lists = self.schema["lists"]
+
+        # State variables calculated during fit, loaded during inference
         self.stats_map = {}
         self.global_ref = {}
         self.class_pi = {}
         self.loc_pi = {}
-        self.ELITE_AREAS = {
-            "Airport Residential Area",
-            "Cantonments",
-            "Ridge",
-            "Roman Ridge",
-            "Labone",
-        }
 
-    def __create_log_price(self):
-        """Add log-transformed price"""
+    # ---------- core transformation logic, reused during inference ----------
 
+    def run_pipeline(self, df: pd.DataFrame, is_train: bool = False) -> pd.DataFrame:
+        """Entry point for transforming any dataframe."""
+        data = df.copy()
+
+        data[["lat", "lng"]] = data["loc"].apply(
+            lambda x: pd.Series(self._get_lat_lng(x))
+        )
+
+        data = self._apply_geo_features(data)
+
+        # Target transformation if available
+        if "price" in data.columns:
+            data["log_price"] = np.log(data["price"])
+
+        data = self._add_amenity_features(data)
+        data = self._add_unit_density(data)
+
+        data = self._map_locality_class(data)
+
+        data["class_pi"] = data["loc_class"].map(self.class_pi)
+        data["loc_pi"] = data["locality"].map(self.loc_pi)
+
+        # Map Bayesian stats
+        for stat in ["loc_std_dev", "loc_trust_score", "loc_tier_code"]:
+            data[stat] = data["locality"].map(
+                lambda x: self.stats_map.get(x, {}).get(stat, np.nan)
+            )
+
+        data["condition"] = data["condition"].map(self.mappings["condition_transform"])
+        data["furnishing"] = data["furnishing"].map(
+            self.mappings["furnishing_transform"]
+        )
+
+        return self.__finalize_columns(data)
+
+    # ---------- fitting logic, applied to train only ----------
+
+    def fit_and_save_stats(self):
+        """Calculates statistics from training data and saves them."""
         self.train["log_price"] = np.log(self.train["price"])
-        self.test["log_price"] = np.log(self.test["price"])
 
-    def __map_locality_class(self, data: pd.DataFrame):
-        """Maps locality to pre-defined residential classes"""
-
-        data["loc_class"] = data["locality"].map(self.locality_class).fillna("other")
-
-        return data
-
-    def __compute_global_stats(self):
-        """Compute global reference statistics from training data"""
-
+        # Calculate Global References
         self.global_ref = {
             "median": self.train["log_price"].median(),
             "std": self.train["log_price"].std(),
         }
 
-    def __calculate_price_indices(self):
-        """Calculate median price indices by locality class and locality"""
+        self.class_pi = self.train.groupby("loc_class")["log_price"].median().to_dict()
+        self.loc_pi = self.train.groupby("locality")["log_price"].median().to_dict()
 
-        class_avg = self.train.groupby("loc_class")["log_price"].median()
-        self.class_pi = class_avg.to_dict()
-        save_json(self.config.root_dir / "class_pi.json", self.class_pi)
-
-        class_std = self.train.groupby("loc_class")["log_price"].std()
-        class_std = class_std.to_dict()
-        save_json(self.config.root_dir / "class_std.json", class_std)
-
-        loc_avg = self.train.groupby("locality")["log_price"].median()
-        self.loc_pi = loc_avg.to_dict()
-        save_json(self.config.root_dir / "loc_pi.json", self.loc_pi)
-
-    def __aggregate_by_locality(self):
-        """Group by locality and compute statistics"""
-
-        return (
+        # Build Smoothed Locality Stats
+        locality_agg = (
             self.train.groupby("locality")["log_price"]
-            .agg(
-                n_listings="size",
-                median_log="median",
-                std_log="std",
-            )
+            .agg(n_listings="size", std_log="std")
             .reset_index()
         )
 
-    def __calculate_trust_weight(self, locality, n_listings, K=50):
-        """Calculate Bayesian Smoothing weight based on size"""
-
-        if locality in self.ELITE_AREAS:
-            return 1.0
-        return n_listings / (n_listings + K)
-
-    def __get_tier_info(self, weight):
-        """Map trust score to their code"""
-
-        if weight >= 0.75:
-            return 3
-        if weight >= 0.50:
-            return 2
-        if weight >= 0.25:
-            return 1
-        return 0
-
-    def __smooth_locality_stats(self, row, K=50):
-        """Apply Bayesian smoothing to locality stats"""
-
-        w = self.__calculate_trust_weight(row["locality"], row["n_listings"], K)
-        tier_code = self.__get_tier_info(w)
-
-        local_std = (
-            row["std_log"] if pd.notnull(row["std_log"]) else self.global_ref["std"]
-        )
-        return {
-            "loc_std_dev": w * local_std + (1 - w) * self.global_ref["std"],
-            "loc_trust_score": w,
-            "loc_tier_code": tier_code,
-        }
-
-    def __build_locality_stats(self, K=50):
-        """Create locality map"""
-        self.__compute_global_stats()
-        locality_agg = self.__aggregate_by_locality()
         self.stats_map = {
-            row["locality"]: self.__smooth_locality_stats(row, K)
+            row["locality"]: self._compute_bayesian_stats(row)
             for _, row in locality_agg.iterrows()
         }
 
         save_json(self.config.root_dir / "locality_stats.json", self.stats_map)
         save_json(self.config.root_dir / "global_ref.json", self.global_ref)
+        save_json(self.config.root_dir / "class_pi.json", self.class_pi)
 
-    def __add_features(self, data: pd.DataFrame):
-        """Add locality features to a dataframe."""
+    # ---------- functions for internal use only ----------
 
-        data = self.__map_locality_class(data)
-        data["class_pi"] = data["loc_class"].map(self.class_pi)
-        data["loc_pi"] = data["locality"].map(self.loc_pi)
+    def _get_lat_lng(self, location):
+        if pd.isna(location):
+            return (None, None)
+        loc_data = self.geocode_cache.get(location.lower())
+        return (loc_data["lat"], loc_data["lng"]) if loc_data else (None, None)
 
-        for stat in ["loc_std_dev", "loc_trust_score", "loc_tier_code"]:
-            data[stat] = data["locality"].map(
-                lambda x: self.stats_map.get(x, {}).get(stat, None)
+    def _haversine_distance(self, lat1, lon1, lat2, lon2):
+        """Vectorized Haversine calculation for DF columns or scalars."""
+        lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+        c = 2 * np.arcsin(np.sqrt(a))
+        return 6371 * c
+
+    def _apply_geo_features(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Calculates rotations and hub distances"""
+
+        data["rot_45_lat"] = 0.707 * data["lat"] + 0.707 * data["lng"]
+        data["rot_45_lng"] = 0.707 * data["lng"] - 0.707 * data["lat"]
+
+        HUBS = {
+            "airport": (5.605, -0.166),
+            "accra_mall": (5.620, -0.173),
+            "cbd": (5.550, -0.201),
+            "east_legon_center": (5.632, -0.150),
+        }
+
+        for hub_name, coords in HUBS.items():
+            data[f"dist_to_{hub_name}"] = self._haversine_distance(
+                data["lat"], data["lng"], coords[0], coords[1]
             )
+
+        hub_cols = [f"dist_to_{h}" for h in HUBS.keys()]
+        data["min_dist_to_hub"] = data[hub_cols].min(axis=1)
 
         return data
 
-    def __amenity_features(self):
-        """Add some amenity features"""
-
-        LUXURY_AMENITIES = [
-            "air_conditioning",
-            "chandelier",
-            "microwave",
-            "dishwasher",
-            "refrigerator",
-            "tv",
-            "wi_fi",
-            "hot_water",
-        ]
-
-        OTHER_AMENITIES = [
-            "tiled_floor",
-            "wardrobe",
-            "kitchen_cabinets",
-            "kitchen_shelf",
-            "balcony",
-            "24_hour_electricity",
-            "pre_paid_meter",
-            "pop_ceiling",
-            "dining_area",
-            "apartment",
-        ]
-
-        to_drop = LUXURY_AMENITIES + OTHER_AMENITIES
-
-        self.train["luxury_score"] = self.train[LUXURY_AMENITIES].sum(axis=1)
-        self.test["luxury_score"] = self.test[LUXURY_AMENITIES].sum(axis=1)
-
-        self.train["amenity_count"] = self.train[LUXURY_AMENITIES].sum(
-            axis=1
-        ) + self.train[OTHER_AMENITIES].sum(axis=1)
-
-        self.train = self.train.drop(
-            columns=[column for column in to_drop if column in self.train.columns]
+    def _map_locality_class(self, data: pd.DataFrame):
+        data["loc_class"] = (
+            data["locality"].map(self.mappings["location_class"]).fillna("other")
         )
-        self.test = self.test.drop(
-            columns=[column for column in to_drop if column in self.test.columns]
+        return data
+
+    def _add_amenity_features(self, data: pd.DataFrame):
+        lux = self.lists["amenities"]["luxury"]
+        std = self.lists["amenities"]["standard"]
+
+        data["luxury_score"] = data[lux].sum(axis=1)
+        data["amenity_count"] = data[lux].sum(axis=1) + data[std].sum(axis=1)
+
+        drop_cols = [c for c in (lux + std) if c in data.columns]
+        return data.drop(columns=drop_cols)
+
+    def _add_unit_density(self, data: pd.DataFrame):
+        data["unit_density"] = data["house_type"].map(self.mappings["property_density"])
+        return data
+
+    def _compute_bayesian_stats(self, row, K=50):
+        """Logic for smoothing. Used during fit."""
+        loc = row["locality"]
+        n = row["n_listings"]
+
+        w = 1.0 if loc in self.lists["elite_areas"] else n / (n + K)
+
+        tier = 3 if w >= 0.75 else 2 if w >= 0.50 else 1 if w >= 0.25 else 0
+
+        local_std = (
+            row["std_log"] if pd.notnull(row["std_log"]) else self.global_ref["std"]
         )
+        smoothed_std = w * local_std + (1 - w) * self.global_ref["std"]
 
-    def __add_unit_density(self):
-        self.train["unit_density"] = self.train["house_type"].map(self.unit_density)
-        self.test["unit_density"] = self.test["house_type"].map(self.unit_density)
+        return {
+            "loc_std_dev": smoothed_std,
+            "loc_trust_score": w,
+            "loc_tier_code": tier,
+        }
 
-    def __select_columns(self):
-        columns = [
-            "bathrooms",
-            "bedrooms",
-            "condition",
-            "furnishing",
-            "loc",
-            "lat",
-            "lng",
-            "luxury_score",
-            "unit_density",
-            "loc_class",
-            "class_pi",
-            "loc_pi",
-            "loc_std_dev",
-            "loc_trust_score",
-            "loc_tier_code",
-            "price",
-            "log_price",
-        ]
+    def __finalize_columns(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Ensures the dataframe has exactly the columns required by the model,
+        in the exact order specified in the schema.
+        """
+        required = self.lists["required_columns"]
 
-        self.train = self.train[columns]
-        self.test = self.test[columns]
+        # Add missing columns as 0/NaN
+        for col in required:
+            if col not in data.columns:
+                logger.warning(
+                    f"Feature {col} missing during transform. Filling with 0."
+                )
+                data[col] = 0
 
-    def __save(self):
+        return data[required]
+
+    def transform(self):
+        """Feature egineerinfg for training pipeline."""
+        self.train = self._map_locality_class(self.train)
+        self.fit_and_save_stats()
+
+        # Transform both
+        self.train = self.run_pipeline(self.train)
+        self.test = self.run_pipeline(self.test)
+
+        # Save
         self.train.to_csv(
             os.path.join(self.config.root_dir, "features_train.csv"), index=False
         )
@@ -212,18 +215,6 @@ class EngineerFeatures:
             os.path.join(self.config.root_dir, "features_test.csv"), index=False
         )
 
-    def transform(self):
-        """Apply feature engineering transform"""
-        self.__create_log_price()
-        self.__amenity_features()
-        self.__add_unit_density()
-        self.train = self.__map_locality_class(self.train)
-        self.__calculate_price_indices()
-        self.__build_locality_stats(K=50)
-        self.train = self.__add_features(self.train)
-        self.test = self.__add_features(self.test)
-        self.__select_columns()
-        self.__save()
-
-        logger.info(f"Train shape: {self.train.shape}")
-        logger.info(f"Test shape: {self.test.shape}")
+        logger.info(
+            f"Pipeline complete. Train: {self.train.shape}, Test: {self.test.shape}"
+        )

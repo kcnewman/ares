@@ -69,7 +69,7 @@ class ConfigurationManager:
             root_dir=Path(config.root_dir),
             train=config.train,
             test=config.test,
-            locality_class=Path(config.locality_class),
-            unit_density=Path(config.unit_density),
+            schema=Path(config.schema),
+            geocode_cache=Path(config.geocode_cache),
         )
         return feature_engineering_config

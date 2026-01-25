@@ -20,8 +20,7 @@ feature_engineering:
   root_dir: artifacts/feature_engineering
   train: artifacts/data_processing/preprocessed_train.csv
   test: artifacts/data_processing/preprocessed_eval.csv
-  locality_class: artifacts/cache/locality_class.json
-  unit_density: artifacts/cache/unit_density.json
-  
+  schema: artifacts/cache/schema.json
+  geocode_cache: artifacts/cache/geocode_cache.json  
   
 

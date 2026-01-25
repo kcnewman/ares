@@ -30,5 +30,5 @@ class FeatureEngineeringConfig:
     root_dir: Path
     train: Path
     test: Path
-    locality_class: Path
-    unit_density: Path
+    schema: Path
+    geocode_cache: Path
