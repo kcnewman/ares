@@ -18,10 +18,8 @@ list_of_files = [
     f"src/{project_name}/entity/__init__.py",
     f"src/{project_name}/entity/config_entity.py",
     f"src/{project_name}/constants/__init__.py",
-    "artifacts/data/01-raw/.gitkeep",
-    "artifacts/data/02-preprocessed/.gitkeep",
-    "artifacts/data/03-features/.gitkeep",
-    "artifacts/data/04-geocode_cache/.gitkeep",
+    "artifacts/data/.gitkeep",
+    "artifacts/cache/.gitkeep",
     "tests/.gitkeep",
     "config/config.yaml",
     "dvc.yaml",
@@ -30,7 +28,7 @@ list_of_files = [
     "app.py",
     "Dockerfile",
     "requirements.txt",
-    "notebooks/trials.ipynb",
+    "notebooks/baseline.ipynb",
     "templates/index.html",
 ]
 
