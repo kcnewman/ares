@@ -24,9 +24,9 @@ class DataProcessor:
 
     # ---------- reusable functions ----------
 
-    def clean_dataframe(self, df: pd.DataFrame) -> pd.DataFrame:
+    def clean_dataframe(self, data: pd.DataFrame) -> pd.DataFrame:
         """Standardized cleaning pipeline for any dataframe"""
-        data = df.copy()
+        data = data.copy()
 
         data = self._rename_columns(data)
 
@@ -50,6 +50,7 @@ class DataProcessor:
                 .str.strip()
                 .str.replace(r"\s+", " ", regex=True)
             )
+            data.replace(["nan", ""], np.nan, inplace=True)
         return data
 
     def _rename_columns(self, data: pd.DataFrame):
@@ -88,16 +89,18 @@ class DataProcessor:
 
     # ---------- training only functions ----------
 
-    def _trim_price_outliers(self, df: pd.DataFrame, l1=None, l2=None):
+    def _trim_price_outliers(self, data: pd.DataFrame, l1=None, l2=None):
         """Removes outliers using calculated limits."""
-        x = np.log(df["price"])
+
+        data = data[data["price"] > 0].copy()
+        x = np.log(data["price"])
         if l1 is None or l2 is None:
             q1, q3 = np.percentile(x, [25, 75])
             iqr = q3 - q1
             l1 = q1 - 1.5 * iqr
             l2 = q3 + 1.5 * iqr
 
-        return df[(x >= l1) & (x <= l2)]
+        return data[(x >= l1) & (x <= l2)]
 
     def transform(self):
         """Full Training Pipeline"""
