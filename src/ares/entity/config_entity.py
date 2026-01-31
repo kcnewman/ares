@@ -14,6 +14,7 @@ class DataValidationConfig:
 class DataSplitConfig:
     root_dir: Path
     data_dir: Path
+    status_file: Path
 
 
 @dataclass(frozen=True)

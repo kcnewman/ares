@@ -10,7 +10,7 @@ class DataSplit:
         self.config = config
 
     def split(self):
-        status_dir = os.path.join(self.config.root_dir, "status.txt")
+        status_dir = self.config.status_file
 
         if not os.path.exists(status_dir):
             logger.error(

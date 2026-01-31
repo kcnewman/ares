@@ -42,7 +42,9 @@ class ConfigurationManager:
         create_directories([config.root_dir])
 
         data_split_config = DataSplitConfig(
-            root_dir=config.root_dir, data_dir=config.data_dir
+            root_dir=config.root_dir,
+            data_dir=config.data_dir,
+            status_file=config.status_file,
         )
         return data_split_config
 

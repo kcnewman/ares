@@ -8,6 +8,7 @@ data_validation:
 data_split:
   root_dir: artifacts/data_split
   data_dir: artifacts/data/raw.csv
+  status_file: artifacts/data_validation/status.txt
   
 data_processing:
   root_dir: artifacts/data_processing
