@@ -147,10 +147,16 @@ class EngineerFeatures:
         return data
 
     def _get_lat_lng(self, location):
+        DEFAULT_COORDS = (5.550, -0.201)
+
         if pd.isna(location):
-            return (None, None)
+            return DEFAULT_COORDS
+
         loc_data = self.geocode_cache.get(location.lower())
-        return (loc_data["lat"], loc_data["lng"]) if loc_data else (None, None)
+        if loc_data and "lat" in loc_data and "lng" in loc_data:
+            return (loc_data["lat"], loc_data["lng"])
+
+        return DEFAULT_COORDS
 
     def _haversine_distance(self, lat1, lon1, lat2, lon2):
         lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])

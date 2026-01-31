@@ -1,8 +1,6 @@
 from ares.config.configuration import ConfigurationManager
 from ares.components.data_split import DataSplit
 from ares import logger
-from pathlib import Path
-
 
 STAGE_NAME = "Data Spliting"
 
@@ -13,19 +11,12 @@ class DataSplitPipeline:
 
     def main(self):
         try:
-            with open(Path("artifacts/data_validation/status.txt"), "r") as f:
-                status = f.read().split(" ")[-1]
-
-            if status == "True":
-                config = ConfigurationManager()
-                data_split_config = config.get_data_split_config()
-                data_split = DataSplit(config=data_split_config)
-                data_split.split()
-
-            else:
-                raise Exception("Data schema is not valid")
+            config = ConfigurationManager()
+            data_split_config = config.get_data_split_config()
+            data_split = DataSplit(config=data_split_config)
+            data_split.split()
         except Exception as e:
-            print(e)
+            raise e
 
 
 if __name__ == "__main__":

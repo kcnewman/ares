@@ -10,6 +10,24 @@ class DataSplit:
         self.config = config
 
     def split(self):
+        status_dir = os.path.join(self.config.root_dir, "status.txt")
+
+        if not os.path.exists(status_dir):
+            logger.error(
+                f"CRITICAL: Validation status file missing at {status_dir}. Cannot split."
+            )
+            return
+
+        with open(status_dir, "r") as f:
+            first_line = f.readline()
+            if "Validation status: True" not in first_line:
+                logger.error(
+                    "STOPPING: Data Validation failed. Check status.txt for details."
+                )
+                return
+
+        logger.info("Validation passed. Starting data split...")
+
         data = pd.read_csv(self.config.data_dir)
 
         MIN_LISTINGS = 50

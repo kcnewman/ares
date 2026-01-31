@@ -66,12 +66,10 @@ class DataProcessor:
 
         loc_lower = location.lower().strip()
 
-        # Check Cache
         if loc_lower in self.geocode_cache:
             res = self.geocode_cache[loc_lower]
             return res["lat"], res["lng"]
 
-        # Hit API
         try:
             result = maps.geocode(loc_lower, region="gh")  # type: ignore
             if result:
