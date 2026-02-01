@@ -208,4 +208,4 @@ __marimo__/
 
 notebooks/catboost_info
 mlruns/
-notebooks/01_data_cleaning.ipynb
+notebooks/02_eda.ipynb
