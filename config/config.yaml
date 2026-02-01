@@ -24,4 +24,8 @@ feature_engineering:
   schema: artifacts/cache/schema.json
   geocode_cache: artifacts/cache/geocode_cache.json  
   
-
+model_trainer:
+  root_dir: artifacts/model_trainer
+  train: artifacts/feature_engineering/features_train.csv
+  test: artifacts/feature_engineering/features_test.csv
+  model_name: model.joblib

@@ -33,3 +33,13 @@ class FeatureEngineeringConfig:
     test: Path
     schema: Path
     geocode_cache: Path
+
+
+@dataclass(frozen=True)
+class ModelTrainerConfig:
+    root_dir: Path
+    train: Path
+    test: Path
+    model_name: str
+    params: dict
+    target_column: str

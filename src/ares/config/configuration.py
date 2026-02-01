@@ -6,6 +6,7 @@ from ares.entity.config_entity import (
     DataSplitConfig,
     DataProcessingConfig,
     FeatureEngineeringConfig,
+    ModelTrainerConfig,
 )
 
 
@@ -75,3 +76,21 @@ class ConfigurationManager:
             geocode_cache=Path(config.geocode_cache),
         )
         return feature_engineering_config
+
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
+        config = self.config.model_trainer
+        params = self.params.CatBoost
+        schema = self.schema.TARGET_COLUMN
+
+        create_directories([config.root_dir])
+
+        model_trainer_config = ModelTrainerConfig(
+            root_dir=config.root_dir,
+            train=config.train,
+            test=config.test,
+            model_name=config.model_name,
+            target_column=schema.name,
+            params=params,
+        )
+
+        return model_trainer_config

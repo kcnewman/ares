@@ -7,31 +7,53 @@ from ares import logger
 
 
 class EngineerFeatures:
-    def __init__(self, config: FeatureEngineeringConfig):
+    def __init__(self, config: FeatureEngineeringConfig, mode: str = "train"):
         self.config = config
-        self.train = pd.read_csv(self.config.train)
-        self.test = pd.read_csv(self.config.test)
+        self.mode = mode
+
+        if mode == "train":
+            self.train = pd.read_csv(self.config.train)
+            self.test = pd.read_csv(self.config.test)
 
         self.schema = load_json(self.config.schema)
         self.geocode_cache = load_json(self.config.geocode_cache)
         self.mappings = self.schema["mappings"]
         self.lists = self.schema["lists"]
 
-        # State variables for statistics
-        self.stats_map = {}
-        self.global_ref = {}
-        self.class_pi = {}
-        self.loc_pi = {}
-        self.loc_luxury_median = {}
-        self.loc_bed_median = {}
+        # Constants
+        self.DEFAULT_COORDS = (5.550, -0.201)
+        self.AIRPORT_COORDS = (5.605, -0.166)
+        self.K_SMOOTHING = 50
+        self.ELITE_LUX_THRESHOLD = 5
+        self.ELITE_LOC_PI_THRESHOLD = 0.8
+
+        self.lat_map = {
+            k: v.get("lat", self.DEFAULT_COORDS[0])
+            for k, v in self.geocode_cache.items()
+        }
+        self.lng_map = {
+            k: v.get("lng", self.DEFAULT_COORDS[1])
+            for k, v in self.geocode_cache.items()
+        }
+
+        # State variables
+        if mode == "inference":
+            self._load_stats()
+        else:
+            self.stats_map = {}
+            self.global_ref = {}
+            self.class_pi = {}
+            self.loc_pi = {}
+            self.loc_luxury_median = {}
+            self.global_lux_median = 0
 
     def run_pipeline(self, df: pd.DataFrame) -> pd.DataFrame:
         """Entry point for transforming any dataframe (Train or Inference)."""
         data = df.copy()
 
-        data[["lat", "lng"]] = data["loc"].apply(
-            lambda x: pd.Series(self._get_lat_lng(x))
-        )
+        clean_loc = data["loc"].str.lower()
+        data["lat"] = clean_loc.map(self.lat_map).fillna(self.DEFAULT_COORDS[0])
+        data["lng"] = clean_loc.map(self.lng_map).fillna(self.DEFAULT_COORDS[1])
 
         # Transformations
         data = self._apply_geo_features(data)
@@ -49,12 +71,15 @@ class EngineerFeatures:
             data["loc"].map(self.loc_pi).fillna(self.global_ref.get("median", 0))
         )
 
+        data["loc_price_volatility"] = (
+            data["loc"].map(self.loc_iqr).fillna(self.global_ref.get("std", 0))
+        )
+
         data = self._add_elite_features(data)
 
-        for stat in ["loc_std_dev", "loc_trust_score", "loc_tier_code"]:
-            data[stat] = data["loc"].map(
-                lambda x: self.stats_map.get(x, {}).get(stat, np.nan)
-            )
+        data["loc_std_dev"] = (
+            data["loc"].map(self.stats_map).fillna(self.global_ref.get("std", 0))
+        )
 
         data["condition"] = data["condition"].map(self.mappings["condition_transform"])
         data["furnishing"] = data["furnishing"].map(
@@ -67,7 +92,7 @@ class EngineerFeatures:
         return self.__finalize_columns(data)
 
     def fit_and_save_stats(self):
-        """Calculates statistics from training data and saves for inference."""
+        """Calculates statistics from training data."""
         self.train["log_price"] = np.log(self.train["price"])
 
         self.global_ref = {
@@ -78,10 +103,10 @@ class EngineerFeatures:
         self.class_pi = self.train.groupby("loc_class")["log_price"].median().to_dict()
         self.loc_pi = self.train.groupby("loc")["log_price"].median().to_dict()
 
+        self.global_lux_median = self.train["luxury_score"].median()
         self.loc_luxury_median = (
             self.train.groupby("loc")["luxury_score"].median().to_dict()
         )
-        self.loc_bed_median = self.train.groupby("loc")["bedrooms"].median().to_dict()
 
         locality_agg = (
             self.train.groupby("loc")["log_price"]
@@ -89,74 +114,80 @@ class EngineerFeatures:
             .reset_index()
         )
 
-        self.stats_map = {
-            row["loc"]: self._compute_bayesian_stats(row)
-            for _, row in locality_agg.iterrows()
-        }
+        locality_agg["w"] = locality_agg["n_listings"] / (
+            locality_agg["n_listings"] + self.K_SMOOTHING
+        )
+
+        if "elite_areas" in self.lists:
+            elite_mask = locality_agg["loc"].isin(self.lists["elite_areas"])
+            locality_agg.loc[elite_mask, "w"] = 1.0
+
+        global_std = self.global_ref["std"]
+        locality_agg["loc_std_dev"] = (
+            locality_agg["w"] * locality_agg["std_log"].fillna(global_std)
+        ) + ((1 - locality_agg["w"]) * global_std)
+
+        self.stats_map = locality_agg.set_index("loc")["loc_std_dev"].to_dict()
+
+        self.loc_iqr = (
+            self.train.groupby("loc")["log_price"]
+            .agg(lambda x: np.percentile(x, 75) - np.percentile(x, 25))
+            .to_dict()
+        )
 
         # Persist stats
         save_json(self.config.root_dir / "locality_stats.json", self.stats_map)
         save_json(self.config.root_dir / "class_pi.json", self.class_pi)
+        save_json(self.config.root_dir / "loc_pi.json", self.loc_pi)
+        save_json(self.config.root_dir / "loc_iqr.json", self.loc_iqr)
         save_json(
             self.config.root_dir / "loc_luxury_median.json", self.loc_luxury_median
         )
-        save_json(self.config.root_dir / "loc_bed_median.json", self.loc_bed_median)
+        save_json(self.config.root_dir / "global_ref.json", self.global_ref)
+        save_json(
+            self.config.root_dir / "global_lux_median.json",
+            {"global_lux_median": self.global_lux_median},
+        )
 
     # ---------- Internal Helper Functions ----------
 
+    def _load_stats(self):
+        """Load pre-fitted statistics for inference."""
+        self.stats_map = load_json(self.config.root_dir / "locality_stats.json")
+        self.class_pi = load_json(self.config.root_dir / "class_pi.json")
+        self.loc_luxury_median = load_json(
+            self.config.root_dir / "loc_luxury_median.json"
+        )
+        self.loc_pi = load_json(self.config.root_dir / "loc_pi.json")
+        self.loc_iqr = load_json(self.config.root_dir / "loc_iqr.json")
+        self.global_ref = load_json(self.config.root_dir / "global_ref.json")
+        self.global_lux_median = load_json(
+            self.config.root_dir / "global_lux_median.json"
+        )
+        self.global_lux_median = self.global_lux_median["global_lux_median"]
+
     def _apply_geo_features(self, data: pd.DataFrame) -> pd.DataFrame:
         """Calculates distance-to-hubs."""
-        HUBS = {
-            "airport": (5.605, -0.166),
-            "accra_mall": (5.620, -0.173),
-            "cbd": (5.550, -0.201),
-            "east_legon_center": (5.632, -0.150),
-        }
-
-        for hub_name, coords in HUBS.items():
-            data[f"dist_to_{hub_name}"] = self._haversine_distance(
-                data["lat"], data["lng"], coords[0], coords[1]
-            )
-
-        hub_cols = [f"dist_to_{h}" for h in HUBS.keys()]
-        data["min_dist_to_hub"] = data[hub_cols].min(axis=1)
+        data["dist_to_airport"] = self._haversine_distance(
+            data["lat"], data["lng"], self.AIRPORT_COORDS[0], self.AIRPORT_COORDS[1]
+        )
         return data
 
     def _add_elite_features(self, data: pd.DataFrame) -> pd.DataFrame:
-        data["bath_per_bed"] = (
-            (data["bathrooms"] / data["bedrooms"])
-            .replace([np.inf, -np.inf], 0)
-            .fillna(0)
-        )
-
         data["rel_luxury"] = data["luxury_score"] - data["loc"].map(
             self.loc_luxury_median
-        ).fillna(0)
-        data["rel_size"] = data["bedrooms"] - data["loc"].map(
-            self.loc_bed_median
-        ).fillna(0)
+        ).fillna(self.global_lux_median)
 
-        cantonments_coord = (5.578, -0.174)
-        data["dist_to_wealth_hub"] = self._haversine_distance(
-            data["lat"], data["lng"], cantonments_coord[0], cantonments_coord[1]
-        )
+        data["size_density_idx"] = data["bedrooms"] * data["unit_density"]
+
+        data["class_luxury_premium"] = data["rel_luxury"] * data["class_pi"]
 
         data["is_elite_tier"] = (
-            (data["luxury_score"] > 5) & (data["loc_pi"] > 0.8)
+            (data["luxury_score"] > self.ELITE_LUX_THRESHOLD)
+            & (data["loc_pi"] > self.ELITE_LOC_PI_THRESHOLD)
         ).astype(int)
+
         return data
-
-    def _get_lat_lng(self, location):
-        DEFAULT_COORDS = (5.550, -0.201)
-
-        if pd.isna(location):
-            return DEFAULT_COORDS
-
-        loc_data = self.geocode_cache.get(location.lower())
-        if loc_data and "lat" in loc_data and "lng" in loc_data:
-            return (loc_data["lat"], loc_data["lng"])
-
-        return DEFAULT_COORDS
 
     def _haversine_distance(self, lat1, lon1, lat2, lon2):
         lon1, lat1, lon2, lat2 = map(np.radians, [lon1, lat1, lon2, lat2])
@@ -187,22 +218,9 @@ class EngineerFeatures:
         data["unit_density"] = data["house_type"].map(self.mappings["property_density"])
         return data
 
-    def _compute_bayesian_stats(self, row, K=50):
-        n = row["n_listings"]
-        w = 1.0 if row["loc"] in self.lists.get("elite_areas", []) else n / (n + K)
-        local_std = (
-            row["std_log"] if pd.notnull(row["std_log"]) else self.global_ref["std"]
-        )
-        return {
-            "loc_std_dev": w * local_std + (1 - w) * self.global_ref["std"],
-            "loc_trust_score": w,
-            "loc_tier_code": 3 if w >= 0.75 else 2 if w >= 0.50 else 1,
-        }
-
     def __finalize_columns(self, data: pd.DataFrame) -> pd.DataFrame:
         """Keep only required columns"""
         required = self.lists["required_columns"]
-
         return data[[col for col in required if col in data.columns]]
 
     def transform(self):

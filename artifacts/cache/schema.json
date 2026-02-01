@@ -36,26 +36,21 @@
       ]
     },
     "required_columns": [
-    "bathrooms", 
-    "bedrooms", 
-    "condition", 
-    "furnishing", 
-    "luxury_score", 
-    "unit_density",
-    "bath_per_bed",
-    "rel_luxury",
-    "rel_size",
-    "dist_to_wealth_hub",
-    "is_elite_tier", 
-    "class_pi",           
-    "loc_pi",             
-    "loc_std_dev",        
-    "dist_to_airport", 
-    "dist_to_accra_mall", 
-    "dist_to_cbd", 
-    "dist_to_east_legon_center", 
-    "min_dist_to_hub",
-    "log_price"          
+    "loc_pi",              
+    "bedrooms",            
+    "bathrooms",          
+    "size_density_idx",    
+    "furnishing",         
+    "dist_to_airport",     
+    "luxury_score",        
+
+    "class_luxury_premium",
+    "loc_price_volatility",
+    "loc_std_dev",         
+    "condition",           
+    "is_elite_tier",       
+
+    "log_price"
 ],
   "location_classes": [
         "prime", "established", "high_density", 

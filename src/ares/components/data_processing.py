@@ -76,7 +76,6 @@ class DataProcessor:
                 lat = result[0]["geometry"]["location"]["lat"]
                 lng = result[0]["geometry"]["location"]["lng"]
 
-                # Update local state and persist cache
                 self.geocode_cache[loc_lower] = {"lat": lat, "lng": lng}
                 save_json(self.config.geocode_cache, self.geocode_cache)
                 return lat, lng

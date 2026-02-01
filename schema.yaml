@@ -29,5 +29,5 @@ COLUMNS:
   Wi-Fi: int64  
   loc: object
 
-TAREGT_COLUMN:
-  name: price
+TARGET_COLUMN:
+  name: log_price
