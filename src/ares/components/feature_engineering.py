@@ -72,7 +72,7 @@ class EngineerFeatures:
         )
 
         data["loc_price_volatility"] = (
-            data["loc"].map(self.loc_iqr).fillna(self.global_ref.get("std", 0))
+            data["loc"].map(self.loc_iqr).fillna(self.global_ref.get("iqr", 0.5))
         )
 
         data = self._add_elite_features(data)
@@ -98,6 +98,8 @@ class EngineerFeatures:
         self.global_ref = {
             "median": self.train["log_price"].median(),
             "std": self.train["log_price"].std(),
+            "iqr": np.percentile(self.train["log_price"], 75)
+            - np.percentile(self.train["log_price"], 25),  # Add this
         }
 
         self.class_pi = self.train.groupby("loc_class")["log_price"].median().to_dict()
