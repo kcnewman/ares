@@ -43,3 +43,14 @@ class ModelTrainerConfig:
     model_name: str
     params: dict
     target_column: str
+
+
+@dataclass(frozen=True)
+class ModelEvaluationConfig:
+    root_dir: Path
+    test: Path
+    model_path: Path
+    params: dict
+    metric_file: Path
+    target_column: str
+    mlflow_uri: str

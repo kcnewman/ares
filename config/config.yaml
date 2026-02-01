@@ -29,3 +29,9 @@ model_trainer:
   train: artifacts/feature_engineering/features_train.csv
   test: artifacts/feature_engineering/features_test.csv
   model_name: model.joblib
+
+model_evaluation:
+  root_dir: artifacts/model_evaluation
+  test: artifacts/feature_engineering/features_test.csv
+  model_path: artifacts/model_trainer/model.joblib
+  metric_file: artifacts/model_evaluation/metrics.json

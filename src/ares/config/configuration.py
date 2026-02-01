@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import ares.constants as const
 from ares.utils.common import read_yaml, create_directories
@@ -7,6 +8,7 @@ from ares.entity.config_entity import (
     DataProcessingConfig,
     FeatureEngineeringConfig,
     ModelTrainerConfig,
+    ModelEvaluationConfig,
 )
 
 
@@ -91,6 +93,29 @@ class ConfigurationManager:
             model_name=config.model_name,
             target_column=schema.name,
             params=params,
+        )
+
+        return model_trainer_config
+
+    def get_model_evaluation_config(self) -> ModelEvaluationConfig:
+        config = self.config.model_evaluation
+        params = self.params.CatBoost
+        schema = self.schema.TARGET_COLUMN
+
+        create_directories([config.root_dir])
+
+        mlflow_uri = os.environ.get(
+            "MLFLOW_TRACKING_URI", "sqlite:///experiments/mlflow.db"
+        )
+
+        model_trainer_config = ModelEvaluationConfig(
+            root_dir=config.root_dir,
+            test=config.test,
+            model_path=config.model_path,
+            target_column=schema.name,
+            params=params,
+            mlflow_uri=mlflow_uri,
+            metric_file=config.metric_file,
         )
 
         return model_trainer_config
