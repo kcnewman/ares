@@ -22,14 +22,12 @@ list_of_files = [
     "artifacts/cache/.gitkeep",
     "tests/.gitkeep",
     "config/config.yaml",
-    "dvc.yaml",
     "params.yaml",
     "main.py",
     "app.py",
     "Dockerfile",
     "requirements.txt",
     "notebooks/baseline.ipynb",
-    "templates/index.html",
 ]
 
 for filepath in list_of_files:
