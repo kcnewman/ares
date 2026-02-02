@@ -1,2 +1,0 @@
-Validation status: True
-Details: All checks passed

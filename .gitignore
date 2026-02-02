@@ -19,3 +19,8 @@ notebooks/
 
 .pytest_cache/
 
+.eggs/
+*.egg
+*.egg-info/
+.Python
+
