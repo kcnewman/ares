@@ -42,7 +42,7 @@ class ModelEvaluation:
 
             signature = infer_signature(test_x, preds)
 
-            mlflow.catboost.log_model(
+            mlflow.catboost.log_model(  # type: ignore
                 cb_model=model,
                 artifact_path="model",
                 signature=signature,

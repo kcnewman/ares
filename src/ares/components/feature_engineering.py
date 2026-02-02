@@ -55,13 +55,11 @@ class EngineerFeatures:
         data["lat"] = clean_loc.map(self.lat_map).fillna(self.DEFAULT_COORDS[0])
         data["lng"] = clean_loc.map(self.lng_map).fillna(self.DEFAULT_COORDS[1])
 
-        # Transformations
         data = self._apply_geo_features(data)
         data = self._add_amenity_features(data)
         data = self._add_unit_density(data)
         data = self._map_locality_class(data)
 
-        # Apply Fitted Pi-Encodings
         data["class_pi"] = (
             data["loc_class"]
             .map(self.class_pi)
@@ -137,7 +135,6 @@ class EngineerFeatures:
             .to_dict()
         )
 
-        # Persist stats
         save_json(self.config.root_dir / "locality_stats.json", self.stats_map)
         save_json(self.config.root_dir / "class_pi.json", self.class_pi)
         save_json(self.config.root_dir / "loc_pi.json", self.loc_pi)

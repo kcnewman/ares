@@ -28,7 +28,12 @@ def predict(
     model_path: Path | str = DEFAULT_MODEL,
     feature_pipeline: EngineerFeatures = fe_pipeline,
 ) -> pd.DataFrame:
-    """Takes raw data, transforms it, aligns schema, and returns estimates with bands."""
+    """Takes raw data, transforms it, aligns schema, and returns estimates with bands.
+
+    Returns
+        -------
+        results: pd.DataFrame[str, float]
+    """
 
     try:
         logger.info(f"Processing {len(input_data)} records for inference")
