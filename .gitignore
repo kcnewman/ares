@@ -24,3 +24,4 @@ notebooks/
 *.egg-info/
 .Python
 
+artifacts.zip
