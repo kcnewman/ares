@@ -1,0 +1,29 @@
+# Ignore Git metadata
+.git
+.gitignore
+
+# Ignore Python/Build artifacts
+__pycache__/
+*.py[cdo]
+*.pyo
+*.pyd
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Ignore virtual environments (Docker will build its own)
+.venv/
+venv/
+env/
+
+# Ignore logs and local experiments
+logs/
+experiments/
+mlruns/
+
+# Ignore local dev files
+notebooks/
+template.py
+tests/
+
+# DO NOT ignore artifacts/ (Strategy A depends on this)
+# DO NOT ignore uv.lock or pyproject.toml

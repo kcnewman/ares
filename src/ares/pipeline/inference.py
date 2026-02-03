@@ -41,7 +41,9 @@ def predict(
         transformed_data = feature_pipeline.run_pipeline(input_data)
         spread = transformed_data["loc_price_volatility"]
 
-        training_features = fe_pipeline.lists["required_columns"]
+        training_features = [
+            col for col in fe_pipeline.lists["required_columns"] if col != "log_price"
+        ]
         model_input = transformed_data[training_features]
 
         model = load(model_path)

@@ -115,7 +115,7 @@ class EngineerFeatures:
         )
 
         locality_agg["w"] = locality_agg["n_listings"] / (
-            locality_agg["n_listings"] + self.K_SMOOTHING
+            locality_agg["n_listings"].add(self.K_SMOOTHING)
         )
 
         if "elite_areas" in self.lists:
@@ -219,7 +219,11 @@ class EngineerFeatures:
 
     def __finalize_columns(self, data: pd.DataFrame) -> pd.DataFrame:
         """Keep only required columns"""
-        required = self.lists["required_columns"]
+        required = self.lists["required_columns"].copy()
+
+        if self.mode == "inference" and "log_price" in required:
+            required.remove("log_price")
+
         return data[[col for col in required if col in data.columns]]
 
     def transform(self):
