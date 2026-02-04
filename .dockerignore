@@ -25,5 +25,7 @@ notebooks/
 template.py
 tests/
 
+artifacts.zip
+
 # DO NOT ignore artifacts/ (Strategy A depends on this)
 # DO NOT ignore uv.lock or pyproject.toml
