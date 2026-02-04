@@ -3,32 +3,27 @@ name = "ares"
 version = "0.1.0"
 description = "ARES; a system to help estimate likely rent ranges for residential properties based on current online asking prices in the GA region"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12, <3.13"
 dependencies = [
-    "scipy>=1.16.3",
-    "seaborn>=0.13.2",
-    "statsmodels>=0.14.6",
-    "boto3>=1.40.33",
-    "fastapi>=0.116.1",
-    "matplotlib>=3.10.5",
-    "mlflow>=3.3.1",
-    "numpy==1.26.4",
-    "optuna>=4.5.0",
-    "pandas==2.1.1",
-    "pytest>=8.4.1",
-    "scikit-learn>=1.7.1",
-    "seaborn>=0.13.2",
-    "streamlit>=1.48.1",
-    "xgboost==3.0.4",
+    "fastapi",
+    "uvicorn",
+    "pandas",
+    "numpy",
     "catboost",
-    "python-box==6.0.2",
+    "scikit-learn",
+    "googlemaps",
+    "python-box",
     "pyYAML",
-    "tqdm",
     "joblib",
-    "types-PyYAML",
-    "notebook>=7.5.1",
-    "googlemaps>=4.10.0",
-    "beartype>=0.22.9",
+    "beartype"
+]
+
+[dependency-groups]
+train = ["mlflow", "statsmodels", "xgboost", "tqdm", "notebook", "pytest"]
+ui = [
+    "streamlit",
+    "matplotlib",
+    "seaborn",
 ]
 
 [build-system]
