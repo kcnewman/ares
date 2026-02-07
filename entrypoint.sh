@@ -9,10 +9,4 @@ uvicorn ares.api.main:app --host 0.0.0.0 --port 8000 &
 sleep 3
 
 # Start Streamlit on the port defined by the Docker ENV (default 8080)
-# In your entrypoint.sh or Dockerfile
-streamlit run app.py \
-    --server.port=8080 \
-    --server.address=0.0.0.0 \
-    --server.enableCORS=false \
-    --server.enableXsrfProtection=false \
-    --server.enableWebsocketCompression=false
+streamlit run app.py --server.port=${PORT:-8080} --server.address=0.0.0.0

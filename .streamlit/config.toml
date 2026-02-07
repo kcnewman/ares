@@ -3,15 +3,3 @@ toolbarMode = "hidden"
 
 [server]
 headless = true
-
-[server]
-# This tells Streamlit it's okay to be behind a proxy
-enableCORS = false
-enableXsrfProtection = false
-
-# Firebase/Cloud Run sometimes strip headers needed for compression
-enableWebsocketCompression = false
-
-[browser]
-# This helps the browser find the right address
-gatherUsageStats = false
