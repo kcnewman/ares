@@ -87,23 +87,21 @@ dependencies = [
     { name = "pandas" },
     { name = "python-box" },
     { name = "pyyaml" },
-    { name = "scikit-learn" },
+    { name = "streamlit" },
     { name = "uvicorn" },
 ]
 
 [package.dev-dependencies]
-train = [
+dev = [
+    { name = "matplotlib" },
     { name = "mlflow" },
     { name = "notebook" },
     { name = "pytest" },
+    { name = "scikit-learn" },
+    { name = "seaborn" },
     { name = "statsmodels" },
     { name = "tqdm" },
     { name = "xgboost" },
-]
-ui = [
-    { name = "matplotlib" },
-    { name = "seaborn" },
-    { name = "streamlit" },
 ]
 
 [package.metadata]
@@ -117,23 +115,21 @@ requires-dist = [
     { name = "pandas" },
     { name = "python-box" },
     { name = "pyyaml" },
-    { name = "scikit-learn" },
+    { name = "streamlit" },
     { name = "uvicorn" },
 ]
 
 [package.metadata.requires-dev]
-train = [
+dev = [
+    { name = "matplotlib" },
     { name = "mlflow" },
     { name = "notebook" },
     { name = "pytest" },
+    { name = "scikit-learn" },
+    { name = "seaborn" },
     { name = "statsmodels" },
     { name = "tqdm" },
     { name = "xgboost" },
-]
-ui = [
-    { name = "matplotlib" },
-    { name = "seaborn" },
-    { name = "streamlit" },
 ]
 
 [[package]]

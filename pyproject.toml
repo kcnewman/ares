@@ -10,21 +10,17 @@ dependencies = [
     "pandas",
     "numpy",
     "catboost",
-    "scikit-learn",
     "googlemaps",
     "python-box",
     "pyYAML",
     "joblib",
-    "beartype"
+    "beartype",
+    "streamlit",
 ]
 
 [dependency-groups]
-train = ["mlflow", "statsmodels", "xgboost", "tqdm", "notebook", "pytest"]
-ui = [
-    "streamlit",
-    "matplotlib",
-    "seaborn",
-]
+dev = ["mlflow", "statsmodels", "xgboost", "tqdm", "notebook", "pytest", "matplotlib","scikit-learn",
+    "seaborn"]
 
 [build-system]
 requires = ["setuptools>=45", "wheel"]

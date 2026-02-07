@@ -63,7 +63,10 @@ def predict(
             index=input_data.index,
         )
 
-        return results.round(-2)
+        currency_cols = ["estimated_price", "lower_band", "upper_band"]
+        results[currency_cols] = results[currency_cols].round(-2)
+
+        return results
 
     except Exception as e:
         logger.error(f"Inference pipeline failed: {str(e)}")

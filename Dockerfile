@@ -4,27 +4,35 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
+# Install system dependencies required for building C extensions (like Catboost/XGBoost)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-ENV UV_PYTHON=python3.12
-ENV UV_COMPILE_BYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV UV_PYTHON=python3.12 \
+    UV_COMPILE_BYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 COPY pyproject.toml uv.lock* ./
 
-RUN uv sync --frozen --no-install-project --no-dev --no-group train
+RUN uv sync --frozen --no-dev
 
+# Copy the rest of the application code
 COPY src/ ./src/
 COPY artifacts/ ./artifacts/
 COPY config/ ./config/
 COPY params.yaml schema.yaml app.py ./
 
-ENV PYTHONPATH="/app/src:${PYTHONPATH}"
-ENV PATH="/app/.venv/bin:$PATH"
+ENV BACKEND_URL="http://127.0.0.1:8000" \
+    PORT=8080 \
+    PYTHONPATH="/app/src" \
+    PATH="/app/.venv/bin:$PATH"
 
-EXPOSE 8000
+# Expose the Streamlit port
+EXPOSE 8080
 
-CMD exec uvicorn ares.api.main:app --host 0.0.0.0 --port ${PORT}
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
