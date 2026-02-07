@@ -14,15 +14,17 @@ ENV UV_PYTHON=python3.12 \
     UV_COMPILE_BYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock* README.md ./
+
+COPY src/ ./src/
 
 RUN uv sync --frozen --no-dev
 
 # Copy the rest of the application code
-COPY src/ ./src/
 COPY artifacts/ ./artifacts/
 COPY config/ ./config/
 COPY params.yaml schema.yaml app.py ./
+COPY .streamlit/ ./.streamlit/
 
 ENV BACKEND_URL="http://127.0.0.1:8000" \
     PORT=8080 \
