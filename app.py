@@ -55,7 +55,7 @@ st.markdown(
 st.markdown("<div id='top'></div>", unsafe_allow_html=True)
 st.title("Accra Rent Valuation System")
 st.caption(
-    "A machine learning powered rent valuation with market uncertainty bands for the Greater Accraaa Region of Ghana."
+    "A machine learning powered rent valuation with market uncertainty bands for the Greater Accra Region of Ghana."
 )
 
 result_placeholder = st.empty()
@@ -64,9 +64,9 @@ result_placeholder = st.empty()
 api_online = check_api()
 
 if not api_online:
-    st.error("Backend API is offline. Please restart the service to use the valuator.")
+    st.error("Backend API is offline. Restart the service to use the valuator.")
 elif not schema:
-    st.error("Schema file missing. Please check artifacts/cache/schema.json")
+    st.error("Schema file missing. Check artifacts/cache/schema.json")
 else:
     with st.form("valuation_form", border=False):
         st.markdown("### Core Specifications")
@@ -106,7 +106,7 @@ else:
 
     if submit_btn:
         if bedrooms == 0 and bathrooms == 0:
-            st.error("Please provide at least one bedroom or bathroom.")
+            st.error("Provide at least one bedroom or bathroom.")
         else:
             # Construct Payload
             payload = {
