@@ -1,8 +1,10 @@
 name: Deploy to Cloud Run
-
-on: 
-  release:
-    types: [published]
+on:
+  push:
+    paths:
+      - 'artifacts.zip'
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -10,18 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download & Unzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release download ${{ github.event.release.tag_name }} -p "artifacts.zip"
-          unzip -o artifacts.zip
+      - name: Unzip Artifacts
+        run: unzip -o artifacts.zip
 
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
-        with: 
+        with:
           credentials_json: '${{ secrets.GCP_SA_KEY }}'
-      
+
       - name: Setup Cloud Run
         uses: google-github-actions/setup-gcloud@v2
 
@@ -30,7 +28,7 @@ jobs:
           gcloud auth configure-docker us-central1-docker.pkg.dev
           docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ares-repo/ares-app:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ares-repo/ares-app:${{ github.sha }}
-        
+
       - name: Run
         run: |
           gcloud run deploy ares-service \
