@@ -78,10 +78,10 @@ def configure_page() -> None:
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Home", key="ex_home", use_container_width=True):
+        if st.button("← Home", key="ex_home", width="stretch"):
             st.switch_page(PAGE_HOME)
     with right_col:
-        if st.button("Predictor →", key="ex_pred", use_container_width=True):
+        if st.button("Predictor →", key="ex_pred", width="stretch"):
             st.switch_page(PAGE_PREDICTOR)
 
 
@@ -169,7 +169,7 @@ def render_filter_form(options: FilterOptions) -> FilterState:
 
         apply_col, _ = st.columns([1, 4])
         with apply_col:
-            st.form_submit_button("Apply Filters", use_container_width=True)
+            st.form_submit_button("Apply Filters", width="stretch")
 
     st.markdown("</div>", unsafe_allow_html=True)
     return FilterState(
@@ -303,7 +303,7 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
         ),
         bargap=0.05,
     )
-    st.plotly_chart(dist_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(dist_fig, width="stretch", config=CHART_CFG)
     chart_gap()
 
     section_heading("Listing Volume by Location")
@@ -336,7 +336,7 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
         ),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
-    st.plotly_chart(volume_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(volume_fig, width="stretch", config=CHART_CFG)
     chart_gap("1.1rem")
 
     st.markdown("---")
@@ -434,7 +434,7 @@ def render_amenity_premium_chart(df: pd.DataFrame) -> None:
         ),
         yaxis=dict(showgrid=False, title=None),
     )
-    st.plotly_chart(amenity_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(amenity_fig, width="stretch", config=CHART_CFG)
 
 
 def render_unit_economics(df: pd.DataFrame) -> None:
@@ -534,7 +534,7 @@ def render_unit_economics(df: pd.DataFrame) -> None:
                 ),
                 yaxis=dict(showgrid=False, title=None, tickfont_size=10),
             )
-            st.plotly_chart(loc_fig, use_container_width=True, config=CHART_CFG)
+            st.plotly_chart(loc_fig, width="stretch", config=CHART_CFG)
 
     with right_col:
         st.markdown(
@@ -595,7 +595,7 @@ def render_unit_economics(df: pd.DataFrame) -> None:
                 ),
                 yaxis=dict(showgrid=False, title=None, tickfont_size=10),
             )
-            st.plotly_chart(type_fig, use_container_width=True, config=CHART_CFG)
+            st.plotly_chart(type_fig, width="stretch", config=CHART_CFG)
 
 
 def render_segment_volatility(df: pd.DataFrame) -> None:
@@ -655,7 +655,7 @@ def render_segment_volatility(df: pd.DataFrame) -> None:
         ),
         yaxis=dict(showgrid=False, title=None, tickfont_size=10),
     )
-    st.plotly_chart(volatility_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(volatility_fig, width="stretch", config=CHART_CFG)
 
 
 def render_furnishing_premium(df: pd.DataFrame) -> None:
@@ -739,7 +739,7 @@ def render_furnishing_premium(df: pd.DataFrame) -> None:
         ),
         yaxis=dict(showgrid=False, title=None, tickfont_size=10),
     )
-    st.plotly_chart(furnishing_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(furnishing_fig, width="stretch", config=CHART_CFG)
 
 
 def render_opportunity_matrix(df: pd.DataFrame) -> None:
@@ -812,7 +812,7 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
         yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, title=None),
         coloraxis_colorbar=dict(title="Volatility"),
     )
-    st.plotly_chart(matrix_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(matrix_fig, width="stretch", config=CHART_CFG)
 
 
 def render_bed_bath_heatmap(df: pd.DataFrame) -> None:
@@ -858,7 +858,7 @@ def render_bed_bath_heatmap(df: pd.DataFrame) -> None:
         xaxis=dict(side="top", title=None),
         yaxis=dict(title=None),
     )
-    st.plotly_chart(heatmap_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(heatmap_fig, width="stretch", config=CHART_CFG)
 
 
 def render_compact_bar(
@@ -919,7 +919,7 @@ def render_compact_bar(
         yaxis=dict(showgrid=False, title=None, tickfont_size=10),
     )
     with column:
-        st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
+        st.plotly_chart(fig, width="stretch", config=CHART_CFG)
         if note:
             st.caption(note)
 
@@ -1028,7 +1028,7 @@ def render_location_skew_stability(df: pd.DataFrame) -> None:
         yaxis=dict(ticksuffix="%", showgrid=True, gridcolor=GRID_COLOR, title=None),
         coloraxis_colorbar=dict(title="Median Rent"),
     )
-    st.plotly_chart(skew_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(skew_fig, width="stretch", config=CHART_CFG)
     st.caption(
         "Read it this way: upper-right locations are both skewed and volatile; "
         "lower-left locations are relatively stable and less skewed."
@@ -1085,7 +1085,7 @@ def render_segment_leaderboard(df: pd.DataFrame) -> None:
         "{:.0f}th".format
     )
 
-    st.dataframe(leaderboard, hide_index=True, use_container_width=True)
+    st.dataframe(leaderboard, hide_index=True, width="stretch")
     st.caption(
         "Use this as a shortlist: pair high-median segments with volatility to "
         "avoid segments that are expensive but unstable."
@@ -1169,7 +1169,7 @@ def render_segment_comparison_panel(df: pd.DataFrame) -> None:
             ],
         }
     )
-    st.dataframe(comparison_table, hide_index=True, use_container_width=True)
+    st.dataframe(comparison_table, hide_index=True, width="stretch")
     st.caption(
         "Percentiles are computed across all qualifying segments in the current filter."
     )
@@ -1234,7 +1234,7 @@ def render_segment_percentile_map(df: pd.DataFrame) -> None:
             title=None,
         ),
     )
-    st.plotly_chart(percentile_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(percentile_fig, width="stretch", config=CHART_CFG)
     st.caption(
         "Upper-right segments are both premium-priced and relatively volatile in the "
         "current market slice."
@@ -1308,7 +1308,7 @@ def render_segments_tab(df: pd.DataFrame) -> None:
         xaxis=dict(tickprefix="₵", showgrid=True, gridcolor=GRID_COLOR, title=None),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
-    st.plotly_chart(compare_fig, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(compare_fig, width="stretch", config=CHART_CFG)
     st.caption(
         "If mean is much higher than median, a few expensive listings are pulling "
         "the average upward."
@@ -1518,7 +1518,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
             )
         )
         bubble_fig.update_layout(**map_layout)
-        st.plotly_chart(bubble_fig, use_container_width=True, config=map_config)
+        st.plotly_chart(bubble_fig, width="stretch", config=map_config)
         st.caption(
             "Bubble size = listing count, color = median rent. Hover or zoom to inspect hotspots."
         )
@@ -1554,7 +1554,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
                 titlefont=dict(size=10),
             ),
         )
-        st.plotly_chart(density_fig, use_container_width=True, config=map_config)
+        st.plotly_chart(density_fig, width="stretch", config=map_config)
         st.caption(
             "Density is weighted by listing price. Increase radius for smoother market clusters."
         )
@@ -1579,7 +1579,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
             "median_rent": "Median Rent",
         }
     )
-    st.dataframe(hotspot_df, hide_index=True, use_container_width=True)
+    st.dataframe(hotspot_df, hide_index=True, width="stretch")
 
 
 def build_representative_sample(
@@ -1665,7 +1665,7 @@ def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
     display_frame["Rent (₵/mo)"] = display_frame["Rent (₵/mo)"].map("₵{:,.0f}".format)
     st.dataframe(
         display_frame.reset_index(drop=True),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 

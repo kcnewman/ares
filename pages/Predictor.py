@@ -36,14 +36,14 @@ def init_session_state() -> None:
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Explorer", key="pred_expl", use_container_width=True):
+        if st.button("← Explorer", key="pred_expl", width="stretch"):
             st.switch_page(PAGE_EXPLORER)
     with right_col:
         has_report = st.session_state.get("prediction_result") is not None
         if st.button(
             "Last Report →",
             key="pred_report",
-            use_container_width=True,
+            width="stretch",
             disabled=not has_report,
         ):
             st.switch_page(PAGE_REPORT)
@@ -127,7 +127,7 @@ def render_form(
 
         st.markdown("<br>", unsafe_allow_html=True)
         submitted = st.form_submit_button(
-            "Generate Valuation →", use_container_width=True
+            "Generate Valuation →", width="stretch"
         )
 
     form_data: dict[str, str | int] = {

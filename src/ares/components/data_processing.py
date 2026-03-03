@@ -10,7 +10,20 @@ from ares.entity.config_entity import DataProcessingConfig
 from ares.utils.common import load_json, save_json
 
 load_dotenv()
-maps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_KEY"))
+
+
+def _build_maps_client() -> googlemaps.Client | None:
+    api_key = os.getenv("GOOGLE_MAPS_KEY")
+    if not api_key:
+        logger.warning(
+            "GOOGLE_MAPS_KEY is not configured. Geocoding fallback will be skipped."
+        )
+        return None
+    try:
+        return googlemaps.Client(key=api_key)
+    except Exception as exc:
+        logger.error("Failed to initialize Google Maps client: %s", exc)
+        return None
 
 
 class DataProcessor:
@@ -18,6 +31,7 @@ class DataProcessor:
         self.config = config
         self.train = pd.read_csv(self.config.train)
         self.test = pd.read_csv(self.config.test)
+        self.maps_client = _build_maps_client()
 
         try:
             self.geocode_cache = load_json(self.config.geocode_cache)
@@ -74,8 +88,11 @@ class DataProcessor:
             res = self.geocode_cache[loc_lower]
             return res["lat"], res["lng"]
 
+        if self.maps_client is None:
+            return (None, None)
+
         try:
-            result = maps.geocode(loc_lower, region="gh")  # type: ignore
+            result = self.maps_client.geocode(loc_lower, region="gh")
             if result:
                 lat = result[0]["geometry"]["location"]["lat"]
                 lng = result[0]["geometry"]["location"]["lng"]

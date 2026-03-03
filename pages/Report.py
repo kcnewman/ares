@@ -159,10 +159,10 @@ def build_comparables_dataset(
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Predictor", key="rpt_pred", use_container_width=True):
+        if st.button("← Predictor", key="rpt_pred", width="stretch"):
             st.switch_page(PAGE_PREDICTOR)
     with right_col:
-        if st.button("Explorer →", key="rpt_expl", use_container_width=True):
+        if st.button("Explorer →", key="rpt_expl", width="stretch"):
             st.switch_page(PAGE_EXPLORER)
 
 
@@ -293,7 +293,7 @@ def render_insights_tab(
         ),
         bargap=0.05,
     )
-    st.plotly_chart(figure, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(figure, width="stretch", config=CHART_CFG)
     st.markdown('<div style="height:1.1rem;"></div>', unsafe_allow_html=True)
     render_comparables_table(market_data, context)
 
@@ -343,7 +343,7 @@ def render_comparables_table(
     if "Listing URL" in display_frame.columns:
         st.dataframe(
             display_frame,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             column_config={
                 "Listing URL": st.column_config.LinkColumn(
@@ -356,7 +356,7 @@ def render_comparables_table(
     else:
         st.dataframe(
             display_frame,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
         )
 

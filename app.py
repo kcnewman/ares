@@ -73,11 +73,11 @@ def render_snapshot_metrics(snapshot: HomeSnapshot) -> None:
 def render_ctas(api_online: bool) -> None:
     left_col, right_col = st.columns(2, gap="medium")
     with left_col:
-        if st.button("Explore Market →", use_container_width=True):
+        if st.button("Explore Market →", width="stretch"):
             st.switch_page(PAGE_EXPLORER)
 
     with right_col:
-        if st.button("Run Predictor →", use_container_width=True):
+        if st.button("Run Predictor →", width="stretch"):
             if not api_online:
                 st.error("API is offline. Start the FastAPI service first.")
             else:
