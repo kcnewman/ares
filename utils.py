@@ -4,17 +4,14 @@ Import at the top of every page before any other st.* calls.
 """
 
 import os
+
+import pandas as pd
 import streamlit as st
 import streamlit.components.v1 as components
-import pandas as pd
 
-# ---------------------------------------------------------------------------
-# Runtime config
-# ---------------------------------------------------------------------------
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 DATA_PATH = os.getenv("DATA_PATH", "artifacts/data/preprocessed_train.csv")
 
-# Amenity display labels (preserves key used for API payload)
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",
     "air_conditioning": "Air Conditioning",
@@ -353,7 +350,7 @@ def result_card_html(
         </div>
         <div>
           <div class="metric-label">Market Volatility</div>
-          <div class="metric-value" style="color:{vol_color};">{vol*100:.2f}% · {vol_label}</div>
+          <div class="metric-value" style="color:{vol_color};">{vol * 100:.2f}% · {vol_label}</div>
         </div>
       </div>
     </div>
@@ -370,9 +367,6 @@ def chip_grid_html(chips: list[tuple[str, str]]) -> str:
     return f'<div class="chip-grid">{inner}</div>'
 
 
-# ---------------------------------------------------------------------------
-# Data helpers
-# ---------------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_market_data() -> pd.DataFrame | None:
     """Load training CSV for market context charts. Returns None on failure."""
@@ -386,6 +380,7 @@ def load_market_data() -> pd.DataFrame | None:
 
 def check_api() -> bool:
     import requests as _req
+
     try:
         r = _req.get(f"{BACKEND_URL}/health", timeout=2)
         return r.status_code == 200
@@ -395,6 +390,7 @@ def check_api() -> bool:
 
 def load_schema() -> dict | None:
     import json
+
     try:
         with open("artifacts/cache/schema.json") as f:
             return json.load(f)

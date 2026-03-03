@@ -5,21 +5,19 @@ Renders the centred result card, property summary chips, and
 market-context tabs (distribution, comparable listings, amenity impact).
 """
 
-import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-import pandas as pd
+import streamlit as st
 
 from utils import (
     AMENITY_LABELS,
+    chip_grid_html,
     inject_styles,
-    scroll_to_top,
     load_market_data,
     result_card_html,
-    chip_grid_html,
+    scroll_to_top,
 )
 
-# ── Page config ─────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="ARES · Valuation Report",
     page_icon="📊",
@@ -28,8 +26,7 @@ st.set_page_config(
 )
 inject_styles()
 
-# Shared Plotly layout defaults (neutral, matches design tokens)
-_PLOTLY_LAYOUT = dict(
+_PLOTLY_LAYOUT: dict = dict(
     font_family="Manrope, sans-serif",
     font_color="#52525b",
     plot_bgcolor="#ffffff",
@@ -44,14 +41,12 @@ _PLOTLY_LAYOUT = dict(
     ),
 )
 
-# ── Scroll to top on fresh load ──────────────────────────────────────────────
 _uid_key = "report_scroll_uid"
 _uid = st.session_state.get("scroll_uid", 0)
 if st.session_state.get(_uid_key) != _uid:
     scroll_to_top(_uid)
     st.session_state[_uid_key] = _uid
 
-# ── Guard: redirect if no result ─────────────────────────────────────────────
 result = st.session_state.get("prediction_result")
 inputs = st.session_state.get("form_inputs", {})
 
@@ -61,21 +56,19 @@ if not result:
         st.switch_page("app.py")
     st.stop()
 
-# Pull values
 est_price = result.get("estimated_price", 0)
-low_b     = result.get("lower_band", 0)
-high_b    = result.get("upper_band", 0)
-vol       = result.get("market_volatility_idx", 0)
+low_b = result.get("lower_band", 0)
+high_b = result.get("upper_band", 0)
+vol = result.get("market_volatility_idx", 0)
 
-loc         = inputs.get("location", "—")
-prop_type   = inputs.get("property_type", "—")
-condition   = inputs.get("condition", "—")
-furnishing  = inputs.get("furnishing", "—")
-bedrooms    = inputs.get("bedrooms", 0)
-bathrooms   = inputs.get("bathrooms", 0)
-amenities   = inputs.get("amenities", {})
+loc = inputs.get("location", "—")
+prop_type = inputs.get("property_type", "—")
+condition = inputs.get("condition", "—")
+furnishing = inputs.get("furnishing", "—")
+bedrooms = inputs.get("bedrooms", 0)
+bathrooms = inputs.get("bathrooms", 0)
+amenities = inputs.get("amenities", {})
 
-# ── Header ───────────────────────────────────────────────────────────────────
 back_col, _ = st.columns([1, 4])
 with back_col:
     if st.button("← New Valuation"):
@@ -89,21 +82,19 @@ st.markdown(
 )
 st.markdown("---")
 
-# ── Result card ──────────────────────────────────────────────────────────────
 st.markdown(result_card_html(est_price, low_b, high_b, vol), unsafe_allow_html=True)
 
-# ── Property summary chips ───────────────────────────────────────────────────
 chips = [
-    ("Location",      loc.title()),
+    ("Location", loc.title()),
     ("Property Type", prop_type.title()),
-    ("Condition",     condition.title()),
-    ("Furnishing",    furnishing.title()),
-    ("Bedrooms",      str(bedrooms)),
-    ("Bathrooms",     str(bathrooms)),
+    ("Condition", condition.title()),
+    ("Furnishing", furnishing.title()),
+    ("Bedrooms", str(bedrooms)),
+    ("Bathrooms", str(bathrooms)),
 ]
 if amenities:
     am_names = ", ".join(
-        AMENITY_LABELS.get(k, k.replace("_", " ").title()) for k in amenities
+        AMENITY_LABELS.get(k) or k.replace("_", " ").title() for k in amenities
     )
     chips.append(("Amenities", am_names))
 
@@ -111,19 +102,18 @@ st.markdown(chip_grid_html(chips), unsafe_allow_html=True)
 
 st.markdown("---")
 
-# ── Market Context Tabs ───────────────────────────────────────────────────────
 st.markdown(
-    "<div class='section-heading'>"
-    "<span class='eyebrow'>Market Context</span>"
-    "</div>",
+    "<div class='section-heading'><span class='eyebrow'>Market Context</span></div>",
     unsafe_allow_html=True,
 )
 
-tab_dist, tab_type, tab_comps = st.tabs([
-    "Price Distribution",
-    "By Property Type",
-    "Comparable Listings",
-])
+tab_dist, tab_type, tab_comps = st.tabs(
+    [
+        "Price Distribution",
+        "By Property Type",
+        "Comparable Listings",
+    ]
+)
 
 df = load_market_data()
 
@@ -135,11 +125,10 @@ if df is None:
                 "Set the `DATA_PATH` env variable to `preprocessed_train.csv`."
             )
 else:
-    # ── Tab 1: Price distribution for selected location ──────────────────────
     with tab_dist:
         loc_df = df[df["loc"] == loc] if loc in df["loc"].values else df
-        scope  = f"in {loc.title()}" if loc in df["loc"].values else "(all locations)"
-        n      = len(loc_df)
+        scope = f"in {loc.title()}" if loc in df["loc"].values else "(all locations)"
+        n = len(loc_df)
 
         st.markdown(
             f"<p style='color:var(--text-2);font-size:0.85rem;'>"
@@ -147,7 +136,6 @@ else:
             unsafe_allow_html=True,
         )
 
-        # Clip to 99th percentile so outliers don't squash the chart
         p99 = loc_df["price"].quantile(0.99)
         plot_df = loc_df[loc_df["price"] <= p99]
 
@@ -159,7 +147,6 @@ else:
             color_discrete_sequence=["#18181b"],
         )
 
-        # Overlay the estimated price
         fig.add_vline(
             x=est_price,
             line_color="#dc2626",
@@ -170,28 +157,33 @@ else:
             annotation_font_color="#dc2626",
             annotation_font_size=11,
         )
-        # Shaded band
         fig.add_vrect(
-            x0=low_b, x1=high_b,
-            fillcolor="#dc2626", opacity=0.07,
-            layer="below", line_width=0,
+            x0=low_b,
+            x1=high_b,
+            fillcolor="#dc2626",
+            opacity=0.07,
+            layer="below",
+            line_width=0,
         )
 
         fig.update_layout(
             **_PLOTLY_LAYOUT,
             xaxis=dict(
-                tickprefix="₵", showgrid=False,
-                title="Monthly Rent (₵)", title_font_size=11,
+                tickprefix="₵",
+                showgrid=False,
+                title="Monthly Rent (₵)",
+                title_font_size=11,
             ),
             yaxis=dict(
-                showgrid=True, gridcolor="#f4f4f5",
-                title="# Listings", title_font_size=11,
+                showgrid=True,
+                gridcolor="#f4f4f5",
+                title="# Listings",
+                title_font_size=11,
             ),
             bargap=0.06,
         )
         st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
-        # Quick stats row
         q25, q50, q75 = (
             loc_df["price"].quantile(0.25),
             loc_df["price"].median(),
@@ -199,13 +191,12 @@ else:
         )
         stat_chips = [
             ("25th Pct.", f"₵{q25:,.0f}"),
-            ("Median",    f"₵{q50:,.0f}"),
+            ("Median", f"₵{q50:,.0f}"),
             ("75th Pct.", f"₵{q75:,.0f}"),
             ("Your Estimate", f"₵{est_price:,.0f}"),
         ]
         st.markdown(chip_grid_html(stat_chips), unsafe_allow_html=True)
 
-    # ── Tab 2: Median rent by property type ─────────────────────────────────
     with tab_type:
         type_stats = (
             df.groupby("house_type")["price"]
@@ -215,25 +206,27 @@ else:
             .sort_values("median", ascending=True)
         )
 
-        # Highlight selected type
         colors = [
-            "#18181b" if t == prop_type else "#d4d4d8"
-            for t in type_stats["house_type"]
+            "#18181b" if t == prop_type else "#d4d4d8" for t in type_stats["house_type"]
         ]
 
-        fig2 = go.Figure(go.Bar(
-            x=type_stats["median"],
-            y=type_stats["house_type"].str.title(),
-            orientation="h",
-            marker_color=colors,
-            hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
-        ))
+        fig2 = go.Figure(
+            go.Bar(
+                x=type_stats["median"],
+                y=type_stats["house_type"].str.title(),
+                orientation="h",
+                marker_color=colors,
+                hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
+            )
+        )
         fig2.update_layout(
             **_PLOTLY_LAYOUT,
             height=420,
             xaxis=dict(
-                tickprefix="₵", showgrid=True,
-                gridcolor="#f4f4f5", title=None,
+                tickprefix="₵",
+                showgrid=True,
+                gridcolor="#f4f4f5",
+                title=None,
             ),
             yaxis=dict(showgrid=False, title=None),
         )
@@ -243,14 +236,12 @@ else:
             "Your selected type is highlighted.</p>",
             unsafe_allow_html=True,
         )
-        st.plotly_chart(fig2, use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(
+            fig2, use_container_width=True, config={"displayModeBar": False}
+        )
 
-    # ── Tab 3: Comparable listings ───────────────────────────────────────────
     with tab_comps:
-        # Filter by location + property type, fallback to location only
-        comp_df = df[
-            (df["loc"] == loc) & (df["house_type"] == prop_type)
-        ].copy()
+        comp_df = df[(df["loc"] == loc) & (df["house_type"] == prop_type)].copy()
 
         if len(comp_df) < 5:
             comp_df = df[df["loc"] == loc].copy()
@@ -258,19 +249,24 @@ else:
         else:
             scope_note = f"({prop_type.title()} in {loc.title()})"
 
-        # Sort by proximity to estimated price
         comp_df["_delta"] = (comp_df["price"] - est_price).abs()
         comp_df = comp_df.nsmallest(20, "_delta").copy()
 
-        # Format for display
-        display_cols = ["house_type", "bedrooms", "bathrooms", "condition", "furnishing", "price"]
-        rename_map   = {
+        display_cols = [
+            "house_type",
+            "bedrooms",
+            "bathrooms",
+            "condition",
+            "furnishing",
+            "price",
+        ]
+        rename_map = {
             "house_type": "Type",
-            "bedrooms":   "Beds",
-            "bathrooms":  "Baths",
-            "condition":  "Condition",
+            "bedrooms": "Beds",
+            "bathrooms": "Baths",
+            "condition": "Condition",
             "furnishing": "Furnishing",
-            "price":      "Rent (₵/mo)",
+            "price": "Rent (₵/mo)",
         }
 
         if len(comp_df) == 0:
@@ -296,7 +292,6 @@ else:
                 hide_index=True,
             )
 
-# ── Footer note ───────────────────────────────────────────────────────────────
 st.markdown("---")
 st.markdown(
     "<p style='text-align:center;color:var(--text-3);font-size:0.75rem;'>"
