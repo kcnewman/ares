@@ -1,8 +1,3 @@
-"""
-utils.py — Shared design system, HTML builders, Plotly theme, and data helpers.
-Import before any st.* calls on every page.
-"""
-
 from __future__ import annotations
 
 import json
@@ -13,18 +8,15 @@ import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
-# ── Navigation paths ──────────────────────────────────────────────────────────
 PAGE_HOME = "app.py"
 PAGE_EXPLORER = "pages/Explorer.py"
 PAGE_PREDICTOR = "pages/Predictor.py"
 PAGE_REPORT = "pages/Report.py"
 
-# ── Runtime config ────────────────────────────────────────────────────────────
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 DATA_PATH = os.getenv("DATA_PATH", "artifacts/data/preprocessed_train.csv")
 SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
 
-# ── Amenity display labels ────────────────────────────────────────────────────
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",
     "air_conditioning": "Air Conditioning",
@@ -47,7 +39,6 @@ AMENITY_LABELS: dict[str, str] = {
 }
 AMENITY_COLS = list(AMENITY_LABELS.keys())
 
-# ── Plotly shared layout ──────────────────────────────────────────────────────
 PLOTLY_LAYOUT = dict(
     font_family="Manrope, sans-serif",
     font_color="#52525b",
@@ -69,7 +60,6 @@ BAR_DIM = "#d4d4d8"
 RED = "#dc2626"
 CHART_CFG = {"displayModeBar": False}
 
-# ── Google Fonts ──────────────────────────────────────────────────────────────
 _FONT_LINK = (
     "<link rel='preconnect' href='https://fonts.googleapis.com'>"
     "<link rel='preconnect' href='https://fonts.gstatic.com' crossorigin>"
@@ -77,7 +67,6 @@ _FONT_LINK = (
     "&family=Manrope:wght@400;500;600;700&display=swap' rel='stylesheet'>"
 )
 
-# ── Global CSS ────────────────────────────────────────────────────────────────
 _CSS = """
 <style>
 :root {
@@ -247,7 +236,7 @@ div.stButton > button[kind="secondary"]:hover {
 /* divider */
 hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1.5rem 0 !important; }
 
-/* ── chip grid ── */
+/* chip grid */
 .chip-grid {
   display:grid;
   grid-template-columns:repeat(auto-fill,minmax(130px,1fr));
@@ -257,7 +246,7 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 .chip-label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
 .chip-value { font-size:0.85rem; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-/* ── home stat row ── */
+/* home stat row */
 .stat-row { display:flex; gap:0.75rem; margin:1rem 0 1.5rem; }
 .stat-item { flex:1; background:var(--surface); border:1px solid var(--bd); border-radius:var(--r); padding:0.9rem 1.1rem; }
 .stat-item .sl { font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.2rem; }
@@ -265,7 +254,7 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 .stat-item .sv.online { color:var(--green); }
 .stat-item .sv.offline { color:var(--red); }
 
-/* ── workflow card ── */
+/* workflow card */
 .workflow-card { border:1px solid var(--bd); border-radius:var(--rl); background:var(--surface); padding:1.25rem 1.5rem; margin:0.75rem 0 1.5rem; }
 .workflow-steps { display:flex; }
 .workflow-step { flex:1; padding:0.6rem 1rem; border-right:1px solid var(--bd); }
@@ -275,17 +264,17 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 .ws-title { font-size:0.88rem; font-weight:700; color:var(--t1); margin-bottom:0.2rem; }
 .ws-desc { font-size:0.76rem; color:var(--t2); line-height:1.45; }
 
-/* ── section heading ── */
+/* section heading */
 .sh { display:flex; align-items:center; gap:0.6rem; margin:1.5rem 0 1rem; }
 .sh::after { content:''; flex:1; height:1px; background:var(--bd); }
 
-/* ── explorer metric bar ── */
+/* explorer metric bar */
 .metric-bar { display:flex; gap:0.75rem; margin:0.25rem 0 1.25rem; flex-wrap:wrap; }
 .mc { flex:1; min-width:100px; background:var(--surface); border:1px solid var(--bd); border-radius:var(--r); padding:0.7rem 1rem; }
 .mc-l { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
 .mc-v { font-size:0.95rem; font-weight:700; color:var(--t1); }
 
-/* ── result card ── */
+/* result card */
 .result-card {
   background:var(--surface); border:1px solid var(--bd); border-radius:var(--rl);
   padding:2.25rem 2rem 1.75rem; text-align:center;
@@ -300,17 +289,17 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 .ml { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.25rem; }
 .mv { font-size:0.9rem; font-weight:700; color:var(--t1); }
 
-/* ── insight box ── */
+/* insight box */
 .ib { background:var(--bg); border:1px solid var(--bd); border-radius:var(--r); padding:1.1rem 1.4rem; margin-bottom:1rem; }
 .ib-title { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); margin-bottom:0.6rem; }
 .ig { display:grid; grid-template-columns:repeat(auto-fill,minmax(115px,1fr)); gap:0.6rem 1.25rem; }
 .ii-l { font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.12rem; }
 .ii-v { font-size:0.87rem; font-weight:600; color:var(--t1); }
 
-/* ── report metadata ── */
+/* report metadata */
 .report-meta { font-size:0.71rem; color:var(--t3); text-align:center; margin:0 0 1.5rem; }
 
-/* ── filter panel ── */
+/* filter panel */
 .filter-panel { background:var(--surface); border:1px solid var(--bd); border-radius:var(--rl); padding:1.25rem 1.5rem 0.75rem; margin-bottom:1rem; }
 </style>
 """
@@ -328,9 +317,6 @@ def scroll_to_top(uid: int = 0) -> None:
         ".scrollTo({top:0,behavior:'smooth'});</script>",
         height=0,
     )
-
-
-# ── HTML builders ─────────────────────────────────────────────────────────────
 
 
 def chip_grid_html(chips: list[tuple[str, str]]) -> str:
@@ -478,32 +464,35 @@ def page_note(text: str) -> None:
     )
 
 
-# ── Data helpers ──────────────────────────────────────────────────────────────
-
-
 @st.cache_data(show_spinner=False)
 def load_market_data() -> pd.DataFrame | None:
     try:
         df = pd.read_csv(DATA_PATH)
         df["price"] = pd.to_numeric(df["price"], errors="coerce")
         return df.dropna(subset=["price"])
-    except Exception:
+    except (
+        FileNotFoundError,
+        OSError,
+        KeyError,
+        pd.errors.EmptyDataError,
+        pd.errors.ParserError,
+    ):
         return None
 
 
 def check_api() -> bool:
     try:
-        r = requests.get(f"{BACKEND_URL}/health", timeout=2)
-        return r.status_code == 200
-    except Exception:
+        response = requests.get(f"{BACKEND_URL}/health", timeout=2)
+        return response.status_code == 200
+    except requests.RequestException:
         return False
 
 
 def load_schema() -> dict | None:
     try:
-        with open(SCHEMA_PATH) as f:
-            return json.load(f)
-    except FileNotFoundError:
+        with open(SCHEMA_PATH, encoding="utf-8") as file:
+            return json.load(file)
+    except (FileNotFoundError, OSError, json.JSONDecodeError):
         return None
 
 

@@ -1,8 +1,6 @@
-"""
-pages/Explorer.py — Market Explorer
-Inline filter form → summary metrics → tabbed output (Overview / Segments / Listings).
-"""
+from dataclasses import dataclass
 
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
@@ -24,172 +22,234 @@ from utils import (
     section_heading,
 )
 
-st.set_page_config(
-    page_title="ARES · Market Explorer",
-    page_icon="🔍",
-    layout="centered",
-    initial_sidebar_state="collapsed",
-)
-inject_styles()
+ALL_OPTION = "All"
 
-# ── Nav bar ───────────────────────────────────────────────────────────────────
-nc1, nc2 = st.columns(2, gap="small")
-with nc1:
-    if st.button("← Home", key="ex_home", use_container_width=True):
-        st.switch_page(PAGE_HOME)
-with nc2:
-    if st.button("Predictor →", key="ex_pred", use_container_width=True):
-        st.switch_page(PAGE_PREDICTOR)
 
-st.markdown("## Market Explorer")
-st.markdown(
-    "<p style='color:var(--t2);font-size:0.9rem;margin-top:-0.4rem;margin-bottom:0;'>"
-    "Filter the dataset and explore rental price distributions across Greater Accra."
-    "</p>",
-    unsafe_allow_html=True,
-)
-st.markdown("---")
+@dataclass(frozen=True)
+class FilterOptions:
+    locations: list[str]
+    property_types: list[str]
+    conditions: list[str]
+    furnishings: list[str]
+    price_min: int
+    price_max: int
+    beds_max: int
+    baths_max: int
+    amenities: list[str]
 
-# ── Load data ─────────────────────────────────────────────────────────────────
-df_full = load_market_data()
 
-if df_full is None:
-    st.error(
-        "Market data unavailable. "
-        "Set the `DATA_PATH` environment variable to point to `preprocessed_train.csv`."
+@dataclass(frozen=True)
+class FilterState:
+    location: str
+    property_type: str
+    condition: str
+    furnishing: str
+    beds: tuple[int, int]
+    baths: tuple[int, int]
+    price: tuple[int, int]
+    amenities: list[str]
+
+
+@dataclass(frozen=True)
+class PriceSummary:
+    listing_count: int
+    q25: float
+    q50: float
+    q75: float
+    iqr: float
+    std: float
+
+
+def configure_page() -> None:
+    st.set_page_config(
+        page_title="ARES · Market Explorer",
+        page_icon="🔍",
+        layout="centered",
+        initial_sidebar_state="collapsed",
     )
-    st.stop()
+    inject_styles()
 
-# ── Derive filter option lists ────────────────────────────────────────────────
-ALL = "All"
 
-loc_opts = sorted(df_full["loc"].dropna().unique().tolist())
-type_opts = sorted(df_full["house_type"].dropna().unique().tolist())
-cond_opts = sorted(df_full["condition"].dropna().unique().tolist())
-furn_opts = sorted(df_full["furnishing"].dropna().unique().tolist())
+def render_navigation() -> None:
+    left_col, right_col = st.columns(2, gap="small")
+    with left_col:
+        if st.button("← Home", key="ex_home", use_container_width=True):
+            st.switch_page(PAGE_HOME)
+    with right_col:
+        if st.button("Predictor →", key="ex_pred", use_container_width=True):
+            st.switch_page(PAGE_PREDICTOR)
 
-price_min_global = int(df_full["price"].min())
-price_max_global = int(
-    df_full["price"].quantile(0.995)
-)  # clip extreme outliers for slider
-beds_max = int(df_full["bedrooms"].max())
-baths_max = int(df_full["bathrooms"].max())
 
-amenity_options = [(k, v) for k, v in AMENITY_LABELS.items() if k in df_full.columns]
+def render_intro() -> None:
+    st.markdown("## Market Explorer")
+    st.markdown(
+        "<p style='color:var(--t2);font-size:0.9rem;margin-top:-0.4rem;margin-bottom:0;'>"
+        "Filter the dataset and explore rental price distributions across Greater Accra."
+        "</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown("---")
 
-# ── Filter form ───────────────────────────────────────────────────────────────
-st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
-section_heading("Filters")
 
-with st.form("explorer_filters", border=False):
-    r1c1, r1c2, r1c3, r1c4 = st.columns(4, gap="small")
-    with r1c1:
-        f_loc = st.selectbox("Location", [ALL] + loc_opts)
-    with r1c2:
-        f_type = st.selectbox("Property Type", [ALL] + type_opts)
-    with r1c3:
-        f_cond = st.selectbox("Condition", [ALL] + cond_opts)
-    with r1c4:
-        f_furn = st.selectbox("Furnishing", [ALL] + furn_opts)
+def load_data() -> pd.DataFrame:
+    data = load_market_data()
+    if data is None:
+        st.error(
+            "Market data unavailable. "
+            "Set the `DATA_PATH` environment variable to point to `preprocessed_train.csv`."
+        )
+        st.stop()
+    return data
 
-    r2c1, r2c2, r2c3 = st.columns(3, gap="small")
-    with r2c1:
-        f_beds = st.slider("Bedrooms", 0, beds_max, (0, beds_max))
-    with r2c2:
-        f_baths = st.slider("Bathrooms", 0, baths_max, (0, baths_max))
-    with r2c3:
-        f_price = st.slider(
-            "Price Range (₵/mo)",
-            price_min_global,
-            price_max_global,
-            (price_min_global, price_max_global),
+
+def build_filter_options(df: pd.DataFrame) -> FilterOptions:
+    return FilterOptions(
+        locations=sorted(df["loc"].dropna().unique().tolist()),
+        property_types=sorted(df["house_type"].dropna().unique().tolist()),
+        conditions=sorted(df["condition"].dropna().unique().tolist()),
+        furnishings=sorted(df["furnishing"].dropna().unique().tolist()),
+        price_min=int(df["price"].min()),
+        price_max=int(df["price"].quantile(0.995)),
+        beds_max=int(df["bedrooms"].max()),
+        baths_max=int(df["bathrooms"].max()),
+        amenities=[label for label in AMENITY_LABELS if label in df.columns],
+    )
+
+
+def render_filter_form(options: FilterOptions) -> FilterState:
+    st.markdown('<div class="filter-panel">', unsafe_allow_html=True)
+    section_heading("Filters")
+    with st.form("explorer_filters", border=False):
+        row_1_col_1, row_1_col_2, row_1_col_3, row_1_col_4 = st.columns(4, gap="small")
+        with row_1_col_1:
+            selected_location = st.selectbox(
+                "Location", [ALL_OPTION, *options.locations]
+            )
+        with row_1_col_2:
+            selected_property_type = st.selectbox(
+                "Property Type", [ALL_OPTION, *options.property_types]
+            )
+        with row_1_col_3:
+            selected_condition = st.selectbox(
+                "Condition", [ALL_OPTION, *options.conditions]
+            )
+        with row_1_col_4:
+            selected_furnishing = st.selectbox(
+                "Furnishing", [ALL_OPTION, *options.furnishings]
+            )
+
+        row_2_col_1, row_2_col_2, row_2_col_3 = st.columns(3, gap="small")
+        with row_2_col_1:
+            selected_beds = st.slider(
+                "Bedrooms", 0, options.beds_max, (0, options.beds_max)
+            )
+        with row_2_col_2:
+            selected_baths = st.slider(
+                "Bathrooms", 0, options.baths_max, (0, options.baths_max)
+            )
+        with row_2_col_3:
+            selected_price = st.slider(
+                "Price Range (₵/mo)",
+                options.price_min,
+                options.price_max,
+                (options.price_min, options.price_max),
+            )
+
+        selected_amenities = st.multiselect(
+            "Required Amenities",
+            options=options.amenities,
+            format_func=lambda amenity: AMENITY_LABELS.get(amenity, amenity),
+            placeholder="Select amenities to require…",
         )
 
-    f_amenities = st.multiselect(
-        "Required Amenities",
-        options=[k for k, _ in amenity_options],
-        format_func=lambda k: AMENITY_LABELS.get(k, k),
-        placeholder="Select amenities to require…",
+        apply_col, _ = st.columns([1, 4])
+        with apply_col:
+            st.form_submit_button("Apply Filters", use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+    return FilterState(
+        location=selected_location,
+        property_type=selected_property_type,
+        condition=selected_condition,
+        furnishing=selected_furnishing,
+        beds=selected_beds,
+        baths=selected_baths,
+        price=selected_price,
+        amenities=selected_amenities,
     )
 
-    apply_col, _ = st.columns([1, 4])
-    with apply_col:
-        apply = st.form_submit_button("Apply Filters", use_container_width=True)
 
-st.markdown("</div>", unsafe_allow_html=True)
+def apply_filters(df: pd.DataFrame, filters: FilterState) -> pd.DataFrame:
+    filtered = df.copy()
 
-# ── Apply filtering ───────────────────────────────────────────────────────────
-df = df_full.copy()
+    if filters.location != ALL_OPTION:
+        filtered = filtered[filtered["loc"] == filters.location]
+    if filters.property_type != ALL_OPTION:
+        filtered = filtered[filtered["house_type"] == filters.property_type]
+    if filters.condition != ALL_OPTION:
+        filtered = filtered[filtered["condition"] == filters.condition]
+    if filters.furnishing != ALL_OPTION:
+        filtered = filtered[filtered["furnishing"] == filters.furnishing]
 
-if f_loc != ALL:
-    df = df[df["loc"] == f_loc]
-if f_type != ALL:
-    df = df[df["house_type"] == f_type]
-if f_cond != ALL:
-    df = df[df["condition"] == f_cond]
-if f_furn != ALL:
-    df = df[df["furnishing"] == f_furn]
+    filtered = filtered[filtered["bedrooms"].between(filters.beds[0], filters.beds[1])]
+    filtered = filtered[
+        filtered["bathrooms"].between(filters.baths[0], filters.baths[1])
+    ]
+    filtered = filtered[filtered["price"].between(filters.price[0], filters.price[1])]
 
-df = df[(df["bedrooms"] >= f_beds[0]) & (df["bedrooms"] <= f_beds[1])]
-df = df[(df["bathrooms"] >= f_baths[0]) & (df["bathrooms"] <= f_baths[1])]
-df = df[(df["price"] >= f_price[0]) & (df["price"] <= f_price[1])]
+    for amenity in filters.amenities:
+        if amenity in filtered.columns:
+            filtered = filtered[filtered[amenity] == 1]
 
-for am in f_amenities:
-    if am in df.columns:
-        df = df[df[am] == 1]
+    return filtered
 
-n_filtered = len(df)
 
-# ── Summary metric bar ────────────────────────────────────────────────────────
-if n_filtered == 0:
-    st.warning("No listings match the current filters. Try relaxing your criteria.")
-    st.stop()
+def summarize_prices(df: pd.DataFrame) -> PriceSummary:
+    q25 = df["price"].quantile(0.25)
+    q50 = df["price"].median()
+    q75 = df["price"].quantile(0.75)
+    return PriceSummary(
+        listing_count=len(df),
+        q25=q25,
+        q50=q50,
+        q75=q75,
+        iqr=q75 - q25,
+        std=df["price"].std(),
+    )
 
-q25 = df["price"].quantile(0.25)
-q50 = df["price"].median()
-q75 = df["price"].quantile(0.75)
-iqr = q75 - q25
-std = df["price"].std()
 
-st.markdown(
-    metric_bar_html(
-        [
-            ("Listings", f"{n_filtered:,}"),
-            ("Median Rent", f"₵{q50:,.0f}"),
-            ("IQR", f"₵{q25:,.0f} – ₵{q75:,.0f}"),
-            ("Std. Dev.", f"₵{std:,.0f}"),
-        ]
-    ),
-    unsafe_allow_html=True,
-)
+def render_summary_metrics(summary: PriceSummary) -> None:
+    st.markdown(
+        metric_bar_html(
+            [
+                ("Listings", f"{summary.listing_count:,}"),
+                ("Median Rent", f"₵{summary.q50:,.0f}"),
+                ("IQR", f"₵{summary.q25:,.0f} – ₵{summary.q75:,.0f}"),
+                ("Std. Dev.", f"₵{summary.std:,.0f}"),
+            ]
+        ),
+        unsafe_allow_html=True,
+    )
 
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-tab_ov, tab_seg, tab_list = st.tabs(["Overview", "Segments", "Listings"])
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 1 · OVERVIEW
-# ─────────────────────────────────────────────────────────────────────────────
-with tab_ov:
-    # Price distribution with outlier fences
+def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     section_heading("Price Distribution")
-    page_note(f"{n_filtered:,} listings · IQR fences shown as dashed lines.")
+    page_note(f"{summary.listing_count:,} listings · IQR fences shown as dashed lines.")
 
-    # Clip to 99th pct for readability
     p99 = df["price"].quantile(0.99)
     hist_df = df[df["price"] <= p99]
+    fence_low = max(summary.q25 - 1.5 * summary.iqr, df["price"].min())
+    fence_high = min(summary.q75 + 1.5 * summary.iqr, p99)
 
-    fence_lo = max(q25 - 1.5 * iqr, df["price"].min())
-    fence_hi = min(q75 + 1.5 * iqr, p99)
-
-    fig1 = px.histogram(
+    dist_fig = px.histogram(
         hist_df,
         x="price",
         nbins=35,
         labels={"price": "Monthly Rent (₵)"},
         color_discrete_sequence=[BAR_COLOR],
     )
-    fig1.add_vline(
-        x=fence_lo,
+    dist_fig.add_vline(
+        x=fence_low,
         line_dash="dash",
         line_color=BAR_DIM,
         line_width=1.5,
@@ -198,8 +258,8 @@ with tab_ov:
         annotation_font_color=BAR_DIM,
         annotation_position="top left",
     )
-    fig1.add_vline(
-        x=fence_hi,
+    dist_fig.add_vline(
+        x=fence_high,
         line_dash="dash",
         line_color=BAR_DIM,
         line_width=1.5,
@@ -208,8 +268,8 @@ with tab_ov:
         annotation_font_color=BAR_DIM,
         annotation_position="top right",
     )
-    fig1.add_vline(
-        x=q50,
+    dist_fig.add_vline(
+        x=summary.q50,
         line_dash="dot",
         line_color=RED,
         line_width=1.5,
@@ -218,61 +278,104 @@ with tab_ov:
         annotation_font_color=RED,
         annotation_position="top right",
     )
-    fig1.update_layout(
+    dist_fig.update_layout(
         **PLOTLY_LAYOUT,
         xaxis=dict(
-            tickprefix="₵", showgrid=False, title="Monthly Rent (₵)", title_font_size=11
+            tickprefix="₵",
+            showgrid=False,
+            title="Monthly Rent (₵)",
+            title_font_size=11,
         ),
         yaxis=dict(
-            showgrid=True, gridcolor=GRID_COLOR, title="Listings", title_font_size=11
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            title="Listings",
+            title_font_size=11,
         ),
         bargap=0.05,
     )
-    st.plotly_chart(fig1, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(dist_fig, use_container_width=True, config=CHART_CFG)
 
-    # Top locations by listing volume
     section_heading("Listing Volume by Location")
     page_note("Top 15 locations within filtered results.")
 
-    loc_vol = (
+    location_volume = (
         df.groupby("loc")["price"]
         .agg(count="count", median="median")
         .reset_index()
         .nlargest(15, "count")
         .sort_values("count")
     )
-
-    fig2 = go.Figure(
+    volume_fig = go.Figure(
         go.Bar(
-            x=loc_vol["count"],
-            y=loc_vol["loc"].str.title(),
+            x=location_volume["count"],
+            y=location_volume["loc"].str.title(),
             orientation="h",
             marker_color=BAR_COLOR,
             hovertemplate="<b>%{y}</b><br>Listings: %{x:,}<extra></extra>",
         )
     )
-    fig2.update_layout(
+    volume_fig.update_layout(
         **PLOTLY_LAYOUT,
         height=380,
         xaxis=dict(
-            showgrid=True, gridcolor=GRID_COLOR, title="Listings", title_font_size=11
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            title="Listings",
+            title_font_size=11,
         ),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
-    st.plotly_chart(fig2, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(volume_fig, use_container_width=True, config=CHART_CFG)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 2 · SEGMENTS
-# ─────────────────────────────────────────────────────────────────────────────
-with tab_seg:
-    # Median vs Mean by locality (top 15 by count)
+def render_compact_bar(
+    df: pd.DataFrame,
+    group_column: str,
+    title: str,
+    column: object,
+) -> None:
+    grouped = (
+        df.groupby(group_column)["price"]
+        .agg(count="count", median="median")
+        .reset_index()
+        .query("count >= 3")
+        .sort_values("median")
+    )
+    fig = go.Figure(
+        go.Bar(
+            x=grouped["median"],
+            y=grouped[group_column].str.title(),
+            orientation="h",
+            marker_color=BAR_COLOR,
+            hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=max(200, len(grouped) * 30 + 50),
+        margin=dict(l=0, r=0, t=36, b=0),
+        title=dict(text=title, font_size=11, x=0, xanchor="left"),
+        xaxis=dict(
+            tickprefix="₵",
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            title=None,
+            tickfont_size=10,
+        ),
+        yaxis=dict(showgrid=False, title=None, tickfont_size=10),
+    )
+    with column:
+        st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_segments_tab(df: pd.DataFrame) -> None:
     section_heading("Median vs. Mean Rent by Location")
     page_note(
         "Top 15 locations. Gap between median and mean signals skew from luxury listings."
     )
 
-    loc_stats = (
+    location_stats = (
         df.groupby("loc")["price"]
         .agg(count="count", median="median", mean="mean")
         .reset_index()
@@ -280,29 +383,28 @@ with tab_seg:
         .nlargest(15, "count")
         .sort_values("median")
     )
-
-    fig3 = go.Figure()
-    fig3.add_trace(
+    compare_fig = go.Figure()
+    compare_fig.add_trace(
         go.Bar(
             name="Median",
-            x=loc_stats["median"],
-            y=loc_stats["loc"].str.title(),
+            x=location_stats["median"],
+            y=location_stats["loc"].str.title(),
             orientation="h",
             marker_color=BAR_COLOR,
             hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
         )
     )
-    fig3.add_trace(
+    compare_fig.add_trace(
         go.Bar(
             name="Mean",
-            x=loc_stats["mean"],
-            y=loc_stats["loc"].str.title(),
+            x=location_stats["mean"],
+            y=location_stats["loc"].str.title(),
             orientation="h",
             marker_color=BAR_DIM,
             hovertemplate="<b>%{y}</b><br>Mean: ₵%{x:,.0f}<extra></extra>",
         )
     )
-    fig3.update_layout(
+    compare_fig.update_layout(
         **PLOTLY_LAYOUT,
         height=400,
         barmode="group",
@@ -318,60 +420,21 @@ with tab_seg:
         xaxis=dict(tickprefix="₵", showgrid=True, gridcolor=GRID_COLOR, title=None),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
-    st.plotly_chart(fig3, use_container_width=True, config=CHART_CFG)
+    st.plotly_chart(compare_fig, use_container_width=True, config=CHART_CFG)
 
-    # Segment bars: property type / furnishing / condition
-    sc1, sc2, sc3 = st.columns(3, gap="medium")
-
-    def _compact_bar(group_col: str, title: str, col):
-        seg = (
-            df.groupby(group_col)["price"]
-            .agg(count="count", median="median")
-            .reset_index()
-            .query("count >= 3")
-            .sort_values("median")
-        )
-        fig = go.Figure(
-            go.Bar(
-                x=seg["median"],
-                y=seg[group_col].str.title(),
-                orientation="h",
-                marker_color=BAR_COLOR,
-                hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
-            )
-        )
-        fig.update_layout(
-            **PLOTLY_LAYOUT,
-            height=max(200, len(seg) * 30 + 50),
-            margin=dict(l=0, r=0, t=36, b=0),
-            title=dict(text=title, font_size=11, x=0, xanchor="left"),
-            xaxis=dict(
-                tickprefix="₵",
-                showgrid=True,
-                gridcolor=GRID_COLOR,
-                title=None,
-                tickfont_size=10,
-            ),
-            yaxis=dict(showgrid=False, title=None, tickfont_size=10),
-        )
-        with col:
-            st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
-
-    _compact_bar("house_type", "By Property Type", sc1)
-    _compact_bar("furnishing", "By Furnishing", sc2)
-    _compact_bar("condition", "By Condition", sc3)
+    col_1, col_2, col_3 = st.columns(3, gap="medium")
+    render_compact_bar(df, "house_type", "By Property Type", col_1)
+    render_compact_bar(df, "furnishing", "By Furnishing", col_2)
+    render_compact_bar(df, "condition", "By Condition", col_3)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# TAB 3 · LISTINGS
-# ─────────────────────────────────────────────────────────────────────────────
-with tab_list:
+def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
     section_heading("Filtered Listings")
     page_note(
-        f"Showing up to 500 of {n_filtered:,} filtered listings, sorted by price."
+        f"Showing up to 500 of {listing_count:,} filtered listings, sorted by price."
     )
 
-    display_cols = {
+    display_columns = {
         "loc": "Location",
         "house_type": "Type",
         "bedrooms": "Beds",
@@ -380,16 +443,49 @@ with tab_list:
         "furnishing": "Furnishing",
         "price": "Rent (₵/mo)",
     }
-
-    disp = (
-        df[list(display_cols.keys())]
-        .rename(columns=display_cols)
+    display_frame = (
+        df[list(display_columns)]
+        .rename(columns=display_columns)
         .sort_values("Rent (₵/mo)", ascending=False)
         .head(500)
     )
-    for col_str in ["Location", "Type", "Condition", "Furnishing"]:
-        if col_str in disp.columns:
-            disp[col_str] = disp[col_str].str.title()
-    disp["Rent (₵/mo)"] = disp["Rent (₵/mo)"].map("₵{:,.0f}".format)
+    for column_name in ["Location", "Type", "Condition", "Furnishing"]:
+        if column_name in display_frame.columns:
+            display_frame[column_name] = display_frame[column_name].str.title()
+    display_frame["Rent (₵/mo)"] = display_frame["Rent (₵/mo)"].map("₵{:,.0f}".format)
+    st.dataframe(
+        display_frame.reset_index(drop=True),
+        use_container_width=True,
+        hide_index=True,
+    )
 
-    st.dataframe(disp.reset_index(drop=True), use_container_width=True, hide_index=True)
+
+def main() -> None:
+    configure_page()
+    render_navigation()
+    render_intro()
+
+    full_data = load_data()
+    filter_options = build_filter_options(full_data)
+    filters = render_filter_form(filter_options)
+    filtered_data = apply_filters(full_data, filters)
+
+    if filtered_data.empty:
+        st.warning("No listings match the current filters. Try relaxing your criteria.")
+        st.stop()
+
+    summary = summarize_prices(filtered_data)
+    render_summary_metrics(summary)
+
+    overview_tab, segments_tab, listings_tab = st.tabs(
+        ["Overview", "Segments", "Listings"]
+    )
+    with overview_tab:
+        render_overview_tab(filtered_data, summary)
+    with segments_tab:
+        render_segments_tab(filtered_data)
+    with listings_tab:
+        render_listings_tab(filtered_data, summary.listing_count)
+
+
+main()
