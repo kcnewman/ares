@@ -234,6 +234,10 @@ def render_summary_metrics(summary: PriceSummary) -> None:
     )
 
 
+def chart_gap(height: str = "1.25rem") -> None:
+    st.markdown(f'<div style="height:{height};"></div>', unsafe_allow_html=True)
+
+
 def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     section_heading("Price Distribution")
     page_note(f"{summary.listing_count:,} listings · IQR fences shown as dashed lines.")
@@ -297,6 +301,7 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
         bargap=0.05,
     )
     st.plotly_chart(dist_fig, use_container_width=True, config=CHART_CFG)
+    chart_gap()
 
     section_heading("Listing Volume by Location")
     page_note("Top 15 locations within filtered results.")
@@ -329,18 +334,25 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
     st.plotly_chart(volume_fig, use_container_width=True, config=CHART_CFG)
+    chart_gap("1.1rem")
 
     st.markdown("---")
+    chart_gap("0.5rem")
     section_heading("Advanced Insights")
     page_note(
         "Derived from current filters. Segment metrics use sample thresholds to avoid noisy results."
     )
 
     render_amenity_premium_chart(df)
+    chart_gap()
     render_unit_economics(df)
+    chart_gap()
     render_segment_volatility(df)
+    chart_gap()
     render_furnishing_premium(df)
+    chart_gap()
     render_opportunity_matrix(df)
+    chart_gap()
     render_bed_bath_heatmap(df)
 
 
@@ -1298,9 +1310,12 @@ def render_segments_tab(df: pd.DataFrame) -> None:
         "If mean is much higher than median, a few expensive listings are pulling "
         "the average upward."
     )
+    chart_gap()
 
     render_location_skew_stability(df)
+    chart_gap()
     render_segment_percentile_map(df)
+    chart_gap()
 
     col_1, col_2, col_3 = st.columns(3, gap="medium")
     render_compact_bar(
@@ -1324,8 +1339,10 @@ def render_segments_tab(df: pd.DataFrame) -> None:
         col_3,
         note="Tracks quality-condition premium across the filtered market.",
     )
+    chart_gap()
 
     render_segment_comparison_panel(df)
+    chart_gap()
     render_segment_leaderboard(df)
 
 

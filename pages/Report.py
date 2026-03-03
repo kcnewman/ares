@@ -132,6 +132,25 @@ def build_segment_summary(
     )
 
 
+def build_comparables_dataset(
+    market_data: pd.DataFrame,
+    context: PredictionContext,
+) -> tuple[pd.DataFrame, str]:
+    comparables = market_data[
+        (market_data["loc"] == context.location)
+        & (market_data["house_type"] == context.property_type)
+    ].copy()
+    scope_note = f"{context.property_type.title()} in {context.location.title()}"
+
+    if len(comparables) < 5:
+        comparables = market_data[market_data["loc"] == context.location].copy()
+        scope_note = (
+            f"all types in {context.location.title()} (fewer than 5 exact matches)"
+        )
+
+    return comparables, scope_note
+
+
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
@@ -269,9 +288,11 @@ def render_insights_tab(
         bargap=0.05,
     )
     st.plotly_chart(figure, use_container_width=True, config=CHART_CFG)
+    st.markdown('<div style="height:1.1rem;"></div>', unsafe_allow_html=True)
+    render_comparables_table(market_data, context)
 
 
-def render_comparables_tab(
+def render_comparables_table(
     market_data: pd.DataFrame | None,
     context: PredictionContext,
 ) -> None:
@@ -279,25 +300,19 @@ def render_comparables_tab(
         st.info("Market data unavailable. Set the `DATA_PATH` env variable.")
         return
 
-    comparables = market_data[
-        (market_data["loc"] == context.location)
-        & (market_data["house_type"] == context.property_type)
-    ].copy()
-    scope_note = f"{context.property_type.title()} in {context.location.title()}"
-
-    if len(comparables) < 5:
-        comparables = market_data[market_data["loc"] == context.location].copy()
-        scope_note = (
-            f"all types in {context.location.title()} (fewer than 5 exact matches)"
-        )
+    comparables, scope_note = build_comparables_dataset(market_data, context)
 
     if comparables.empty:
         st.info("No comparable listings found for this location.")
         return
 
+    section_heading("Comparable Listings")
     comparables["_delta"] = (comparables["price"] - context.estimated_price).abs()
     comparables = comparables.nsmallest(25, "_delta").sort_values("_delta")
-    page_note(f"Top 25 listings closest to your estimate · {scope_note}.")
+    page_note(
+        "Top 25 listings closest to your estimate. "
+        f"Scope: {scope_note}. Use Listing URL to open each listing."
+    )
 
     display_columns = {
         "house_type": "Type",
@@ -307,16 +322,37 @@ def render_comparables_tab(
         "furnishing": "Furnishing",
         "price": "Rent (₵/mo)",
     }
+    if "url" in comparables.columns:
+        display_columns["url"] = "Listing URL"
     display_frame = comparables[list(display_columns)].rename(columns=display_columns)
     for column_name in ["Type", "Condition", "Furnishing"]:
         display_frame[column_name] = display_frame[column_name].str.title()
     display_frame["Rent (₵/mo)"] = comparables["price"].map("₵{:,.0f}".format)
+    if "Listing URL" in display_frame.columns:
+        display_frame["Listing URL"] = (
+            display_frame["Listing URL"].fillna("").astype(str).str.strip()
+        )
 
-    st.dataframe(
-        display_frame.reset_index(drop=True),
-        use_container_width=True,
-        hide_index=True,
-    )
+    display_frame = display_frame.reset_index(drop=True)
+    if "Listing URL" in display_frame.columns:
+        st.dataframe(
+            display_frame,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Listing URL": st.column_config.LinkColumn(
+                    "Listing URL",
+                    help="Open source listing in a new tab.",
+                    display_text="Open listing",
+                )
+            },
+        )
+    else:
+        st.dataframe(
+            display_frame,
+            use_container_width=True,
+            hide_index=True,
+        )
 
 
 def main() -> None:
@@ -333,11 +369,7 @@ def main() -> None:
     render_property_chips(context)
 
     section_heading("Market Analysis")
-    insights_tab, comparables_tab = st.tabs(["Insights", "Comparables"])
-    with insights_tab:
-        render_insights_tab(market_data, context, segment)
-    with comparables_tab:
-        render_comparables_tab(market_data, context)
+    render_insights_tab(market_data, context, segment)
 
     st.markdown("---")
 
