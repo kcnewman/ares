@@ -11,6 +11,7 @@ from utils import (
     BAR_COLOR,
     BAR_DIM,
     CHART_CFG,
+    confidence_tier,
     GRID_COLOR,
     PAGE_HOME,
     PAGE_PREDICTOR,
@@ -329,34 +330,570 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     )
     st.plotly_chart(volume_fig, use_container_width=True, config=CHART_CFG)
 
+    st.markdown("---")
+    section_heading("Advanced Insights")
+    page_note(
+        "Derived from current filters. Segment metrics use sample thresholds to avoid noisy results."
+    )
+
+    render_amenity_premium_chart(df)
+    render_unit_economics(df)
+    render_segment_volatility(df)
+    render_furnishing_premium(df)
+    render_opportunity_matrix(df)
+    render_bed_bath_heatmap(df)
+
+
+def render_amenity_premium_chart(df: pd.DataFrame) -> None:
+    section_heading("Amenity Premium")
+    page_note(
+        "Median rent uplift for listings with each amenity versus listings without it. "
+        "Minimum 25 listings in each group."
+    )
+
+    premium_rows: list[dict[str, float | int | str]] = []
+    for amenity_column, amenity_label in AMENITY_LABELS.items():
+        if amenity_column not in df.columns:
+            continue
+
+        with_amenity = df[df[amenity_column] == 1]["price"]
+        without_amenity = df[df[amenity_column] == 0]["price"]
+        if len(with_amenity) < 25 or len(without_amenity) < 25:
+            continue
+
+        median_with = float(with_amenity.median())
+        median_without = float(without_amenity.median())
+        if median_without <= 0:
+            continue
+
+        uplift_abs = median_with - median_without
+        uplift_pct = ((median_with / median_without) - 1) * 100
+        premium_rows.append(
+            {
+                "amenity": amenity_label,
+                "uplift_abs": uplift_abs,
+                "uplift_pct": uplift_pct,
+                "with_count": int(len(with_amenity)),
+                "without_count": int(len(without_amenity)),
+            }
+        )
+
+    if not premium_rows:
+        st.info("Not enough data to estimate amenity premiums for the current filters.")
+        return
+
+    premium_df = pd.DataFrame(premium_rows)
+    premium_df = premium_df.reindex(
+        premium_df["uplift_pct"].abs().sort_values(ascending=False).index
+    ).head(12)
+    premium_df = premium_df.sort_values("uplift_pct")
+
+    amenity_fig = go.Figure(
+        go.Bar(
+            x=premium_df["uplift_pct"],
+            y=premium_df["amenity"],
+            orientation="h",
+            marker_color=[
+                BAR_COLOR if uplift >= 0 else RED for uplift in premium_df["uplift_pct"]
+            ],
+            customdata=premium_df[["uplift_abs", "with_count", "without_count"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Uplift: %{x:.1f}%<br>"
+                "Median delta: ₵%{customdata[0]:,.0f}<br>"
+                "With amenity: %{customdata[1]:,}<br>"
+                "Without amenity: %{customdata[2]:,}<extra></extra>"
+            ),
+        )
+    )
+    amenity_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=max(260, len(premium_df) * 28 + 70),
+        xaxis=dict(
+            title="Median Rent Uplift (%)",
+            ticksuffix="%",
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            zeroline=True,
+            zerolinecolor=BAR_DIM,
+        ),
+        yaxis=dict(showgrid=False, title=None),
+    )
+    st.plotly_chart(amenity_fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_unit_economics(df: pd.DataFrame) -> None:
+    section_heading("Unit Economics")
+    page_note(
+        "Median rent normalized by bedroom and bathroom counts across locations and "
+        "property types."
+    )
+
+    unit_df = df[(df["bedrooms"] > 0) & (df["bathrooms"] > 0)].copy()
+    if unit_df.empty:
+        st.info("Not enough valid bedroom/bathroom data to compute unit economics.")
+        return
+
+    unit_df["price_per_bedroom"] = unit_df["price"] / unit_df["bedrooms"]
+    unit_df["price_per_bathroom"] = unit_df["price"] / unit_df["bathrooms"]
+
+    loc_stats = (
+        unit_df.groupby("loc")
+        .agg(
+            count=("price", "count"),
+            pp_bed=("price_per_bedroom", "median"),
+            pp_bath=("price_per_bathroom", "median"),
+        )
+        .reset_index()
+        .query("count >= 8")
+        .nlargest(10, "count")
+    )
+    type_stats = (
+        unit_df.groupby("house_type")
+        .agg(
+            count=("price", "count"),
+            pp_bed=("price_per_bedroom", "median"),
+            pp_bath=("price_per_bathroom", "median"),
+        )
+        .reset_index()
+        .query("count >= 8")
+        .nlargest(10, "count")
+    )
+
+    left_col, right_col = st.columns(2, gap="medium")
+
+    with left_col:
+        st.markdown(
+            "<p style='color:var(--t2);font-size:0.76rem;margin:0 0 0.45rem;'>"
+            "Top locations by listing count</p>",
+            unsafe_allow_html=True,
+        )
+        if loc_stats.empty:
+            st.info("No location-level sample met the minimum threshold.")
+        else:
+            loc_plot = (
+                loc_stats.assign(
+                    segment=loc_stats["loc"].str.title(),
+                    **{
+                        "Price / Bedroom": loc_stats["pp_bed"],
+                        "Price / Bathroom": loc_stats["pp_bath"],
+                    },
+                )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]]
+                .melt(
+                    id_vars=["segment", "count"],
+                    value_vars=["Price / Bedroom", "Price / Bathroom"],
+                    var_name="metric",
+                    value_name="value",
+                )
+            )
+            segment_order = loc_stats.sort_values("pp_bed")["loc"].str.title().tolist()
+            loc_fig = px.bar(
+                loc_plot,
+                x="value",
+                y="segment",
+                color="metric",
+                orientation="h",
+                barmode="group",
+                category_orders={"segment": segment_order},
+                color_discrete_map={
+                    "Price / Bedroom": BAR_COLOR,
+                    "Price / Bathroom": BAR_DIM,
+                },
+            )
+            loc_fig.update_layout(
+                **PLOTLY_LAYOUT,
+                height=340,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.0,
+                    xanchor="right",
+                    x=1,
+                    font_size=10,
+                ),
+                xaxis=dict(
+                    tickprefix="₵",
+                    title=None,
+                    showgrid=True,
+                    gridcolor=GRID_COLOR,
+                ),
+                yaxis=dict(showgrid=False, title=None, tickfont_size=10),
+            )
+            st.plotly_chart(loc_fig, use_container_width=True, config=CHART_CFG)
+
+    with right_col:
+        st.markdown(
+            "<p style='color:var(--t2);font-size:0.76rem;margin:0 0 0.45rem;'>"
+            "Top property types by listing count</p>",
+            unsafe_allow_html=True,
+        )
+        if type_stats.empty:
+            st.info("No property-type sample met the minimum threshold.")
+        else:
+            type_plot = (
+                type_stats.assign(
+                    segment=type_stats["house_type"].str.title(),
+                    **{
+                        "Price / Bedroom": type_stats["pp_bed"],
+                        "Price / Bathroom": type_stats["pp_bath"],
+                    },
+                )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]]
+                .melt(
+                    id_vars=["segment", "count"],
+                    value_vars=["Price / Bedroom", "Price / Bathroom"],
+                    var_name="metric",
+                    value_name="value",
+                )
+            )
+            segment_order = (
+                type_stats.sort_values("pp_bed")["house_type"].str.title().tolist()
+            )
+            type_fig = px.bar(
+                type_plot,
+                x="value",
+                y="segment",
+                color="metric",
+                orientation="h",
+                barmode="group",
+                category_orders={"segment": segment_order},
+                color_discrete_map={
+                    "Price / Bedroom": BAR_COLOR,
+                    "Price / Bathroom": BAR_DIM,
+                },
+            )
+            type_fig.update_layout(
+                **PLOTLY_LAYOUT,
+                height=340,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.0,
+                    xanchor="right",
+                    x=1,
+                    font_size=10,
+                ),
+                xaxis=dict(
+                    tickprefix="₵",
+                    title=None,
+                    showgrid=True,
+                    gridcolor=GRID_COLOR,
+                ),
+                yaxis=dict(showgrid=False, title=None, tickfont_size=10),
+            )
+            st.plotly_chart(type_fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_segment_volatility(df: pd.DataFrame) -> None:
+    section_heading("Segment Volatility Score")
+    page_note("Volatility score = IQR / median rent by location + property type segment.")
+
+    segment_stats = (
+        df.groupby(["loc", "house_type"])["price"]
+        .agg(
+            count="count",
+            median="median",
+            q25=lambda series: series.quantile(0.25),
+            q75=lambda series: series.quantile(0.75),
+        )
+        .reset_index()
+    )
+    segment_stats = segment_stats[(segment_stats["count"] >= 8) & (segment_stats["median"] > 0)]
+    if segment_stats.empty:
+        st.info("Not enough segment depth to compute volatility scores.")
+        return
+
+    segment_stats["volatility_pct"] = (
+        (segment_stats["q75"] - segment_stats["q25"]) / segment_stats["median"]
+    ) * 100
+    segment_stats["segment"] = (
+        segment_stats["loc"].str.title() + " · " + segment_stats["house_type"].str.title()
+    )
+    segment_stats = (
+        segment_stats.nlargest(12, "count")
+        .sort_values("volatility_pct")
+        .reset_index(drop=True)
+    )
+
+    volatility_fig = go.Figure(
+        go.Bar(
+            x=segment_stats["volatility_pct"],
+            y=segment_stats["segment"],
+            orientation="h",
+            marker_color=BAR_COLOR,
+            customdata=segment_stats[["count", "median"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Volatility: %{x:.1f}%<br>"
+                "Median rent: ₵%{customdata[1]:,.0f}<br>"
+                "Listings: %{customdata[0]:,}<extra></extra>"
+            ),
+        )
+    )
+    volatility_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=max(280, len(segment_stats) * 26 + 85),
+        xaxis=dict(
+            title="Volatility Score (IQR / Median, %)",
+            ticksuffix="%",
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+        ),
+        yaxis=dict(showgrid=False, title=None, tickfont_size=10),
+    )
+    st.plotly_chart(volatility_fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_furnishing_premium(df: pd.DataFrame) -> None:
+    section_heading("Furnishing Premium by Location")
+    page_note(
+        "Median rent difference between furnished and unfurnished listings. "
+        "Minimum 5 listings in each furnishing state."
+    )
+
+    furnishing_df = df[df["furnishing"].isin(["furnished", "unfurnished"])].copy()
+    if furnishing_df.empty:
+        st.info("No furnished/unfurnished listings available in the current filters.")
+        return
+
+    median_pivot = furnishing_df.pivot_table(
+        index="loc", columns="furnishing", values="price", aggfunc="median"
+    )
+    count_pivot = furnishing_df.pivot_table(
+        index="loc", columns="furnishing", values="price", aggfunc="size", fill_value=0
+    )
+    if "furnished" not in median_pivot.columns or "unfurnished" not in median_pivot.columns:
+        st.info("Need both furnished and unfurnished samples to compute premium.")
+        return
+
+    premium_df = pd.DataFrame(index=median_pivot.index)
+    premium_df["furnished_median"] = median_pivot["furnished"]
+    premium_df["unfurnished_median"] = median_pivot["unfurnished"]
+    premium_df["furnished_count"] = count_pivot["furnished"]
+    premium_df["unfurnished_count"] = count_pivot["unfurnished"]
+    premium_df = premium_df.dropna()
+    premium_df = premium_df[
+        (premium_df["furnished_count"] >= 5)
+        & (premium_df["unfurnished_count"] >= 5)
+        & (premium_df["unfurnished_median"] > 0)
+    ]
+    if premium_df.empty:
+        st.info("No locations met the sample threshold for furnishing premium.")
+        return
+
+    premium_df["premium_pct"] = (
+        (premium_df["furnished_median"] / premium_df["unfurnished_median"]) - 1
+    ) * 100
+    premium_df["premium_abs"] = (
+        premium_df["furnished_median"] - premium_df["unfurnished_median"]
+    )
+    premium_df["total_count"] = (
+        premium_df["furnished_count"] + premium_df["unfurnished_count"]
+    )
+    premium_df = premium_df.nlargest(12, "total_count").sort_values("premium_pct")
+    premium_df["location"] = premium_df.index.str.title()
+
+    furnishing_fig = go.Figure(
+        go.Bar(
+            x=premium_df["premium_pct"],
+            y=premium_df["location"],
+            orientation="h",
+            marker_color=[
+                BAR_COLOR if premium >= 0 else RED
+                for premium in premium_df["premium_pct"]
+            ],
+            customdata=premium_df[["premium_abs", "furnished_count", "unfurnished_count"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Premium: %{x:.1f}%<br>"
+                "Median delta: ₵%{customdata[0]:,.0f}<br>"
+                "Furnished: %{customdata[1]:,}<br>"
+                "Unfurnished: %{customdata[2]:,}<extra></extra>"
+            ),
+        )
+    )
+    furnishing_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=max(260, len(premium_df) * 28 + 70),
+        xaxis=dict(
+            title="Furnished vs Unfurnished Premium (%)",
+            ticksuffix="%",
+            showgrid=True,
+            gridcolor=GRID_COLOR,
+            zeroline=True,
+            zerolinecolor=BAR_DIM,
+        ),
+        yaxis=dict(showgrid=False, title=None, tickfont_size=10),
+    )
+    st.plotly_chart(furnishing_fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_opportunity_matrix(df: pd.DataFrame) -> None:
+    section_heading("Segment Opportunity Matrix")
+    page_note(
+        "Bubbles represent location + property type segments. Larger bubbles indicate "
+        "higher average amenity count."
+    )
+
+    amenity_columns = [column for column in AMENITY_LABELS if column in df.columns]
+    matrix_df = df.copy()
+    matrix_df["amenity_score"] = (
+        matrix_df[amenity_columns].sum(axis=1) if amenity_columns else 0
+    )
+
+    segment_df = (
+        matrix_df.groupby(["loc", "house_type"])
+        .agg(
+            listing_count=("price", "count"),
+            median_rent=("price", "median"),
+            q25=("price", lambda series: series.quantile(0.25)),
+            q75=("price", lambda series: series.quantile(0.75)),
+            amenity_score=("amenity_score", "mean"),
+        )
+        .reset_index()
+    )
+    segment_df = segment_df[
+        (segment_df["listing_count"] >= 8) & (segment_df["median_rent"] > 0)
+    ].copy()
+    if segment_df.empty:
+        st.info("Not enough segment coverage to build the opportunity matrix.")
+        return
+
+    segment_df["volatility_score"] = (
+        (segment_df["q75"] - segment_df["q25"]) / segment_df["median_rent"]
+    )
+    segment_df["segment"] = (
+        segment_df["loc"].str.title() + " · " + segment_df["house_type"].str.title()
+    )
+    segment_df = segment_df.nlargest(35, "listing_count")
+
+    matrix_fig = px.scatter(
+        segment_df,
+        x="median_rent",
+        y="listing_count",
+        size="amenity_score",
+        color="volatility_score",
+        hover_name="segment",
+        custom_data=["amenity_score"],
+        color_continuous_scale=[[0, "#d4d4d8"], [1, "#18181b"]],
+        labels={
+            "median_rent": "Median Rent (₵)",
+            "listing_count": "Listings",
+            "volatility_score": "Volatility",
+        },
+    )
+    matrix_fig.update_traces(
+        hovertemplate=(
+            "<b>%{hovertext}</b><br>"
+            "Median rent: ₵%{x:,.0f}<br>"
+            "Listings: %{y:,}<br>"
+            "Avg. amenities: %{customdata[0]:.2f}<br>"
+            "Volatility: %{marker.color:.2f}<extra></extra>"
+        )
+    )
+    matrix_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=520,
+        xaxis=dict(tickprefix="₵", showgrid=True, gridcolor=GRID_COLOR, title=None),
+        yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, title=None),
+        coloraxis_colorbar=dict(title="Volatility"),
+    )
+    st.plotly_chart(matrix_fig, use_container_width=True, config=CHART_CFG)
+
+
+def render_bed_bath_heatmap(df: pd.DataFrame) -> None:
+    section_heading("Bedroom-Bathroom Price Grid")
+    page_note("Median rent by bedroom and bathroom combination. Minimum 8 listings per cell.")
+
+    grid_df = (
+        df[(df["bedrooms"] > 0) & (df["bathrooms"] > 0) & (df["bedrooms"] <= 6) & (df["bathrooms"] <= 6)]
+        .groupby(["bedrooms", "bathrooms"])["price"]
+        .agg(count="count", median="median")
+        .reset_index()
+        .query("count >= 8")
+    )
+    if grid_df.empty:
+        st.info("No bedroom-bathroom combinations met the sample threshold.")
+        return
+
+    grid = (
+        grid_df.pivot(index="bedrooms", columns="bathrooms", values="median")
+        .sort_index()
+        .sort_index(axis=1)
+    )
+    heatmap_fig = px.imshow(
+        grid,
+        aspect="auto",
+        color_continuous_scale=[[0, "#f0f0ee"], [1, "#18181b"]],
+        labels={
+            "x": "Bathrooms",
+            "y": "Bedrooms",
+            "color": "Median Rent (₵)",
+        },
+    )
+    heatmap_fig.update_traces(
+        hovertemplate=(
+            "Bedrooms: %{y}<br>"
+            "Bathrooms: %{x}<br>"
+            "Median rent: ₵%{z:,.0f}<extra></extra>"
+        )
+    )
+    heatmap_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=360,
+        xaxis=dict(side="top", title=None),
+        yaxis=dict(title=None),
+    )
+    st.plotly_chart(heatmap_fig, use_container_width=True, config=CHART_CFG)
+
 
 def render_compact_bar(
     df: pd.DataFrame,
     group_column: str,
     title: str,
     column: st_dg.DeltaGenerator,
+    note: str | None = None,
 ) -> None:
     grouped = (
         df.groupby(group_column)["price"]
         .agg(count="count", median="median")
         .reset_index()
         .query("count >= 3")
-        .sort_values("median")
+    )
+    if grouped.empty:
+        with column:
+            st.info(f"No data available for {title.lower()}.")
+        return
+
+    if len(grouped) > 8:
+        top_categories = grouped.nlargest(8, "count")[group_column]
+        grouped = grouped[grouped[group_column].isin(top_categories)]
+
+    grouped = grouped.sort_values("median")
+    grouped["confidence"] = grouped["count"].apply(confidence_tier)
+    grouped["row_label"] = (
+        grouped[group_column].str.title() + " [" + grouped["confidence"] + "]"
     )
     fig = go.Figure(
         go.Bar(
             x=grouped["median"],
-            y=grouped[group_column].str.title(),
+            y=grouped["row_label"],
             orientation="h",
             marker_color=BAR_COLOR,
-            hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
+            customdata=grouped[["count", "confidence"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Median: ₵%{x:,.0f}<br>"
+                "Listings: %{customdata[0]:,}<br>"
+                "Confidence: %{customdata[1]}<extra></extra>"
+            ),
         )
     )
     compact_layout = {**PLOTLY_LAYOUT, "margin": dict(l=0, r=0, t=36, b=0)}
     fig.update_layout(
         **compact_layout,
-        height=max(200, len(grouped) * 30 + 50),
+        height=min(300, max(220, len(grouped) * 24 + 65)),
         title=dict(text=title, font_size=11, x=0, xanchor="left"),
+        bargap=0.2,
         xaxis=dict(
             tickprefix="₵",
             showgrid=True,
@@ -368,6 +905,325 @@ def render_compact_bar(
     )
     with column:
         st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
+        if note:
+            st.caption(note)
+
+
+def build_location_type_segment_stats(
+    df: pd.DataFrame, min_count: int = 8
+) -> pd.DataFrame:
+    segment_stats = (
+        df.groupby(["loc", "house_type"])["price"]
+        .agg(
+            count="count",
+            median="median",
+            mean="mean",
+            q25=lambda series: series.quantile(0.25),
+            q75=lambda series: series.quantile(0.75),
+        )
+        .reset_index()
+    )
+    segment_stats = segment_stats[
+        (segment_stats["count"] >= min_count) & (segment_stats["median"] > 0)
+    ].copy()
+    if segment_stats.empty:
+        return segment_stats
+
+    segment_stats["volatility_pct"] = (
+        (segment_stats["q75"] - segment_stats["q25"]) / segment_stats["median"]
+    ) * 100
+    segment_stats["median_pct"] = segment_stats["median"].rank(pct=True) * 100
+    segment_stats["volatility_rank_pct"] = (
+        segment_stats["volatility_pct"].rank(pct=True) * 100
+    )
+    segment_stats["confidence"] = segment_stats["count"].apply(confidence_tier)
+    segment_stats["segment"] = (
+        segment_stats["loc"].str.title() + " · " + segment_stats["house_type"].str.title()
+    )
+    return segment_stats
+
+
+def render_location_skew_stability(df: pd.DataFrame) -> None:
+    section_heading("Location Skew & Stability Map")
+    page_note(
+        "Each bubble is a location. Rightward points indicate stronger luxury skew "
+        "(mean above median). Higher points indicate wider price spread."
+    )
+
+    location_insights = (
+        df.groupby("loc")["price"]
+        .agg(
+            count="count",
+            median="median",
+            mean="mean",
+            q25=lambda series: series.quantile(0.25),
+            q75=lambda series: series.quantile(0.75),
+        )
+        .reset_index()
+    )
+    location_insights = location_insights[
+        (location_insights["count"] >= 8) & (location_insights["median"] > 0)
+    ].copy()
+    if location_insights.empty:
+        st.info("Not enough location depth to build skew and stability insights.")
+        return
+
+    location_insights["skew_pct"] = (
+        (location_insights["mean"] - location_insights["median"])
+        / location_insights["median"]
+    ) * 100
+    location_insights["spread_pct"] = (
+        (location_insights["q75"] - location_insights["q25"])
+        / location_insights["median"]
+    ) * 100
+    location_insights["confidence"] = location_insights["count"].apply(confidence_tier)
+    location_insights["location_name"] = location_insights["loc"].str.title()
+    location_insights = location_insights.nlargest(25, "count")
+
+    skew_fig = px.scatter(
+        location_insights,
+        x="skew_pct",
+        y="spread_pct",
+        size="count",
+        color="median",
+        hover_name="location_name",
+        custom_data=["count", "median", "confidence"],
+        color_continuous_scale=[[0, "#d4d4d8"], [1, "#18181b"]],
+        labels={
+            "skew_pct": "Skew (Mean-Median as % of Median)",
+            "spread_pct": "Spread (IQR as % of Median)",
+            "median": "Median Rent",
+        },
+    )
+    skew_fig.update_traces(
+        hovertemplate=(
+            "<b>%{hovertext}</b><br>"
+            "Skew: %{x:.1f}%<br>"
+            "Spread: %{y:.1f}%<br>"
+            "Listings: %{customdata[0]:,}<br>"
+            "Median rent: ₵%{customdata[1]:,.0f}<br>"
+            "Confidence: %{customdata[2]}<extra></extra>"
+        )
+    )
+    skew_fig.add_vline(x=0, line_dash="dot", line_color=BAR_DIM, line_width=1)
+    skew_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=420,
+        xaxis=dict(ticksuffix="%", showgrid=True, gridcolor=GRID_COLOR, title=None),
+        yaxis=dict(ticksuffix="%", showgrid=True, gridcolor=GRID_COLOR, title=None),
+        coloraxis_colorbar=dict(title="Median Rent"),
+    )
+    st.plotly_chart(skew_fig, use_container_width=True, config=CHART_CFG)
+    st.caption(
+        "Read it this way: upper-right locations are both skewed and volatile; "
+        "lower-left locations are relatively stable and less skewed."
+    )
+
+
+def render_segment_leaderboard(df: pd.DataFrame) -> None:
+    section_heading("Segment Leaderboard")
+    page_note(
+        "Top and bottom location + property-type segments by median rent "
+        "(minimum 8 listings per segment)."
+    )
+
+    segment_stats = build_location_type_segment_stats(df)
+    if segment_stats.empty:
+        st.info("Not enough segment depth to build a leaderboard.")
+        return
+
+    highest = segment_stats.nlargest(5, "median").copy()
+    highest["tier"] = "Highest Median"
+    lowest = segment_stats.nsmallest(5, "median").copy()
+    lowest["tier"] = "Lowest Median"
+
+    leaderboard = pd.concat([highest, lowest], ignore_index=True)[
+        [
+            "tier",
+            "segment",
+            "count",
+            "median",
+            "volatility_pct",
+            "median_pct",
+            "volatility_rank_pct",
+            "confidence",
+        ]
+    ]
+    leaderboard = leaderboard.rename(
+        columns={
+            "tier": "Tier",
+            "segment": "Segment",
+            "count": "Listings",
+            "median": "Median Rent",
+            "volatility_pct": "Volatility",
+            "median_pct": "Median Percentile",
+            "volatility_rank_pct": "Volatility Percentile",
+            "confidence": "Confidence",
+        }
+    )
+    leaderboard["Median Rent"] = leaderboard["Median Rent"].map("₵{:,.0f}".format)
+    leaderboard["Volatility"] = leaderboard["Volatility"].map("{:.1f}%".format)
+    leaderboard["Median Percentile"] = leaderboard["Median Percentile"].map(
+        "{:.0f}th".format
+    )
+    leaderboard["Volatility Percentile"] = leaderboard["Volatility Percentile"].map(
+        "{:.0f}th".format
+    )
+
+    st.dataframe(leaderboard, hide_index=True, use_container_width=True)
+    st.caption(
+        "Use this as a shortlist: pair high-median segments with volatility to "
+        "avoid segments that are expensive but unstable."
+    )
+
+
+def render_segment_comparison_panel(df: pd.DataFrame) -> None:
+    section_heading("Compare Two Segments")
+    page_note(
+        "Select two location + property-type segments to compare price level, "
+        "volatility, and sample confidence."
+    )
+
+    segment_stats = build_location_type_segment_stats(df)
+    if len(segment_stats) < 2:
+        st.info("Need at least two segments with enough listings for comparison.")
+        return
+
+    options = segment_stats["segment"].sort_values().tolist()
+    left_col, right_col = st.columns(2, gap="medium")
+    with left_col:
+        segment_a_label = st.selectbox("Segment A", options, key="segment_compare_a")
+    with right_col:
+        default_index = 1 if len(options) > 1 else 0
+        segment_b_label = st.selectbox(
+            "Segment B",
+            options,
+            index=default_index,
+            key="segment_compare_b",
+        )
+
+    segment_a = segment_stats[segment_stats["segment"] == segment_a_label].iloc[0]
+    segment_b = segment_stats[segment_stats["segment"] == segment_b_label].iloc[0]
+
+    median_gap = float(segment_a["median"] - segment_b["median"])
+    volatility_gap = float(segment_a["volatility_pct"] - segment_b["volatility_pct"])
+    listing_gap = int(segment_a["count"] - segment_b["count"])
+
+    metric_col_1, metric_col_2, metric_col_3 = st.columns(3, gap="small")
+    metric_col_1.metric(
+        "Median Gap (A-B)",
+        f"₵{median_gap:,.0f}",
+        delta=f"{median_gap:+,.0f}",
+    )
+    metric_col_2.metric(
+        "Volatility Gap (A-B)",
+        f"{volatility_gap:+.1f}%",
+        delta=f"{volatility_gap:+.1f} pp",
+    )
+    metric_col_3.metric(
+        "Listing Depth Gap (A-B)",
+        f"{listing_gap:+,}",
+        delta=f"{listing_gap:+,} listings",
+    )
+
+    comparison_table = pd.DataFrame(
+        {
+            "Metric": [
+                "Median Rent",
+                "Volatility",
+                "Listings",
+                "Median Percentile",
+                "Volatility Percentile",
+                "Confidence",
+            ],
+            "Segment A": [
+                f"₵{segment_a['median']:,.0f}",
+                f"{segment_a['volatility_pct']:.1f}%",
+                f"{int(segment_a['count']):,}",
+                f"{segment_a['median_pct']:.0f}th",
+                f"{segment_a['volatility_rank_pct']:.0f}th",
+                str(segment_a["confidence"]),
+            ],
+            "Segment B": [
+                f"₵{segment_b['median']:,.0f}",
+                f"{segment_b['volatility_pct']:.1f}%",
+                f"{int(segment_b['count']):,}",
+                f"{segment_b['median_pct']:.0f}th",
+                f"{segment_b['volatility_rank_pct']:.0f}th",
+                str(segment_b["confidence"]),
+            ],
+        }
+    )
+    st.dataframe(comparison_table, hide_index=True, use_container_width=True)
+    st.caption(
+        "Percentiles are computed across all qualifying segments in the current filter."
+    )
+
+
+def render_segment_percentile_map(df: pd.DataFrame) -> None:
+    section_heading("Segment Percentile Position")
+    page_note(
+        "Position of each segment on median-rent percentile (x-axis) and volatility "
+        "percentile (y-axis)."
+    )
+
+    segment_stats = build_location_type_segment_stats(df)
+    if segment_stats.empty:
+        st.info("Not enough segment depth for percentile indicators.")
+        return
+
+    percentile_df = segment_stats.nlargest(30, "count").copy()
+    percentile_fig = px.scatter(
+        percentile_df,
+        x="median_pct",
+        y="volatility_rank_pct",
+        size="count",
+        color="confidence",
+        hover_name="segment",
+        custom_data=["median", "volatility_pct", "count", "confidence"],
+        color_discrete_map={
+            "High": BAR_COLOR,
+            "Moderate": BAR_DIM,
+            "Low": RED,
+        },
+        labels={
+            "median_pct": "Median Rent Percentile",
+            "volatility_rank_pct": "Volatility Percentile",
+        },
+    )
+    percentile_fig.update_traces(
+        hovertemplate=(
+            "<b>%{hovertext}</b><br>"
+            "Median percentile: %{x:.0f}th<br>"
+            "Volatility percentile: %{y:.0f}th<br>"
+            "Median rent: ₵%{customdata[0]:,.0f}<br>"
+            "Volatility: %{customdata[1]:.1f}%<br>"
+            "Listings: %{customdata[2]:,}<br>"
+            "Confidence: %{customdata[3]}<extra></extra>"
+        )
+    )
+    percentile_fig.add_vline(x=50, line_dash="dot", line_color=BAR_DIM, line_width=1)
+    percentile_fig.add_hline(y=50, line_dash="dot", line_color=BAR_DIM, line_width=1)
+    percentile_fig.update_layout(
+        **PLOTLY_LAYOUT,
+        height=430,
+        xaxis=dict(range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR),
+        yaxis=dict(range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.0,
+            xanchor="right",
+            x=1,
+            font_size=10,
+            title=None,
+        ),
+    )
+    st.plotly_chart(percentile_fig, use_container_width=True, config=CHART_CFG)
+    st.caption(
+        "Upper-right segments are both premium-priced and relatively volatile in the "
+        "current market slice."
+    )
 
 
 def render_segments_tab(df: pd.DataFrame) -> None:
@@ -384,25 +1240,41 @@ def render_segments_tab(df: pd.DataFrame) -> None:
         .nlargest(15, "count")
         .sort_values("median")
     )
+    location_stats["confidence"] = location_stats["count"].apply(confidence_tier)
+    location_stats["row_label"] = (
+        location_stats["loc"].str.title() + " [" + location_stats["confidence"] + "]"
+    )
     compare_fig = go.Figure()
     compare_fig.add_trace(
         go.Bar(
             name="Median",
             x=location_stats["median"],
-            y=location_stats["loc"].str.title(),
+            y=location_stats["row_label"],
             orientation="h",
             marker_color=BAR_COLOR,
-            hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
+            customdata=location_stats[["count", "confidence"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Median: ₵%{x:,.0f}<br>"
+                "Listings: %{customdata[0]:,}<br>"
+                "Confidence: %{customdata[1]}<extra></extra>"
+            ),
         )
     )
     compare_fig.add_trace(
         go.Bar(
             name="Mean",
             x=location_stats["mean"],
-            y=location_stats["loc"].str.title(),
+            y=location_stats["row_label"],
             orientation="h",
             marker_color=BAR_DIM,
-            hovertemplate="<b>%{y}</b><br>Mean: ₵%{x:,.0f}<extra></extra>",
+            customdata=location_stats[["count", "confidence"]],
+            hovertemplate=(
+                "<b>%{y}</b><br>"
+                "Mean: ₵%{x:,.0f}<br>"
+                "Listings: %{customdata[0]:,}<br>"
+                "Confidence: %{customdata[1]}<extra></extra>"
+            ),
         )
     )
     compare_layout = {**PLOTLY_LAYOUT, "showlegend": True}
@@ -422,11 +1294,39 @@ def render_segments_tab(df: pd.DataFrame) -> None:
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
     st.plotly_chart(compare_fig, use_container_width=True, config=CHART_CFG)
+    st.caption(
+        "If mean is much higher than median, a few expensive listings are pulling "
+        "the average upward."
+    )
+
+    render_location_skew_stability(df)
+    render_segment_percentile_map(df)
 
     col_1, col_2, col_3 = st.columns(3, gap="medium")
-    render_compact_bar(df, "house_type", "By Property Type", col_1)
-    render_compact_bar(df, "furnishing", "By Furnishing", col_2)
-    render_compact_bar(df, "condition", "By Condition", col_3)
+    render_compact_bar(
+        df,
+        "house_type",
+        "By Property Type",
+        col_1,
+        note="Top categories by listing depth, sorted by median rent.",
+    )
+    render_compact_bar(
+        df,
+        "furnishing",
+        "By Furnishing",
+        col_2,
+        note="Shows how furnishing state shifts median pricing.",
+    )
+    render_compact_bar(
+        df,
+        "condition",
+        "By Condition",
+        col_3,
+        note="Tracks quality-condition premium across the filtered market.",
+    )
+
+    render_segment_comparison_panel(df)
+    render_segment_leaderboard(df)
 
 
 def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
