@@ -18,6 +18,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 DATA_PATH = os.getenv("DATA_PATH", "artifacts/data_processing/preprocessed_train.csv")
 SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
+FULL_DATA_URL = "https://github.com/kcnewman/ScrapeAccraProperties/tree/main/outputs/data"
+PROJECT_GITHUB_URL = "https://github.com/kcnewman/ares"
 
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",

@@ -11,6 +11,7 @@ from utils import (
     BAR_COLOR,
     BAR_DIM,
     CHART_CFG,
+    FULL_DATA_URL,
     confidence_tier,
     GRID_COLOR,
     PAGE_HOME,
@@ -25,6 +26,8 @@ from utils import (
 )
 
 ALL_OPTION = "All"
+LISTINGS_SAMPLE_SIZE = 500
+LISTINGS_SAMPLE_RANDOM_STATE = 42
 
 
 @dataclass(frozen=True)
@@ -1346,10 +1349,300 @@ def render_segments_tab(df: pd.DataFrame) -> None:
     render_segment_leaderboard(df)
 
 
+def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
+    section_heading("Accra Listing Concentration")
+    page_note(
+        "Interactive map of filtered listings. Switch between hotspot bubbles and "
+        "density to explore where supply is clustering."
+    )
+
+    required_columns = {"lat", "lng"}
+    if not required_columns.issubset(df.columns):
+        st.info("Map unavailable: this dataset does not include `lat` and `lng` columns.")
+        return
+
+    map_df = df.copy()
+    map_df["lat"] = pd.to_numeric(map_df["lat"], errors="coerce")
+    map_df["lng"] = pd.to_numeric(map_df["lng"], errors="coerce")
+    map_df = map_df.dropna(subset=["lat", "lng"])
+    map_df = map_df[map_df["lat"].between(4.8, 6.4) & map_df["lng"].between(-1.0, 0.4)]
+
+    if map_df.empty:
+        st.info("No valid coordinates found for the current filter selection.")
+        return
+
+    center_lat = float(map_df["lat"].median())
+    center_lng = float(map_df["lng"].median())
+    coverage_pct = (len(map_df) / listing_count) * 100 if listing_count else 0
+    location_points = (
+        map_df.groupby("loc")
+        .agg(
+            listings=("price", "count"),
+            median_rent=("price", "median"),
+            q25=("price", lambda series: series.quantile(0.25)),
+            q75=("price", lambda series: series.quantile(0.75)),
+            lat=("lat", "median"),
+            lng=("lng", "median"),
+            primary_type=(
+                "house_type",
+                lambda series: (
+                    series.dropna().astype(str).str.title().value_counts().index[0]
+                    if not series.dropna().empty
+                    else "Unknown"
+                ),
+            ),
+            property_types=(
+                "house_type",
+                lambda series: ", ".join(
+                    series.dropna()
+                    .astype(str)
+                    .str.title()
+                    .value_counts()
+                    .head(3)
+                    .index.tolist()
+                ),
+            ),
+            property_types_count=("house_type", "nunique"),
+        )
+        .reset_index()
+    )
+    location_points["primary_type"] = location_points["primary_type"].replace(
+        "", "Unknown"
+    )
+    location_points["property_types"] = location_points["property_types"].replace(
+        "", "Unknown"
+    )
+    location_points["location_label"] = location_points["loc"].str.title()
+
+    st.markdown(
+        metric_bar_html(
+            [
+                ("Mapped Listings", f"{len(map_df):,}"),
+                ("Mapped Locations", f"{location_points['loc'].nunique():,}"),
+                ("Coverage", f"{coverage_pct:.1f}%"),
+                ("Median Mapped Rent", f"₵{map_df['price'].median():,.0f}"),
+            ]
+        ),
+        unsafe_allow_html=True,
+    )
+
+    controls_col_1, controls_col_2, controls_col_3 = st.columns(3, gap="small")
+    with controls_col_1:
+        view_mode = st.radio(
+            "Map Layer",
+            ["Hotspots", "Density"],
+            horizontal=True,
+            key="ex_map_view_mode",
+        )
+    with controls_col_2:
+        max_locations = min(45, max(1, len(location_points)))
+        hotspot_count = st.slider(
+            "Hotspots Shown",
+            min_value=1,
+            max_value=max_locations,
+            value=min(22, max_locations),
+            key="ex_map_hotspot_count",
+        )
+    with controls_col_3:
+        density_radius = st.slider(
+            "Density Radius",
+            min_value=8,
+            max_value=30,
+            value=18,
+            step=1,
+            key="ex_map_density_radius",
+        )
+
+    map_layout = {
+        **PLOTLY_LAYOUT,
+        "height": 560,
+        "margin": dict(l=0, r=0, t=0, b=0),
+        "mapbox": dict(
+            style="carto-positron",
+            zoom=10.2,
+            center={"lat": center_lat, "lon": center_lng},
+        ),
+    }
+    map_config = {**CHART_CFG, "scrollZoom": True}
+
+    if view_mode == "Hotspots":
+        hotspot_points = location_points.nlargest(hotspot_count, "listings").copy()
+        listing_min = float(hotspot_points["listings"].min())
+        listing_max = float(hotspot_points["listings"].max())
+        if listing_max == listing_min:
+            hotspot_points["marker_size"] = 24.0
+        else:
+            hotspot_points["marker_size"] = 14 + (
+                (hotspot_points["listings"] - listing_min)
+                / (listing_max - listing_min)
+            ) * 30
+
+        bubble_fig = go.Figure(
+            go.Scattermapbox(
+                lat=hotspot_points["lat"],
+                lon=hotspot_points["lng"],
+                mode="markers",
+                marker=dict(
+                    size=hotspot_points["marker_size"],
+                    color=hotspot_points["median_rent"],
+                    colorscale="YlOrRd",
+                    opacity=0.84,
+                    allowoverlap=True,
+                    showscale=True,
+                    colorbar=dict(
+                        title="Median Rent (₵)",
+                        tickprefix="₵",
+                    ),
+                ),
+                customdata=hotspot_points[
+                    [
+                        "location_label",
+                        "listings",
+                        "median_rent",
+                        "q25",
+                        "q75",
+                        "primary_type",
+                        "property_types",
+                        "property_types_count",
+                    ]
+                ],
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>"
+                    "Listings: %{customdata[1]:,}<br>"
+                    "Median rent: ₵%{customdata[2]:,.0f}<br>"
+                    "IQR: ₵%{customdata[3]:,.0f} - ₵%{customdata[4]:,.0f}<br>"
+                    "Primary type: %{customdata[5]}<br>"
+                    "Top types: %{customdata[6]}<br>"
+                    "Type variety: %{customdata[7]}<extra></extra>"
+                ),
+            )
+        )
+        bubble_fig.update_layout(**map_layout)
+        st.plotly_chart(bubble_fig, use_container_width=True, config=map_config)
+        st.caption(
+            "Bubble size = listing count, color = median rent. Hover or zoom to inspect hotspots."
+        )
+    else:
+        density_fig = px.density_mapbox(
+            map_df,
+            lat="lat",
+            lon="lng",
+            z="price",
+            radius=density_radius,
+            center={"lat": center_lat, "lon": center_lng},
+            zoom=10,
+            mapbox_style="carto-positron",
+            color_continuous_scale=[
+                [0.0, "#fff7bc"],
+                [0.35, "#fec44f"],
+                [0.65, "#fe9929"],
+                [1.0, "#d95f0e"],
+            ],
+            hover_data={
+                "loc": True,
+                "house_type": True,
+                "price": ":,.0f",
+                "lat": ":.4f",
+                "lng": ":.4f",
+            },
+        )
+        density_fig.update_layout(
+            **map_layout,
+            coloraxis_colorbar=dict(
+                title="Weighted Density",
+                tickfont=dict(size=10),
+                titlefont=dict(size=10),
+            ),
+        )
+        st.plotly_chart(density_fig, use_container_width=True, config=map_config)
+        st.caption(
+            "Density is weighted by listing price. Increase radius for smoother market clusters."
+        )
+
+    chart_gap("1.0rem")
+
+    section_heading("Top Hotspots")
+    page_note(
+        "Locations with the highest number of mapped listings in this filter slice."
+    )
+
+    hotspot_df = (
+        location_points.sort_values("listings", ascending=False)
+        .head(10)
+        [["location_label", "listings", "median_rent"]]
+    )
+    hotspot_df["median_rent"] = hotspot_df["median_rent"].map("₵{:,.0f}".format)
+    hotspot_df = hotspot_df.rename(
+        columns={
+            "location_label": "Location",
+            "listings": "Listings",
+            "median_rent": "Median Rent",
+        }
+    )
+    st.dataframe(hotspot_df, hide_index=True, use_container_width=True)
+
+
+def build_representative_sample(
+    df: pd.DataFrame,
+    sample_size: int = LISTINGS_SAMPLE_SIZE,
+    stratify_cols: tuple[str, str] = ("loc", "house_type"),
+    random_state: int = LISTINGS_SAMPLE_RANDOM_STATE,
+) -> pd.DataFrame:
+    if df.empty:
+        return df.copy()
+
+    if len(df) <= sample_size:
+        return df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+
+    if not set(stratify_cols).issubset(df.columns):
+        return df.sample(n=sample_size, random_state=random_state).reset_index(drop=True)
+
+    sampled_df = df.copy()
+    sampled_df["_stratum"] = (
+        sampled_df[list(stratify_cols)]
+        .fillna("Unknown")
+        .astype(str)
+        .agg(" | ".join, axis=1)
+    )
+
+    stratum_sizes = sampled_df["_stratum"].value_counts().sort_index()
+    expected = (stratum_sizes / stratum_sizes.sum()) * sample_size
+    allocations = expected.astype(int)
+    remainder = sample_size - int(allocations.sum())
+
+    if remainder > 0:
+        fractional = (expected - allocations).sort_values(ascending=False)
+        for stratum_name in fractional.head(remainder).index:
+            allocations.loc[stratum_name] += 1
+
+    sampled_parts: list[pd.DataFrame] = []
+    for stratum_name, take_count in allocations.items():
+        if int(take_count) <= 0:
+            continue
+        stratum_rows = sampled_df[sampled_df["_stratum"] == stratum_name]
+        sampled_parts.append(
+            stratum_rows.sample(n=int(take_count), random_state=random_state)
+        )
+
+    if not sampled_parts:
+        return df.sample(n=sample_size, random_state=random_state).reset_index(drop=True)
+
+    sampled_rows = pd.concat(sampled_parts, axis=0)
+    sampled_rows = sampled_rows.sample(frac=1, random_state=random_state)
+    return sampled_rows.drop(columns="_stratum").reset_index(drop=True)
+
+
 def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
     section_heading("Filtered Listings")
     page_note(
-        f"Showing up to 500 of {listing_count:,} filtered listings, sorted by price."
+        f"Showing a representative sample of up to {LISTINGS_SAMPLE_SIZE:,} "
+        f"from {listing_count:,} filtered listings."
+    )
+    st.markdown(
+        "<p style='color:var(--t3);font-size:0.78rem;margin:-0.25rem 0 0.7rem;'>"
+        f"Full source data: <a href='{FULL_DATA_URL}' target='_blank'>"
+        "ScrapeAccraProperties outputs</a></p>",
+        unsafe_allow_html=True,
     )
 
     display_columns = {
@@ -1361,11 +1654,10 @@ def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
         "furnishing": "Furnishing",
         "price": "Rent (₵/mo)",
     }
+    sampled_df = build_representative_sample(df)
     display_frame = (
-        df[list(display_columns)]
+        sampled_df[list(display_columns)]
         .rename(columns=display_columns)
-        .sort_values("Rent (₵/mo)", ascending=False)
-        .head(500)
     )
     for column_name in ["Location", "Type", "Condition", "Furnishing"]:
         if column_name in display_frame.columns:
@@ -1395,13 +1687,15 @@ def main() -> None:
     summary = summarize_prices(filtered_data)
     render_summary_metrics(summary)
 
-    overview_tab, segments_tab, listings_tab = st.tabs(
-        ["Overview", "Segments", "Listings"]
+    overview_tab, segments_tab, map_tab, listings_tab = st.tabs(
+        ["Overview", "Segments", "Map", "Listings"]
     )
     with overview_tab:
         render_overview_tab(filtered_data, summary)
     with segments_tab:
         render_segments_tab(filtered_data)
+    with map_tab:
+        render_map_tab(filtered_data, summary.listing_count)
     with listings_tab:
         render_listings_tab(filtered_data, summary.listing_count)
 

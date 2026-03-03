@@ -5,6 +5,7 @@ import streamlit as st
 from utils import (
     PAGE_EXPLORER,
     PAGE_PREDICTOR,
+    PROJECT_GITHUB_URL,
     check_api,
     inject_styles,
     load_market_data,
@@ -61,7 +62,7 @@ def render_snapshot_metrics(snapshot: HomeSnapshot) -> None:
             [
                 ("Prediction API", api_label, api_class),
                 ("Total Listings", snapshot.total_listings, ""),
-                ("Locations Covered", snapshot.locations_covered, ""),
+                ("Total Localities", snapshot.locations_covered, ""),
                 ("Market", "Greater Accra", ""),
             ]
         ),
@@ -90,6 +91,12 @@ def render_footer() -> None:
         "ARES uses an ML model trained on historical Jiji.com.gh listings. "
         "Estimates are indicative and should be validated against current market conditions."
         "</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p style='color:var(--t3);font-size:0.72rem;text-align:center;margin-top:0.25rem;'>"
+        f"Project repository: <a href='{PROJECT_GITHUB_URL}' target='_blank'>"
+        "github.com/kcnewman/ares</a></p>",
         unsafe_allow_html=True,
     )
 
