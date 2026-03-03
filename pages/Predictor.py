@@ -4,15 +4,18 @@ Property input form → POST /predict → navigate to Report page.
 Includes nav buttons for Explorer and last Report (if available).
 """
 
-import streamlit as st
 import requests
+import streamlit as st
 
 from utils import (
-    BACKEND_URL,
-    PAGE_HOME, PAGE_EXPLORER, PAGE_REPORT,
     AMENITY_LABELS,
-    inject_styles, section_heading,
-    check_api, load_schema,
+    BACKEND_URL,
+    PAGE_EXPLORER,
+    PAGE_REPORT,
+    check_api,
+    inject_styles,
+    load_schema,
+    section_heading,
 )
 
 st.set_page_config(
@@ -25,27 +28,32 @@ inject_styles()
 
 # ── Session state defaults ────────────────────────────────────────────────────
 for key, default in [
-    ("scroll_uid",        0),
+    ("scroll_uid", 0),
     ("prediction_result", None),
-    ("form_inputs",       {}),
+    ("form_inputs", {}),
 ]:
     if key not in st.session_state:
         st.session_state[key] = default
 
 # ── Nav bar ───────────────────────────────────────────────────────────────────
-nc1, nc2, nc3 = st.columns([1, 1.4, 4])
+nc1, nc2 = st.columns(2, gap="small")
 with nc1:
-    if st.button("← Explorer", key="pred_expl"):
+    if st.button("← Explorer", key="pred_expl", use_container_width=True):
         st.switch_page(PAGE_EXPLORER)
 with nc2:
     has_report = st.session_state.prediction_result is not None
     if st.button(
         "Last Report →",
         key="pred_report",
+        use_container_width=True,
         disabled=not has_report,
-        help="No report yet — run a valuation first." if not has_report else "Open last valuation report.",
     ):
         st.switch_page(PAGE_REPORT)
+    st.caption(
+        "Run a valuation to enable this."
+        if not has_report
+        else "Opens your most recent valuation."
+    )
 
 st.markdown("## Predictor")
 st.markdown(
@@ -61,7 +69,9 @@ api_ok = check_api()
 schema = load_schema()
 
 if not api_ok:
-    st.error("⚠️ Backend API is offline. Start the FastAPI service to use the predictor.")
+    st.error(
+        "⚠️ Backend API is offline. Start the FastAPI service to use the predictor."
+    )
     st.stop()
 
 if not schema:
@@ -70,31 +80,30 @@ if not schema:
 
 # ── Form ──────────────────────────────────────────────────────────────────────
 with st.form("valuation_form", border=False):
-
     section_heading("Property Details")
 
     c1, c2 = st.columns(2, gap="medium")
     with c1:
-        loc_options  = sorted(schema["mappings"]["location_class"].keys())
-        loc          = st.selectbox("Location", options=loc_options)
+        loc_options = sorted(schema["mappings"]["location_class"].keys())
+        loc = st.selectbox("Location", options=loc_options)
 
         prop_options = list(schema["mappings"]["property_density"].keys())
-        prop_type    = st.selectbox("Property Type", options=prop_options)
+        prop_type = st.selectbox("Property Type", options=prop_options)
 
         cond_options = list(schema["mappings"]["condition_transform"].keys())
-        condition    = st.selectbox("Condition", options=cond_options)
+        condition = st.selectbox("Condition", options=cond_options)
 
     with c2:
         furn_options = list(schema["mappings"]["furnishing_transform"].keys())
-        furnishing   = st.selectbox("Furnishing", options=furn_options)
-        bedrooms     = st.number_input("Bedrooms",  min_value=0, value=1, step=1)
-        bathrooms    = st.number_input("Bathrooms", min_value=0, value=1, step=1)
+        furnishing = st.selectbox("Furnishing", options=furn_options)
+        bedrooms = st.number_input("Bedrooms", min_value=0, value=1, step=1)
+        bathrooms = st.number_input("Bathrooms", min_value=0, value=1, step=1)
 
     st.markdown("---")
     section_heading("Amenities")
 
-    lux_list     = schema["lists"]["amenities"]["luxury"]
-    std_list     = schema["lists"]["amenities"]["standard"]
+    lux_list = schema["lists"]["amenities"]["luxury"]
+    std_list = schema["lists"]["amenities"]["standard"]
     all_amenities: list[str] = lux_list + std_list
 
     amenity_inputs: dict[str, bool] = {}
@@ -115,11 +124,11 @@ if submitted:
 
     payload: dict = {
         "house_type": prop_type,
-        "condition":  condition,
+        "condition": condition,
         "furnishing": furnishing,
-        "loc":        loc,
-        "bathrooms":  int(bathrooms),
-        "bedrooms":   int(bedrooms),
+        "loc": loc,
+        "bathrooms": int(bathrooms),
+        "bedrooms": int(bedrooms),
     }
     for am, checked in amenity_inputs.items():
         payload[am] = 1 if checked else 0
@@ -138,14 +147,16 @@ if submitted:
 
     st.session_state.prediction_result = result
     st.session_state.form_inputs = {
-        "location":      loc,
+        "location": loc,
         "property_type": prop_type,
-        "condition":     condition,
-        "furnishing":    furnishing,
-        "bedrooms":      int(bedrooms),
-        "bathrooms":     int(bathrooms),
-        "amenities":     {am: v for am, v in amenity_inputs.items() if v},
-        "generated_at":  __import__("datetime").datetime.now().strftime("%d %b %Y · %H:%M"),
+        "condition": condition,
+        "furnishing": furnishing,
+        "bedrooms": int(bedrooms),
+        "bathrooms": int(bathrooms),
+        "amenities": {am: v for am, v in amenity_inputs.items() if v},
+        "generated_at": __import__("datetime")
+        .datetime.now()
+        .strftime("%d %b %Y · %H:%M"),
     }
     st.session_state.scroll_uid += 1
 

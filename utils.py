@@ -2,72 +2,72 @@
 utils.py — Shared design system, HTML builders, Plotly theme, and data helpers.
 Import before any st.* calls on every page.
 """
+
 from __future__ import annotations
 
 import json
 import os
-import requests
-from datetime import datetime
 
 import pandas as pd
+import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
 # ── Navigation paths ──────────────────────────────────────────────────────────
-PAGE_HOME      = "app.py"
-PAGE_EXPLORER  = "pages/Explorer.py"
+PAGE_HOME = "app.py"
+PAGE_EXPLORER = "pages/Explorer.py"
 PAGE_PREDICTOR = "pages/Predictor.py"
-PAGE_REPORT    = "pages/Report.py"
+PAGE_REPORT = "pages/Report.py"
 
 # ── Runtime config ────────────────────────────────────────────────────────────
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-DATA_PATH   = os.getenv("DATA_PATH",   "artifacts/data/preprocessed_train.csv")
+DATA_PATH = os.getenv("DATA_PATH", "artifacts/data/preprocessed_train.csv")
 SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
 
 # ── Amenity display labels ────────────────────────────────────────────────────
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",
-    "air_conditioning":    "Air Conditioning",
-    "apartment":           "Apartment",
-    "balcony":             "Balcony",
-    "chandelier":          "Chandelier",
-    "dining_area":         "Dining Area",
-    "dishwasher":          "Dishwasher",
-    "hot_water":           "Hot Water",
-    "kitchen_cabinets":    "Kitchen Cabinets",
-    "kitchen_shelf":       "Kitchen Shelf",
-    "microwave":           "Microwave",
-    "pop_ceiling":         "POP Ceiling",
-    "pre_paid_meter":      "Prepaid Meter",
-    "refrigerator":        "Refrigerator",
-    "tv":                  "TV",
-    "tiled_floor":         "Tiled Floor",
-    "wardrobe":            "Wardrobe",
-    "wi_fi":               "Wi-Fi",
+    "air_conditioning": "Air Conditioning",
+    "apartment": "Apartment",
+    "balcony": "Balcony",
+    "chandelier": "Chandelier",
+    "dining_area": "Dining Area",
+    "dishwasher": "Dishwasher",
+    "hot_water": "Hot Water",
+    "kitchen_cabinets": "Kitchen Cabinets",
+    "kitchen_shelf": "Kitchen Shelf",
+    "microwave": "Microwave",
+    "pop_ceiling": "POP Ceiling",
+    "pre_paid_meter": "Prepaid Meter",
+    "refrigerator": "Refrigerator",
+    "tv": "TV",
+    "tiled_floor": "Tiled Floor",
+    "wardrobe": "Wardrobe",
+    "wi_fi": "Wi-Fi",
 }
 AMENITY_COLS = list(AMENITY_LABELS.keys())
 
 # ── Plotly shared layout ──────────────────────────────────────────────────────
 PLOTLY_LAYOUT = dict(
-    font_family   = "Manrope, sans-serif",
-    font_color    = "#52525b",
-    font_size     = 11,
-    plot_bgcolor  = "#ffffff",
-    paper_bgcolor = "#ffffff",
-    margin        = dict(l=0, r=0, t=28, b=0),
-    showlegend    = False,
-    hoverlabel    = dict(
-        bgcolor     = "#18181b",
-        font_color  = "#ffffff",
-        font_family = "Manrope, sans-serif",
-        font_size   = 11,
+    font_family="Manrope, sans-serif",
+    font_color="#52525b",
+    font_size=11,
+    plot_bgcolor="#ffffff",
+    paper_bgcolor="#ffffff",
+    margin=dict(l=0, r=0, t=28, b=0),
+    showlegend=False,
+    hoverlabel=dict(
+        bgcolor="#18181b",
+        font_color="#ffffff",
+        font_family="Manrope, sans-serif",
+        font_size=11,
     ),
 )
 GRID_COLOR = "#f0f0ee"
-BAR_COLOR  = "#18181b"
-BAR_DIM    = "#d4d4d8"
-RED        = "#dc2626"
-CHART_CFG  = {"displayModeBar": False}
+BAR_COLOR = "#18181b"
+BAR_DIM = "#d4d4d8"
+RED = "#dc2626"
+CHART_CFG = {"displayModeBar": False}
 
 # ── Google Fonts ──────────────────────────────────────────────────────────────
 _FONT_LINK = (
@@ -332,6 +332,7 @@ def scroll_to_top(uid: int = 0) -> None:
 
 # ── HTML builders ─────────────────────────────────────────────────────────────
 
+
 def chip_grid_html(chips: list[tuple[str, str]]) -> str:
     inner = "".join(
         f'<div class="chip"><div class="chip-label">{lbl}</div>'
@@ -362,9 +363,21 @@ def stat_row_html(stats: list[tuple[str, str, str]]) -> str:
 
 def workflow_card_html() -> str:
     steps = [
-        ("01 · Explore",  "Market Explorer",  "Browse 19k+ listings with live filters and segment breakdowns."),
-        ("02 · Predict",  "Run Predictor",    "Input property details and run the ML valuation model."),
-        ("03 · Review",   "Valuation Report", "Estimated rent with uncertainty band and market context."),
+        (
+            "01 · Explore",
+            "Market Explorer",
+            "Browse 19k+ listings with live filters and segment breakdowns.",
+        ),
+        (
+            "02 · Predict",
+            "Run Predictor",
+            "Input property details and run the ML valuation model.",
+        ),
+        (
+            "03 · Review",
+            "Valuation Report",
+            "Estimated rent with uncertainty band and market context.",
+        ),
     ]
     inner = "".join(
         f'<div class="workflow-step"><div class="ws-num">{n}</div>'
@@ -391,13 +404,13 @@ def result_card_html(
         f'<div><div class="ml">Price Range</div>'
         f'<div class="mv">₵{low:,.0f} – ₵{high:,.0f}</div></div>',
         f'<div><div class="ml">Market Volatility</div>'
-        f'<div class="mv" style="color:{vol_color};">{vol*100:.2f}% · {vol_label}</div></div>',
+        f'<div class="mv" style="color:{vol_color};">{vol * 100:.2f}% · {vol_label}</div></div>',
     ]
     if seg_median is not None and seg_median > 0:
-        delta     = price - seg_median
+        delta = price - seg_median
         delta_pct = delta / seg_median * 100
-        sign      = "+" if delta >= 0 else ""
-        d_color   = "var(--red)" if delta >= 0 else "var(--green)"
+        sign = "+" if delta >= 0 else ""
+        d_color = "var(--red)" if delta >= 0 else "var(--green)"
         metrics.append(
             f'<div><div class="ml">vs. Segment Median</div>'
             f'<div class="mv" style="color:{d_color};">{sign}{delta_pct:.1f}%</div></div>'
@@ -420,18 +433,25 @@ def insight_box_html(
     est_price: float,
     confidence: str,
 ) -> str:
-    delta     = est_price - seg_median
+    delta = est_price - seg_median
     delta_pct = delta / seg_median * 100 if seg_median > 0 else 0
-    sign      = "+" if delta >= 0 else ""
-    d_color   = "var(--red)" if delta >= 0 else "var(--green)"
-    c_color   = {"High": "var(--green)", "Moderate": "var(--amber)", "Low": "var(--red)"}.get(confidence, "inherit")
+    sign = "+" if delta >= 0 else ""
+    d_color = "var(--red)" if delta >= 0 else "var(--green)"
+    c_color = {
+        "High": "var(--green)",
+        "Moderate": "var(--amber)",
+        "Low": "var(--red)",
+    }.get(confidence, "inherit")
     items = [
-        ("Baseline Segment",  seg_label),
-        ("Segment Size",      f"{seg_n:,} listings"),
-        ("Segment Median",    f"₵{seg_median:,.0f}"),
-        ("IQR",               f"₵{seg_q25:,.0f} – ₵{seg_q75:,.0f}"),
-        ("Delta vs Median",   f'<span style="color:{d_color};">{sign}{delta_pct:.1f}%</span>'),
-        ("Confidence",        f'<span style="color:{c_color};">{confidence}</span>'),
+        ("Baseline Segment", seg_label),
+        ("Segment Size", f"{seg_n:,} listings"),
+        ("Segment Median", f"₵{seg_median:,.0f}"),
+        ("IQR", f"₵{seg_q25:,.0f} – ₵{seg_q75:,.0f}"),
+        (
+            "Delta vs Median",
+            f'<span style="color:{d_color};">{sign}{delta_pct:.1f}%</span>',
+        ),
+        ("Confidence", f'<span style="color:{c_color};">{confidence}</span>'),
     ]
     inner = "".join(
         f'<div class="insight-item"><div class="ii-l">{lbl}</div>'
@@ -459,6 +479,7 @@ def page_note(text: str) -> None:
 
 
 # ── Data helpers ──────────────────────────────────────────────────────────────
+
 
 @st.cache_data(show_spinner=False)
 def load_market_data() -> pd.DataFrame | None:
@@ -498,7 +519,11 @@ def compute_segment(
     """
     candidates = [
         (
-            df[(df["loc"] == loc) & (df["house_type"] == prop_type) & (df["furnishing"] == furnishing)],
+            df[
+                (df["loc"] == loc)
+                & (df["house_type"] == prop_type)
+                & (df["furnishing"] == furnishing)
+            ],
             f"{furnishing.title()} {prop_type.title()} in {loc.title()}",
         ),
         (

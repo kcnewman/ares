@@ -6,17 +6,28 @@ Tabs: Insights (segment context) | Comparables (ranked table).
 
 from datetime import datetime
 
-import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
+import streamlit as st
 
 from utils import (
-    PAGE_PREDICTOR, PAGE_EXPLORER,
     AMENITY_LABELS,
-    PLOTLY_LAYOUT, GRID_COLOR, BAR_COLOR, BAR_DIM, RED, CHART_CFG,
-    inject_styles, scroll_to_top, section_heading, page_note,
-    result_card_html, chip_grid_html, insight_box_html,
-    load_market_data, compute_segment, confidence_tier,
+    BAR_COLOR,
+    CHART_CFG,
+    GRID_COLOR,
+    PAGE_EXPLORER,
+    PAGE_PREDICTOR,
+    PLOTLY_LAYOUT,
+    RED,
+    chip_grid_html,
+    compute_segment,
+    confidence_tier,
+    inject_styles,
+    insight_box_html,
+    load_market_data,
+    page_note,
+    result_card_html,
+    scroll_to_top,
+    section_heading,
 )
 
 st.set_page_config(
@@ -44,19 +55,19 @@ if not result:
     st.stop()
 
 # ── Unpack result + inputs ────────────────────────────────────────────────────
-est_price  = result.get("estimated_price", 0)
-low_b      = result.get("lower_band",       0)
-high_b     = result.get("upper_band",       0)
-vol        = result.get("market_volatility_idx", 0)
+est_price = result.get("estimated_price", 0)
+low_b = result.get("lower_band", 0)
+high_b = result.get("upper_band", 0)
+vol = result.get("market_volatility_idx", 0)
 
-loc        = inputs.get("location",      "—")
-prop_type  = inputs.get("property_type", "—")
-condition  = inputs.get("condition",     "—")
-furnishing = inputs.get("furnishing",    "—")
-bedrooms   = inputs.get("bedrooms",      0)
-bathrooms  = inputs.get("bathrooms",     0)
-amenities  = inputs.get("amenities",     {})
-gen_at     = inputs.get("generated_at",  datetime.now().strftime("%d %b %Y · %H:%M"))
+loc = inputs.get("location", "—")
+prop_type = inputs.get("property_type", "—")
+condition = inputs.get("condition", "—")
+furnishing = inputs.get("furnishing", "—")
+bedrooms = inputs.get("bedrooms", 0)
+bathrooms = inputs.get("bathrooms", 0)
+amenities = inputs.get("amenities", {})
+gen_at = inputs.get("generated_at", datetime.now().strftime("%d %b %Y · %H:%M"))
 
 # ── Load market data + compute segment ───────────────────────────────────────
 df = load_market_data()
@@ -64,19 +75,19 @@ seg_df, seg_label, seg_median_val = None, None, None
 
 if df is not None:
     seg_df, seg_label = compute_segment(df, loc, prop_type, furnishing)
-    seg_n      = len(seg_df)
+    seg_n = len(seg_df)
     seg_median_val = seg_df["price"].median()
-    seg_q25    = seg_df["price"].quantile(0.25)
-    seg_q75    = seg_df["price"].quantile(0.75)
+    seg_q25 = seg_df["price"].quantile(0.25)
+    seg_q75 = seg_df["price"].quantile(0.75)
     confidence = confidence_tier(seg_n)
 
 # ── Nav bar ───────────────────────────────────────────────────────────────────
-nc1, nc2, nc3 = st.columns([1.1, 1, 4])
+nc1, nc2 = st.columns(2, gap="small")
 with nc1:
-    if st.button("← Predictor", key="rpt_pred"):
+    if st.button("← Predictor", key="rpt_pred", use_container_width=True):
         st.switch_page(PAGE_PREDICTOR)
 with nc2:
-    if st.button("Explorer →", key="rpt_expl"):
+    if st.button("Explorer →", key="rpt_expl", use_container_width=True):
         st.switch_page(PAGE_EXPLORER)
 
 # ── Page title ────────────────────────────────────────────────────────────────
@@ -98,19 +109,19 @@ st.markdown(
 n_market = f"{len(df):,}" if df is not None else "—"
 st.markdown(
     f'<div class="report-meta">'
-    f'Generated {gen_at} &nbsp;·&nbsp; Market snapshot: {n_market} listings'
-    f'</div>',
+    f"Generated {gen_at} &nbsp;·&nbsp; Market snapshot: {n_market} listings"
+    f"</div>",
     unsafe_allow_html=True,
 )
 
 # ── Property chips ────────────────────────────────────────────────────────────
 chips = [
-    ("Location",      loc.title()),
+    ("Location", loc.title()),
     ("Property Type", prop_type.title()),
-    ("Condition",     condition.title()),
-    ("Furnishing",    furnishing.title()),
-    ("Bedrooms",      str(bedrooms)),
-    ("Bathrooms",     str(bathrooms)),
+    ("Condition", condition.title()),
+    ("Furnishing", furnishing.title()),
+    ("Bedrooms", str(bedrooms)),
+    ("Bathrooms", str(bathrooms)),
 ]
 if amenities:
     am_names = ", ".join(
@@ -135,8 +146,13 @@ with tab_ins:
         # Segment context box
         st.markdown(
             insight_box_html(
-                seg_label, seg_n, seg_median_val,
-                seg_q25, seg_q75, est_price, confidence,
+                seg_label,
+                seg_n,
+                seg_median_val,
+                seg_q25,
+                seg_q75,
+                est_price,
+                confidence,
             ),
             unsafe_allow_html=True,
         )
@@ -147,29 +163,48 @@ with tab_ins:
             "Red dashed line marks your estimate."
         )
 
-        p99     = seg_df["price"].quantile(0.99)
+        p99 = seg_df["price"].quantile(0.99)
         plot_df = seg_df[seg_df["price"] <= p99]
 
         fig = px.histogram(
-            plot_df, x="price", nbins=30,
+            plot_df,
+            x="price",
+            nbins=30,
             labels={"price": "Monthly Rent (₵)"},
             color_discrete_sequence=[BAR_COLOR],
         )
         fig.add_vline(
-            x=est_price, line_color=RED, line_width=2, line_dash="dash",
-            annotation_text="Your estimate", annotation_position="top right",
-            annotation_font_color=RED, annotation_font_size=10,
+            x=est_price,
+            line_color=RED,
+            line_width=2,
+            line_dash="dash",
+            annotation_text="Your estimate",
+            annotation_position="top right",
+            annotation_font_color=RED,
+            annotation_font_size=10,
         )
         fig.add_vrect(
-            x0=low_b, x1=high_b,
-            fillcolor=RED, opacity=0.06, layer="below", line_width=0,
+            x0=low_b,
+            x1=high_b,
+            fillcolor=RED,
+            opacity=0.06,
+            layer="below",
+            line_width=0,
         )
         fig.update_layout(
             **PLOTLY_LAYOUT,
-            xaxis=dict(tickprefix="₵", showgrid=False,
-                       title="Monthly Rent (₵)", title_font_size=11),
-            yaxis=dict(showgrid=True, gridcolor=GRID_COLOR,
-                       title="Listings", title_font_size=11),
+            xaxis=dict(
+                tickprefix="₵",
+                showgrid=False,
+                title="Monthly Rent (₵)",
+                title_font_size=11,
+            ),
+            yaxis=dict(
+                showgrid=True,
+                gridcolor=GRID_COLOR,
+                title="Listings",
+                title_font_size=11,
+            ),
             bargap=0.05,
         )
         st.plotly_chart(fig, use_container_width=True, config=CHART_CFG)
@@ -202,13 +237,15 @@ with tab_comp:
 
             display_cols = {
                 "house_type": "Type",
-                "bedrooms":   "Beds",
-                "bathrooms":  "Baths",
-                "condition":  "Condition",
+                "bedrooms": "Beds",
+                "bathrooms": "Baths",
+                "condition": "Condition",
                 "furnishing": "Furnishing",
-                "price":      "Rent (₵/mo)",
+                "price": "Rent (₵/mo)",
             }
-            disp = comp_df[list(display_cols.keys())].rename(columns=display_cols).copy()
+            disp = (
+                comp_df[list(display_cols.keys())].rename(columns=display_cols).copy()
+            )
             for col in ["Type", "Condition", "Furnishing"]:
                 disp[col] = disp[col].str.title()
             disp["Rent (₵/mo)"] = comp_df["price"].map("₵{:,.0f}".format)
