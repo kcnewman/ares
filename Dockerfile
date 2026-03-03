@@ -23,7 +23,8 @@ RUN uv sync --frozen --no-dev
 # Copy the rest of the application code
 COPY artifacts/ ./artifacts/
 COPY config/ ./config/
-COPY params.yaml schema.yaml app.py ./
+COPY pages/ ./pages/
+COPY params.yaml schema.yaml app.py utils.py ./
 COPY .streamlit/ ./.streamlit/
 
 ENV BACKEND_URL="http://127.0.0.1:8000" \

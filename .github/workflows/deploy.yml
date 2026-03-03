@@ -3,6 +3,15 @@ on:
   push:
     paths:
       - 'artifacts.zip'
+      - 'Dockerfile'
+      - 'entrypoint.sh'
+      - 'pyproject.toml'
+      - 'uv.lock'
+      - 'app.py'
+      - 'utils.py'
+      - 'pages/**'
+      - 'src/**'
+      - '.streamlit/**'
     branches:
       - main
 
