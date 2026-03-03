@@ -1,19 +1,23 @@
 import pytest
-import os
 from unittest.mock import patch, mock_open
 from ares.components.data_split import DataSplit
 
 
 @pytest.mark.parametrize(
-    "file_exists, file_content, should_read",
+    "file_exists, file_content, should_read, expected_exception",
     [
-        (False, "", False),  # case 1: file missing
-        (True, "Validation status: False", False),  # case 2: validation failed
-        (True, "Validation status: True", True),  # case 3: validation passed
+        (False, "", False, FileNotFoundError),  # status file missing
+        (True, "Validation status: False", False, RuntimeError),  # validation failed
+        (True, "Validation status: True", True, None),  # validation passed
     ],
 )
 def test_split_flow(
-    mock_split_config, valid_df, file_exists, file_content, should_read
+    mock_split_config,
+    valid_df,
+    file_exists,
+    file_content,
+    should_read,
+    expected_exception,
 ):
     with (
         patch("os.path.exists", return_value=file_exists),
@@ -22,7 +26,11 @@ def test_split_flow(
         patch("pandas.DataFrame.to_csv"),
     ):
         ds = DataSplit(mock_split_config)
-        ds.split()
+        if expected_exception is None:
+            ds.split()
+        else:
+            with pytest.raises(expected_exception):
+                ds.split()
 
         if should_read:
             mock_read.assert_called_once()

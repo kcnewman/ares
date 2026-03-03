@@ -6,10 +6,7 @@ STAGE_NAME = "Model Training"
 
 
 class ModelTrainingPipeline:
-    def __init__(self) -> None:
-        pass
-
-    def main(self):
+    def main(self) -> None:
         config = ConfigurationManager()
         model_trainer_config = config.get_model_trainer_config()
         model_trainer = ModelTrainer(config=model_trainer_config)
@@ -22,6 +19,6 @@ if __name__ == "__main__":
         obj = ModelTrainingPipeline()
         obj.main()
         logger.info(f">>>> Stage {STAGE_NAME} completed <<<<")
-    except Exception as e:
-        logger.exception(e)
-        raise e
+    except Exception:
+        logger.exception("Stage failed: %s", STAGE_NAME)
+        raise

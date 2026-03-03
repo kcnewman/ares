@@ -9,33 +9,37 @@ class DataSplit:
     def __init__(self, config: DataSplitConfig):
         self.config = config
 
-    def split(self):
+    def split(self) -> None:
         status_dir = self.config.status_file
 
         if not os.path.exists(status_dir):
-            logger.error(
-                f"CRITICAL: Validation status file missing at {status_dir}. Cannot split."
+            message = (
+                f"Validation status file missing at {status_dir}. "
+                "Cannot continue data split."
             )
-            return
+            logger.error(message)
+            raise FileNotFoundError(message)
 
         with open(status_dir, "r") as f:
             first_line = f.readline()
             if "Validation status: True" not in first_line:
-                logger.error(
-                    "STOPPING: Data Validation failed. Check status.txt for details."
+                message = (
+                    "Data Validation failed. "
+                    "See status file for details before splitting."
                 )
-                return
+                logger.error(message)
+                raise RuntimeError(message)
 
         logger.info("Validation passed. Starting data split...")
 
         data = pd.read_csv(self.config.data_dir)
 
-        MIN_LISTINGS = 50
+        min_listings = 50
         locality_counts = data["locality"].value_counts()
-        rare_localitys = locality_counts[locality_counts < MIN_LISTINGS].index
+        rare_localities = locality_counts[locality_counts < min_listings].index
 
         data["locality_grouped"] = data["locality"].where(
-            ~data["locality"].isin(rare_localitys), other="OTHER"
+            ~data["locality"].isin(rare_localities), other="OTHER"
         )
 
         train, eval = train_test_split(
@@ -45,6 +49,6 @@ class DataSplit:
         train.to_csv(os.path.join(self.config.root_dir, "train.csv"), index=False)
         eval.to_csv(os.path.join(self.config.root_dir, "eval.csv"), index=False)
 
-        logger.info("Splited data into training and evaluation sets")
+        logger.info("Split data into training and evaluation sets")
         logger.info(f"Train shape: {train.shape}")
         logger.info(f"Test shape: {eval.shape}")

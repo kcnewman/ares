@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 import pandas as pd
+from starlette.concurrency import run_in_threadpool
 from ares.api.schemas import HouseFeatures, PredictionResponse
 from ares.pipeline.inference import predict
 from ares import logger
@@ -27,7 +28,7 @@ async def get_prediction(features: HouseFeatures):
         data_dict = features.model_dump(by_alias=True)
         df = pd.DataFrame([data_dict])
 
-        prediction = predict(df)
+        prediction = await run_in_threadpool(predict, df)
 
         result = prediction.iloc[0]
 

@@ -1,5 +1,6 @@
 import os
 import zipfile
+from collections.abc import Callable
 
 from ares import logger
 from ares.pipeline.data_processing import DataProcessingPipeline
@@ -9,76 +10,18 @@ from ares.pipeline.feature_engineering import FeatureEngineeringPipeline
 from ares.pipeline.model_evaluation import ModelEvaluationPipeline
 from ares.pipeline.model_trainer import ModelTrainingPipeline
 
-STAGE_NAME = "Data Validation"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    data_validation = DataValidationPipeline()
-    data_validation.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
+
+def _run_stage(stage_name: str, stage_fn: Callable[[], None]) -> None:
+    logger.info(f">>>> Stage: {stage_name} started <<<<")
+    try:
+        stage_fn()
+        logger.info(f">>>> Stage: {stage_name} completed <<<<\n\nx==========x")
+    except Exception:
+        logger.exception("Stage failed: %s", stage_name)
+        raise
 
 
-STAGE_NAME = "Data Spliting"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    data_split = DataSplitPipeline()
-    data_split.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
-
-
-STAGE_NAME = "Data Processing"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    data_processor = DataProcessingPipeline()
-    data_processor.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
-
-
-STAGE_NAME = "Feature Engineering"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    feature_pipeline = FeatureEngineeringPipeline()
-    feature_pipeline.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
-
-
-STAGE_NAME = "Model Training"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    training_pipeline = ModelTrainingPipeline()
-    training_pipeline.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
-
-
-STAGE_NAME = "Model Evaluation"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-    evaluation_pipeline = ModelEvaluationPipeline()
-    evaluation_pipeline.main()
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
-except Exception as e:
-    logger.exception(e)
-    raise e
-
-
-STAGE_NAME = "Artifact Compression"
-try:
-    logger.info(f">>>> Stage: {STAGE_NAME} started <<<<")
-
+def _compress_artifacts() -> None:
     directory_to_zip = "artifacts"
     output_zip = "artifacts.zip"
     csv_allowlist = {
@@ -104,8 +47,20 @@ try:
     else:
         logger.warning(f"Compression skipped: {directory_to_zip} directory not found.")
 
-    logger.info(f">>>> Stage: {STAGE_NAME} completed <<<<\n\nx==========x")
 
-except Exception as e:
-    logger.exception(e)
-    raise e
+def main() -> None:
+    stages: list[tuple[str, Callable[[], None]]] = [
+        ("Data Validation", lambda: DataValidationPipeline().main()),
+        ("Data Splitting", lambda: DataSplitPipeline().main()),
+        ("Data Processing", lambda: DataProcessingPipeline().main()),
+        ("Feature Engineering", lambda: FeatureEngineeringPipeline().main()),
+        ("Model Training", lambda: ModelTrainingPipeline().main()),
+        ("Model Evaluation", lambda: ModelEvaluationPipeline().main()),
+        ("Artifact Compression", _compress_artifacts),
+    ]
+    for stage_name, stage_fn in stages:
+        _run_stage(stage_name, stage_fn)
+
+
+if __name__ == "__main__":
+    main()

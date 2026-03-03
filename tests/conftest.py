@@ -16,6 +16,7 @@ class MockValConfig:
 class MockSplitConfig:
     root_dir: str = "output"
     data_dir: str = "data.csv"
+    status_file: str = "status.txt"
 
 
 @dataclass

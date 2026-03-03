@@ -1,9 +1,9 @@
 import pytest
 import numpy as np
-import pandas as pd
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from box import ConfigBox
 from ares.components.feature_engineering import EngineerFeatures
+from ares.utils.volatility import shrink_to_global
 
 
 @pytest.fixture
@@ -24,30 +24,41 @@ def test_math_logic_and_geo(ef_instance):
     assert 1.5 < dist < 2.5
 
 
-def test_zero_division(ef_instance, feature_df):
-    """Ensures 0 bedrooms or 0 price doesn't crash the pipeline."""
+def test_elite_features_are_computed(ef_instance, feature_df):
+    """Ensures elite feature generation runs on edge values without crashing."""
     feature_df.loc[0, "price"] = 0
 
     prepared_df = ef_instance._add_amenity_features(feature_df)
+    prepared_df = ef_instance._add_unit_density(prepared_df)
     prepared_df["loc_pi"] = 0.9
+    prepared_df["class_pi"] = 0.8
     res = ef_instance._add_elite_features(prepared_df)
 
-    assert res.loc[1, "bath_per_bed"] == 0
-    assert np.isfinite(res["bath_per_bed"]).all()
+    assert "size_density_idx" in res.columns
+    assert "class_luxury_premium" in res.columns
+    assert np.isfinite(res["size_density_idx"]).all()
 
 
 def test_bayesian_smoothing_logic(ef_instance):
-    """Checks if small samples are pulled toward the global median."""
-    ef_instance.global_ref = {"std": 1.0}
+    """Checks that low-support estimates shrink harder to global value."""
+    global_std = 1.0
+    local_std = 0.1
 
-    row_low = {"loc": "rare", "n_listings": 1, "std_log": 0.1}
-    stats_low = ef_instance._compute_bayesian_stats(row_low, K=50)
+    smoothed_low = shrink_to_global(
+        local_value=local_std,
+        n_listings=1,
+        global_value=global_std,
+        k_smoothing=50,
+    )
+    smoothed_high = shrink_to_global(
+        local_value=local_std,
+        n_listings=500,
+        global_value=global_std,
+        k_smoothing=50,
+    )
 
-    row_high = {"loc": "busy", "n_listings": 500, "std_log": 0.1}
-    stats_high = ef_instance._compute_bayesian_stats(row_high, K=50)
-
-    assert stats_low["loc_trust_score"] < stats_high["loc_trust_score"]
-    assert stats_low["loc_std_dev"] > 0.5
+    assert abs(smoothed_low - global_std) < abs(local_std - global_std)
+    assert abs(smoothed_high - local_std) < abs(smoothed_low - local_std)
 
 
 def test_full_pipeline_persistence(mock_fe_config, feature_schema, feature_df):

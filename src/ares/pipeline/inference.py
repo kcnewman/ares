@@ -9,6 +9,7 @@ import numpy as np
 from joblib import load
 import argparse
 from pathlib import Path
+from functools import lru_cache
 
 from ares.config.configuration import ConfigurationManager
 from ares.components.feature_engineering import EngineerFeatures
@@ -23,9 +24,12 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MODEL = PROJECT_ROOT / "artifacts" / "model_trainer" / "model.joblib"
 DEFAULT_OUTPUT = PROJECT_ROOT / "artifacts" / "inference" / "predictions.csv"
 
-config_manager = ConfigurationManager()
-fe_config = config_manager.get_feature_engineering_config()
-fe_pipeline = EngineerFeatures(config=fe_config, mode="inference")
+
+@lru_cache(maxsize=1)
+def _get_feature_pipeline() -> EngineerFeatures:
+    config_manager = ConfigurationManager()
+    fe_config = config_manager.get_feature_engineering_config()
+    return EngineerFeatures(config=fe_config, mode="inference")
 
 
 def _load_volatility_thresholds(
@@ -56,7 +60,7 @@ def _load_volatility_thresholds(
 def predict(
     input_data: pd.DataFrame,
     model_path: Path | str = DEFAULT_MODEL,
-    feature_pipeline: EngineerFeatures = fe_pipeline,
+    feature_pipeline: EngineerFeatures | None = None,
 ) -> pd.DataFrame:
     """Takes raw data, transforms it, aligns schema, and returns estimates with bands.
 
@@ -66,6 +70,7 @@ def predict(
     """
 
     try:
+        feature_pipeline = feature_pipeline or _get_feature_pipeline()
         logger.info(f"Processing {len(input_data)} records for inference")
 
         transformed_data = feature_pipeline.run_pipeline(input_data)
@@ -77,7 +82,9 @@ def predict(
         volatility_pct = spread.apply(log_iqr_to_relative_pct)
 
         training_features = [
-            col for col in fe_pipeline.lists["required_columns"] if col != "log_price"
+            col
+            for col in feature_pipeline.lists["required_columns"]
+            if col != "log_price"
         ]
         model_input = transformed_data[training_features]
 
@@ -107,7 +114,7 @@ def predict(
 
     except Exception as e:
         logger.error(f"Inference pipeline failed: {str(e)}")
-        raise e
+        raise
 
 
 if __name__ == "__main__":

@@ -6,10 +6,7 @@ STAGE_NAME = "Model Evaluation"
 
 
 class ModelEvaluationPipeline:
-    def __init__(self) -> None:
-        pass
-
-    def main(self):
+    def main(self) -> None:
         config = ConfigurationManager()
         model_evaluation_config = config.get_model_evaluation_config()
         evaluator = ModelEvaluation(config=model_evaluation_config)
@@ -22,6 +19,6 @@ if __name__ == "__main__":
         obj = ModelEvaluationPipeline()
         obj.main()
         logger.info(f">>>> Stage {STAGE_NAME} completed <<<<")
-    except Exception as e:
-        logger.exception(e)
-        raise e
+    except Exception:
+        logger.exception("Stage failed: %s", STAGE_NAME)
+        raise
