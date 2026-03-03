@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote_plus
 
 import pandas as pd
 import plotly.express as px
@@ -149,6 +150,49 @@ def build_comparables_dataset(
         )
 
     return comparables, scope_note
+
+
+def normalize_listing_url(raw_url: Any) -> str:
+    if pd.isna(raw_url):
+        return ""
+
+    value = str(raw_url).strip()
+    if not value:
+        return ""
+    if value.startswith(("https://", "http://")):
+        return value
+
+    tokens = value.split()
+    if len(tokens) >= 6 and tokens[0] in {"https", "http"}:
+        scheme = tokens[0]
+        if tokens[1:4] == ["jiji", "com", "gh"]:
+            body_tokens = tokens[4:]
+            if body_tokens and body_tokens[-1] == "html":
+                body_tokens = body_tokens[:-1]
+
+            category_tokens = ["houses", "apartments", "for", "rent"]
+            category_start = None
+            for index in range(max(0, len(body_tokens) - len(category_tokens) + 1)):
+                if body_tokens[index : index + len(category_tokens)] == category_tokens:
+                    category_start = index
+                    break
+
+            if (
+                category_start is not None
+                and category_start > 0
+                and category_start + len(category_tokens) < len(body_tokens)
+            ):
+                location_slug = "-".join(body_tokens[:category_start])
+                listing_slug = "-".join(body_tokens[category_start + len(category_tokens) :])
+                return (
+                    f"{scheme}://jiji.com.gh/{location_slug}/houses-apartments-for-rent/"
+                    f"{listing_slug}.html"
+                )
+
+            fallback_slug = "-".join(body_tokens)
+            return f"{scheme}://jiji.com.gh/{fallback_slug}.html"
+
+    return f"https://jiji.com.gh/search?query={quote_plus(value)}"
 
 
 def render_navigation() -> None:
@@ -330,7 +374,7 @@ def render_comparables_table(
     display_frame["Rent (₵/mo)"] = comparables["price"].map("₵{:,.0f}".format)
     if "Listing URL" in display_frame.columns:
         display_frame["Listing URL"] = (
-            display_frame["Listing URL"].fillna("").astype(str).str.strip()
+            comparables["url"].apply(normalize_listing_url).fillna("").astype(str).str.strip()
         )
 
     display_frame = display_frame.reset_index(drop=True)

@@ -43,8 +43,8 @@ AMENITY_COLS = list(AMENITY_LABELS.keys())
 
 PLOTLY_LAYOUT = dict(
     font_family="Manrope, sans-serif",
-    font_color="#52525b",
-    font_size=11,
+    font_color="#3f3f46",
+    font_size=12,
     plot_bgcolor="#ffffff",
     paper_bgcolor="#ffffff",
     margin=dict(l=0, r=0, t=28, b=0),
@@ -53,7 +53,7 @@ PLOTLY_LAYOUT = dict(
         bgcolor="#18181b",
         font_color="#ffffff",
         font_family="Manrope, sans-serif",
-        font_size=11,
+        font_size=12,
     ),
 )
 GRID_COLOR = "#f0f0ee"
@@ -77,8 +77,8 @@ _CSS = """
   --bd:      #e4e4e7;
   --bd2:     #d4d4d8;
   --t1:      #18181b;
-  --t2:      #52525b;
-  --t3:      #a1a1aa;
+  --t2:      #3f3f46;
+  --t3:      #71717a;
   --acc:     #18181b;
   --green:   #16a34a;
   --red:     #dc2626;
@@ -118,7 +118,7 @@ h1 { font-size:1.85rem !important; letter-spacing:-0.02em; }
 h2 { font-size:1.3rem !important; }
 h3 { font-size:1rem !important; }
 .eyebrow {
-  font-size:0.67rem; font-weight:700;
+  font-size:0.72rem; font-weight:700;
   letter-spacing:0.13em; text-transform:uppercase; color:var(--t3);
 }
 
@@ -151,7 +151,7 @@ h3 { font-size:1rem !important; }
 
 /* widget labels */
 label[data-testid="stWidgetLabel"] p {
-  font-size:0.72rem !important;
+  font-size:0.76rem !important;
   font-weight:700 !important;
   color:var(--t2) !important;
   text-transform:uppercase !important;
@@ -177,7 +177,7 @@ div.stFormSubmitButton > button {
   border:none !important;
   border-radius:var(--r) !important;
   font-family:'Manrope',sans-serif !important;
-  font-size:0.78rem !important;
+  font-size:0.82rem !important;
   font-weight:700 !important;
   letter-spacing:0.08em !important;
   text-transform:uppercase !important;
@@ -204,7 +204,7 @@ div.stButton > button[kind="secondary"]:hover {
 /* tabs */
 [data-testid="stTabs"] [data-testid="stTab"] {
   font-family:'Manrope',sans-serif !important;
-  font-size:0.75rem !important;
+  font-size:0.82rem !important;
   font-weight:700 !important;
   letter-spacing:0.07em !important;
   text-transform:uppercase !important;
@@ -229,6 +229,13 @@ div.stButton > button[kind="secondary"]:hover {
   border-radius:var(--r) !important;
   overflow:hidden;
 }
+[data-testid="stDataFrame"] [role="columnheader"] {
+  font-size:0.82rem !important;
+  font-weight:700 !important;
+}
+[data-testid="stDataFrame"] [role="gridcell"] {
+  font-size:0.88rem !important;
+}
 
 /* alerts */
 [data-testid="stAlert"] { border-radius:var(--r) !important; font-size:0.85rem !important; }
@@ -243,14 +250,14 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
   gap:0.5rem; margin:0.75rem 0 1rem;
 }
 .chip { background:var(--bg); border:1px solid var(--bd); border-radius:var(--r); padding:0.6rem 0.8rem; }
-.chip-label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
-.chip-value { font-size:0.85rem; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.chip-label { font-size:0.66rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
+.chip-value { font-size:0.9rem; font-weight:600; color:var(--t1); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* home stat row */
 .stat-row { display:flex; gap:0.75rem; margin:1rem 0 1.5rem; }
 .stat-item { flex:1; background:var(--surface); border:1px solid var(--bd); border-radius:var(--r); padding:0.9rem 1.1rem; }
-.stat-item .sl { font-size:0.62rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.2rem; }
-.stat-item .sv { font-size:1.05rem; font-weight:700; color:var(--t1); }
+.stat-item .sl { font-size:0.68rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.2rem; }
+.stat-item .sv { font-size:1.1rem; font-weight:700; color:var(--t1); }
 .stat-item .sv.online { color:var(--green); }
 .stat-item .sv.offline { color:var(--red); }
 
@@ -260,9 +267,9 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 .workflow-step { flex:1; padding:0.6rem 1rem; border-right:1px solid var(--bd); }
 .workflow-step:first-child { padding-left:0; }
 .workflow-step:last-child { border-right:none; }
-.ws-num { font-size:0.62rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); margin-bottom:0.25rem; }
-.ws-title { font-size:0.88rem; font-weight:700; color:var(--t1); margin-bottom:0.2rem; }
-.ws-desc { font-size:0.76rem; color:var(--t2); line-height:1.45; }
+.ws-num { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); margin-bottom:0.25rem; }
+.ws-title { font-size:0.93rem; font-weight:700; color:var(--t1); margin-bottom:0.2rem; }
+.ws-desc { font-size:0.82rem; color:var(--t2); line-height:1.5; }
 
 /* section heading */
 .sh { display:flex; align-items:center; gap:0.6rem; margin:1.5rem 0 1rem; }
@@ -271,8 +278,8 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 /* explorer metric bar */
 .metric-bar { display:flex; gap:0.75rem; margin:0.25rem 0 1.25rem; flex-wrap:wrap; }
 .mc { flex:1; min-width:100px; background:var(--surface); border:1px solid var(--bd); border-radius:var(--r); padding:0.7rem 1rem; }
-.mc-l { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
-.mc-v { font-size:0.95rem; font-weight:700; color:var(--t1); }
+.mc-l { font-size:0.67rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.18rem; }
+.mc-v { font-size:1rem; font-weight:700; color:var(--t1); }
 
 /* result card */
 .result-card {
@@ -286,18 +293,18 @@ hr { border:none !important; border-top:1px solid var(--bd) !important; margin:1
 }
 .metric-row { display:flex; justify-content:center; gap:2.5rem; padding-top:1.1rem; border-top:1px solid var(--bd); flex-wrap:wrap; }
 .metric-row > div { text-align:center; }
-.ml { font-size:0.62rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.25rem; }
-.mv { font-size:0.9rem; font-weight:700; color:var(--t1); }
+.ml { font-size:0.68rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.25rem; }
+.mv { font-size:0.96rem; font-weight:700; color:var(--t1); }
 
 /* insight box */
 .ib { background:var(--bg); border:1px solid var(--bd); border-radius:var(--r); padding:1.1rem 1.4rem; margin-bottom:1rem; }
-.ib-title { font-size:0.68rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); margin-bottom:0.6rem; }
+.ib-title { font-size:0.74rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--t3); margin-bottom:0.6rem; }
 .ig { display:grid; grid-template-columns:repeat(auto-fill,minmax(115px,1fr)); gap:0.6rem 1.25rem; }
-.ii-l { font-size:0.6rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.12rem; }
-.ii-v { font-size:0.87rem; font-weight:600; color:var(--t1); }
+.ii-l { font-size:0.66rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--t3); font-weight:700; margin-bottom:0.12rem; }
+.ii-v { font-size:0.93rem; font-weight:600; color:var(--t1); }
 
 /* report metadata */
-.report-meta { font-size:0.71rem; color:var(--t3); text-align:center; margin:0 0 1.5rem; }
+.report-meta { font-size:0.78rem; color:var(--t3); text-align:center; margin:0 0 1.5rem; }
 
 /* filter panel */
 .filter-panel { background:var(--surface); border:1px solid var(--bd); border-radius:var(--rl); padding:1.25rem 1.5rem 0.75rem; margin-bottom:1rem; }
@@ -433,10 +440,10 @@ def insight_box_html(
         ("Segment Size", f"{seg_n:,} listings"),
         ("Segment Median", f"₵{seg_median:,.0f}"),
         ("IQR", f"₵{seg_q25:,.0f} – ₵{seg_q75:,.0f}"),
-        (
-            "Delta vs Median",
-            f'<span style="color:{d_color};">{sign}{delta_pct:.1f}%</span>',
-        ),
+        # (
+        #     "Delta vs Median",
+        #     f'<span style="color:{d_color};">{sign}{delta_pct:.1f}%</span>',
+        # ),
         ("Confidence", f'<span style="color:{c_color};">{confidence}</span>'),
     ]
     inner = "".join(
@@ -459,7 +466,7 @@ def section_heading(label: str) -> None:
 
 def page_note(text: str) -> None:
     st.markdown(
-        f"<p style='color:var(--t2);font-size:0.82rem;margin:-0.25rem 0 0.75rem;'>{text}</p>",
+        f"<p style='color:var(--t2);font-size:0.88rem;margin:-0.25rem 0 0.75rem;line-height:1.5;'>{text}</p>",
         unsafe_allow_html=True,
     )
 
