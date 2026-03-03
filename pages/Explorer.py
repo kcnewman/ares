@@ -405,11 +405,11 @@ def render_segments_tab(df: pd.DataFrame) -> None:
             hovertemplate="<b>%{y}</b><br>Mean: ₵%{x:,.0f}<extra></extra>",
         )
     )
+    compare_layout = {**PLOTLY_LAYOUT, "showlegend": True}
     compare_fig.update_layout(
-        **PLOTLY_LAYOUT,
+        **compare_layout,
         height=400,
         barmode="group",
-        showlegend=True,
         legend=dict(
             orientation="h",
             yanchor="bottom",

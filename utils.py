@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 
 import pandas as pd
 import requests
@@ -13,6 +14,7 @@ PAGE_EXPLORER = "pages/Explorer.py"
 PAGE_PREDICTOR = "pages/Predictor.py"
 PAGE_REPORT = "pages/Report.py"
 
+PROJECT_ROOT = Path(__file__).resolve().parent
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 DATA_PATH = os.getenv("DATA_PATH", "artifacts/data_processing/preprocessed_train.csv")
 SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
@@ -462,10 +464,45 @@ def page_note(text: str) -> None:
     )
 
 
+def _normalize_col(name: str) -> str:
+    return name.strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _candidate_market_paths() -> list[Path]:
+    configured_path = Path(DATA_PATH).expanduser()
+    candidates = [
+        configured_path,
+        PROJECT_ROOT / configured_path,
+        PROJECT_ROOT / "artifacts/data_processing/preprocessed_train.csv",
+        PROJECT_ROOT / "artifacts/data/preprocessed_train.csv",
+        PROJECT_ROOT / "artifacts/data/raw.csv",
+    ]
+    deduped: list[Path] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        key = str(candidate.resolve()) if candidate.exists() else str(candidate)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(candidate)
+    return deduped
+
+
+def _resolve_market_data_path() -> Path | None:
+    for candidate in _candidate_market_paths():
+        if candidate.exists() and candidate.is_file():
+            return candidate
+    return None
+
+
 @st.cache_data(show_spinner=False)
-def load_market_data() -> pd.DataFrame | None:
+def _read_market_data(path: str, modified_ns: int) -> pd.DataFrame | None:
+    del modified_ns
     try:
-        df = pd.read_csv(DATA_PATH)
+        df = pd.read_csv(path)
+        df = df.rename(columns=lambda col: _normalize_col(str(col)))
+        required_columns = {"loc", "house_type", "condition", "furnishing", "price"}
+        if not required_columns.issubset(df.columns):
+            return None
         df["price"] = pd.to_numeric(df["price"], errors="coerce")
         return df.dropna(subset=["price"])
     except (
@@ -476,6 +513,13 @@ def load_market_data() -> pd.DataFrame | None:
         pd.errors.ParserError,
     ):
         return None
+
+
+def load_market_data() -> pd.DataFrame | None:
+    resolved_path = _resolve_market_data_path()
+    if resolved_path is None:
+        return None
+    return _read_market_data(str(resolved_path), resolved_path.stat().st_mtime_ns)
 
 
 def check_api() -> bool:
