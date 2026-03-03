@@ -352,10 +352,10 @@ def render_compact_bar(
             hovertemplate="<b>%{y}</b><br>Median: ₵%{x:,.0f}<extra></extra>",
         )
     )
+    compact_layout = {**PLOTLY_LAYOUT, "margin": dict(l=0, r=0, t=36, b=0)}
     fig.update_layout(
-        **PLOTLY_LAYOUT,
+        **compact_layout,
         height=max(200, len(grouped) * 30 + 50),
-        margin=dict(l=0, r=0, t=36, b=0),
         title=dict(text=title, font_size=11, x=0, xanchor="left"),
         xaxis=dict(
             tickprefix="₵",
