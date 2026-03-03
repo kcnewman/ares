@@ -2,13 +2,12 @@ import os
 import zipfile
 
 from ares import logger
-from ares.pipeline.data_validation import DataValidationPipeline
-from ares.pipeline.data_split import DataSplitPipeline
 from ares.pipeline.data_processing import DataProcessingPipeline
+from ares.pipeline.data_split import DataSplitPipeline
+from ares.pipeline.data_validation import DataValidationPipeline
 from ares.pipeline.feature_engineering import FeatureEngineeringPipeline
-from ares.pipeline.model_trainer import ModelTrainingPipeline
 from ares.pipeline.model_evaluation import ModelEvaluationPipeline
-
+from ares.pipeline.model_trainer import ModelTrainingPipeline
 
 STAGE_NAME = "Data Validation"
 try:
@@ -82,13 +81,20 @@ try:
 
     directory_to_zip = "artifacts"
     output_zip = "artifacts.zip"
+    csv_allowlist = {
+        os.path.join("artifacts", "data_processing", "preprocessed_train.csv")
+    }
 
     if os.path.exists(directory_to_zip):
         with zipfile.ZipFile(output_zip, "w", zipfile.ZIP_DEFLATED) as zipf:
             for root, dirs, files in os.walk(directory_to_zip):
                 for file in files:
-                    if not file.endswith(".csv"):
-                        file_path = os.path.join(root, file)
+                    file_path = os.path.join(root, file)
+                    normalized_path = os.path.normpath(file_path)
+                    include_file = (not file.endswith(".csv")) or (
+                        normalized_path in csv_allowlist
+                    )
+                    if include_file:
                         arcname = os.path.relpath(
                             file_path, os.path.join(directory_to_zip, "..")
                         )

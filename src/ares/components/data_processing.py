@@ -88,6 +88,19 @@ class DataProcessor:
 
         return (None, None)
 
+    def _add_lat_lng(self, data: pd.DataFrame) -> pd.DataFrame:
+        data = data.copy()
+        if "loc" not in data.columns:
+            return data
+
+        locations = data["loc"].dropna().astype(str).str.strip().str.lower().unique()
+        loc_to_coords = {loc: self.get_lat_lng(loc) for loc in locations}
+
+        coords = data["loc"].astype(str).str.strip().str.lower().map(loc_to_coords)
+        data["lat"] = coords.str[0]
+        data["lng"] = coords.str[1]
+        return data
+
     # ---------- training only functions ----------
 
     def _trim_price_outliers(self, data: pd.DataFrame, l1=None, l2=None):
@@ -116,6 +129,9 @@ class DataProcessor:
 
         self.train.dropna(inplace=True)
         self.test.dropna(inplace=True)
+
+        self.train = self._add_lat_lng(self.train)
+        self.test = self._add_lat_lng(self.test)
 
         # Save
         self.train.to_csv(
