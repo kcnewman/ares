@@ -36,6 +36,8 @@ async def get_prediction(features: HouseFeatures):
             lower_band=result["lower_band"],
             upper_band=result["upper_band"],
             market_volatility_idx=result["market_volatility_idx"],
+            market_volatility_pct=result["market_volatility_pct"],
+            market_volatility_tier=result["market_volatility_tier"],
         )
     except Exception as e:
         logger.error(f"API Prediction failed: {str(e)}")

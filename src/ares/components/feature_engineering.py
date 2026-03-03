@@ -1,9 +1,16 @@
-import pandas as pd
-import numpy as np
 import os
-from ares.utils.common import load_json, save_json
-from ares.entity.config_entity import FeatureEngineeringConfig
+
+import numpy as np
+import pandas as pd
+
 from ares import logger
+from ares.entity.config_entity import FeatureEngineeringConfig
+from ares.utils.common import load_json, save_json
+from ares.utils.volatility import (
+    compute_log_iqr,
+    derive_volatility_thresholds,
+    shrink_to_global,
+)
 
 
 class EngineerFeatures:
@@ -92,12 +99,12 @@ class EngineerFeatures:
     def fit_and_save_stats(self):
         """Calculates statistics from training data."""
         self.train["log_price"] = np.log(self.train["price"])
+        global_iqr = compute_log_iqr(self.train["log_price"])
 
         self.global_ref = {
             "median": self.train["log_price"].median(),
             "std": self.train["log_price"].std(),
-            "iqr": np.percentile(self.train["log_price"], 75)
-            - np.percentile(self.train["log_price"], 25),  # Add this
+            "iqr": global_iqr,
         }
 
         self.class_pi = self.train.groupby("loc_class")["log_price"].median().to_dict()
@@ -110,30 +117,53 @@ class EngineerFeatures:
 
         locality_agg = (
             self.train.groupby("loc")["log_price"]
-            .agg(n_listings="size", std_log="std")
+            .agg(
+                n_listings="size",
+                std_log="std",
+                iqr_log=compute_log_iqr,
+            )
             .reset_index()
         )
 
-        locality_agg["w"] = locality_agg["n_listings"] / (
-            locality_agg["n_listings"].add(self.K_SMOOTHING)
-        )
-
-        if "elite_areas" in self.lists:
-            elite_mask = locality_agg["loc"].isin(self.lists["elite_areas"])
-            locality_agg.loc[elite_mask, "w"] = 1.0
-
         global_std = self.global_ref["std"]
-        locality_agg["loc_std_dev"] = (
-            locality_agg["w"] * locality_agg["std_log"].fillna(global_std)
-        ) + ((1 - locality_agg["w"]) * global_std)
+        locality_agg["loc_std_dev"] = locality_agg.apply(
+            lambda row: shrink_to_global(
+                local_value=float(row["std_log"])
+                if pd.notna(row["std_log"])
+                else float(global_std),
+                n_listings=float(row["n_listings"]),
+                global_value=float(global_std),
+                k_smoothing=float(self.K_SMOOTHING),
+                force_full_weight=bool(
+                    "elite_areas" in self.lists
+                    and row["loc"] in self.lists["elite_areas"]
+                ),
+            ),
+            axis=1,
+        )
+        locality_agg["loc_iqr"] = locality_agg.apply(
+            lambda row: shrink_to_global(
+                local_value=float(row["iqr_log"])
+                if pd.notna(row["iqr_log"])
+                else float(global_iqr),
+                n_listings=float(row["n_listings"]),
+                global_value=float(global_iqr),
+                k_smoothing=float(self.K_SMOOTHING),
+                force_full_weight=bool(
+                    "elite_areas" in self.lists
+                    and row["loc"] in self.lists["elite_areas"]
+                ),
+            ),
+            axis=1,
+        )
 
         self.stats_map = locality_agg.set_index("loc")["loc_std_dev"].to_dict()
+        self.loc_iqr = locality_agg.set_index("loc")["loc_iqr"].to_dict()
 
-        self.loc_iqr = (
-            self.train.groupby("loc")["log_price"]
-            .agg(lambda x: np.percentile(x, 75) - np.percentile(x, 25))
-            .to_dict()
-        )
+        train_loc_vol = self.train["loc"].map(self.loc_iqr).fillna(global_iqr)
+        vol_q25, vol_q75 = derive_volatility_thresholds(train_loc_vol)
+        self.global_ref["volatility_q25"] = vol_q25
+        self.global_ref["volatility_q75"] = vol_q75
 
         save_json(self.config.root_dir / "locality_stats.json", self.stats_map)
         save_json(self.config.root_dir / "class_pi.json", self.class_pi)

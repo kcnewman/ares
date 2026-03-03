@@ -12,6 +12,11 @@ from pathlib import Path
 
 from ares.config.configuration import ConfigurationManager
 from ares.components.feature_engineering import EngineerFeatures
+from ares.utils.volatility import (
+    classify_volatility_tier,
+    derive_volatility_thresholds,
+    log_iqr_to_relative_pct,
+)
 from ares import logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -21,6 +26,31 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "artifacts" / "inference" / "predictions.csv"
 config_manager = ConfigurationManager()
 fe_config = config_manager.get_feature_engineering_config()
 fe_pipeline = EngineerFeatures(config=fe_config, mode="inference")
+
+
+def _load_volatility_thresholds(
+    feature_pipeline: EngineerFeatures, spread: pd.Series
+) -> tuple[float, float]:
+    q25 = float(
+        feature_pipeline.global_ref.get(
+            "volatility_q25",
+            feature_pipeline.global_ref.get("vol_q25", np.nan),
+        )
+    )
+    q75 = float(
+        feature_pipeline.global_ref.get(
+            "volatility_q75",
+            feature_pipeline.global_ref.get("vol_q75", np.nan),
+        )
+    )
+    if np.isfinite(q25) and np.isfinite(q75) and q75 > q25:
+        return q25, q75
+
+    loc_iqr_values = pd.Series(list(feature_pipeline.loc_iqr.values()), dtype=float)
+    loc_iqr_values = loc_iqr_values[np.isfinite(loc_iqr_values)]
+    if loc_iqr_values.empty:
+        return derive_volatility_thresholds(spread)
+    return derive_volatility_thresholds(loc_iqr_values)
 
 
 def predict(
@@ -39,7 +69,12 @@ def predict(
         logger.info(f"Processing {len(input_data)} records for inference")
 
         transformed_data = feature_pipeline.run_pipeline(input_data)
-        spread = transformed_data["loc_price_volatility"]
+        spread = transformed_data["loc_price_volatility"].astype(float)
+        vol_q25, vol_q75 = _load_volatility_thresholds(feature_pipeline, spread)
+        volatility_tier = spread.apply(
+            lambda value: classify_volatility_tier(float(value), vol_q25, vol_q75)
+        )
+        volatility_pct = spread.apply(log_iqr_to_relative_pct)
 
         training_features = [
             col for col in fe_pipeline.lists["required_columns"] if col != "log_price"
@@ -59,6 +94,8 @@ def predict(
                 "lower_band": np.exp(lower_log),
                 "upper_band": np.exp(upper_log),
                 "market_volatility_idx": spread,
+                "market_volatility_pct": volatility_pct,
+                "market_volatility_tier": volatility_tier,
             },
             index=input_data.index,
         )

@@ -388,16 +388,21 @@ def result_card_html(
     price: float,
     low: float,
     high: float,
-    vol: float,
+    vol_pct: float,
+    vol_tier: str = "Moderate",
     seg_median: float | None = None,
 ) -> str:
-    vol_color = "var(--green)" if vol < 0.10 else "var(--red)"
-    vol_label = "Stable" if vol < 0.10 else "Volatile"
+    tier = str(vol_tier).title()
+    vol_color = {
+        "Stable": "var(--green)",
+        "Moderate": "var(--amber)",
+        "Volatile": "var(--red)",
+    }.get(tier, "var(--t2)")
     metrics = [
         f'<div><div class="ml">Price Range</div>'
         f'<div class="mv">₵{low:,.0f} – ₵{high:,.0f}</div></div>',
-        f'<div><div class="ml">Market Volatility</div>'
-        f'<div class="mv" style="color:{vol_color};">{vol * 100:.2f}% · {vol_label}</div></div>',
+        f'<div><div class="ml">Market Spread (IQR)</div>'
+        f'<div class="mv" style="color:{vol_color};">{vol_pct:.1f}% · {tier}</div></div>',
     ]
     if seg_median is not None and seg_median > 0:
         delta = price - seg_median

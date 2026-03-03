@@ -1,11 +1,13 @@
-import pandas as pd
-import numpy as np
-import googlemaps
 import os
-from ares import logger
-from ares.utils.common import save_json, load_json
-from ares.entity.config_entity import DataProcessingConfig
+
+import googlemaps
+import numpy as np
+import pandas as pd
 from dotenv import load_dotenv
+
+from ares import logger
+from ares.entity.config_entity import DataProcessingConfig
+from ares.utils.common import load_json, save_json
 
 load_dotenv()
 maps = googlemaps.Client(key=os.getenv("GOOGLE_MAPS_KEY"))
@@ -42,6 +44,8 @@ class DataProcessor:
     def _clean_strings(self, data: pd.DataFrame):
         string_cols = data.select_dtypes(include=["object"]).columns
         for col in string_cols:
+            if col == "url":
+                continue
             data[col] = (
                 data[col]
                 .astype(str)

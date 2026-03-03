@@ -36,3 +36,5 @@ class PredictionResponse(BaseModel):
     lower_band: float
     upper_band: float
     market_volatility_idx: float
+    market_volatility_pct: float
+    market_volatility_tier: str

@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from urllib.parse import quote_plus
 
 import pandas as pd
 import plotly.express as px
@@ -34,7 +33,8 @@ class PredictionContext:
     estimated_price: float
     lower_band: float
     upper_band: float
-    volatility: float
+    volatility_pct: float
+    volatility_tier: str
     location: str
     property_type: str
     condition: str
@@ -90,11 +90,15 @@ def build_prediction_context(
     result: dict[str, Any],
     inputs: dict[str, Any],
 ) -> PredictionContext:
+    volatility_pct = float(result.get("market_volatility_pct", 0))
+    volatility_tier = str(result.get("market_volatility_tier", "Moderate")).title()
+
     return PredictionContext(
         estimated_price=float(result.get("estimated_price", 0)),
         lower_band=float(result.get("lower_band", 0)),
         upper_band=float(result.get("upper_band", 0)),
-        volatility=float(result.get("market_volatility_idx", 0)),
+        volatility_pct=volatility_pct,
+        volatility_tier=volatility_tier,
         location=str(inputs.get("location", "—")),
         property_type=str(inputs.get("property_type", "—")),
         condition=str(inputs.get("condition", "—")),
@@ -152,49 +156,6 @@ def build_comparables_dataset(
     return comparables, scope_note
 
 
-def normalize_listing_url(raw_url: Any) -> str:
-    if pd.isna(raw_url):
-        return ""
-
-    value = str(raw_url).strip()
-    if not value:
-        return ""
-    if value.startswith(("https://", "http://")):
-        return value
-
-    tokens = value.split()
-    if len(tokens) >= 6 and tokens[0] in {"https", "http"}:
-        scheme = tokens[0]
-        if tokens[1:4] == ["jiji", "com", "gh"]:
-            body_tokens = tokens[4:]
-            if body_tokens and body_tokens[-1] == "html":
-                body_tokens = body_tokens[:-1]
-
-            category_tokens = ["houses", "apartments", "for", "rent"]
-            category_start = None
-            for index in range(max(0, len(body_tokens) - len(category_tokens) + 1)):
-                if body_tokens[index : index + len(category_tokens)] == category_tokens:
-                    category_start = index
-                    break
-
-            if (
-                category_start is not None
-                and category_start > 0
-                and category_start + len(category_tokens) < len(body_tokens)
-            ):
-                location_slug = "-".join(body_tokens[:category_start])
-                listing_slug = "-".join(body_tokens[category_start + len(category_tokens) :])
-                return (
-                    f"{scheme}://jiji.com.gh/{location_slug}/houses-apartments-for-rent/"
-                    f"{listing_slug}.html"
-                )
-
-            fallback_slug = "-".join(body_tokens)
-            return f"{scheme}://jiji.com.gh/{fallback_slug}.html"
-
-    return f"https://jiji.com.gh/search?query={quote_plus(value)}"
-
-
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
@@ -226,7 +187,8 @@ def render_result_and_metadata(
             context.estimated_price,
             context.lower_band,
             context.upper_band,
-            context.volatility,
+            context.volatility_pct,
+            context.volatility_tier,
             seg_median=segment_median,
         ),
         unsafe_allow_html=True,
@@ -374,7 +336,7 @@ def render_comparables_table(
     display_frame["Rent (₵/mo)"] = comparables["price"].map("₵{:,.0f}".format)
     if "Listing URL" in display_frame.columns:
         display_frame["Listing URL"] = (
-            comparables["url"].apply(normalize_listing_url).fillna("").astype(str).str.strip()
+            display_frame["Listing URL"].fillna("").astype(str).str.strip()
         )
 
     display_frame = display_frame.reset_index(drop=True)
