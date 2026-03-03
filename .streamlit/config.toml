@@ -1,5 +1,12 @@
 [client]
-toolbarMode = "hidden"
+toolbarMode = "minimal"
 
 [server]
 headless = true
+
+[theme]
+base = "light"
+backgroundColor = "#f8f8f7"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#18181b"
+font = "sans serif"
