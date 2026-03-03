@@ -14,7 +14,7 @@ PAGE_PREDICTOR = "pages/Predictor.py"
 PAGE_REPORT = "pages/Report.py"
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-DATA_PATH = os.getenv("DATA_PATH", "artifacts/data/preprocessed_train.csv")
+DATA_PATH = os.getenv("DATA_PATH", "artifacts/data_processing/preprocessed_train.csv")
 SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
 
 AMENITY_LABELS: dict[str, str] = {
@@ -95,12 +95,10 @@ html,body,[data-testid="stApp"] {
 #MainMenu,footer,
 [data-testid="stDecoration"],
 [data-testid="stSidebarNavItems"],
-[data-testid="stSidebarNav"] { display:none !important; }
-
-[data-testid="stSidebar"] {
-  background:var(--surface) !important;
-  border-right:1px solid var(--bd) !important;
-}
+[data-testid="stSidebarNav"],
+[data-testid="stSidebar"],
+[data-testid="stSidebarCollapsedControl"],
+[data-testid="collapsedControl"] { display:none !important; }
 .main .block-container {
   padding-top:2.25rem !important;
   padding-bottom:4rem !important;

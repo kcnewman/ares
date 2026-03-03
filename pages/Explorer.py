@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import streamlit.delta_generator as st_dg
 
 from utils import (
     AMENITY_LABELS,
@@ -158,7 +159,7 @@ def render_filter_form(options: FilterOptions) -> FilterState:
         selected_amenities = st.multiselect(
             "Required Amenities",
             options=options.amenities,
-            format_func=lambda amenity: AMENITY_LABELS.get(amenity, amenity),
+            format_func=lambda amenity: str(AMENITY_LABELS.get(amenity, amenity)),
             placeholder="Select amenities to require…",
         )
 
@@ -333,7 +334,7 @@ def render_compact_bar(
     df: pd.DataFrame,
     group_column: str,
     title: str,
-    column: object,
+    column: st_dg.DeltaGenerator,
 ) -> None:
     grouped = (
         df.groupby(group_column)["price"]

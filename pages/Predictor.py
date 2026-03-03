@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import requests
 import streamlit as st
@@ -91,17 +91,21 @@ def render_form(
         left_col, right_col = st.columns(2, gap="medium")
         with left_col:
             location_options = sorted(schema["mappings"]["location_class"])
-            location = st.selectbox("Location", options=location_options)
+            location = cast(str, st.selectbox("Location", options=location_options))
 
             property_options = list(schema["mappings"]["property_density"])
-            property_type = st.selectbox("Property Type", options=property_options)
+            property_type = cast(
+                str, st.selectbox("Property Type", options=property_options)
+            )
 
             condition_options = list(schema["mappings"]["condition_transform"])
-            condition = st.selectbox("Condition", options=condition_options)
+            condition = cast(str, st.selectbox("Condition", options=condition_options))
 
         with right_col:
             furnishing_options = list(schema["mappings"]["furnishing_transform"])
-            furnishing = st.selectbox("Furnishing", options=furnishing_options)
+            furnishing = cast(
+                str, st.selectbox("Furnishing", options=furnishing_options)
+            )
             bedrooms = int(st.number_input("Bedrooms", min_value=0, value=1, step=1))
             bathrooms = int(st.number_input("Bathrooms", min_value=0, value=1, step=1))
 
@@ -115,7 +119,9 @@ def render_form(
         amenity_inputs: dict[str, bool] = {}
         amenity_columns = st.columns(3, gap="small")
         for index, amenity in enumerate(all_amenities):
-            label = AMENITY_LABELS.get(amenity, amenity.replace("_", " ").title())
+            label = cast(
+                str, AMENITY_LABELS.get(amenity, amenity.replace("_", " ").title())
+            )
             with amenity_columns[index % 3]:
                 amenity_inputs[amenity] = st.checkbox(label, key=f"am_{amenity}")
 
