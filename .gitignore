@@ -1,0 +1,48 @@
+# Artifacts: ignore generated files, keep directory skeleton via .gitkeep
+artifacts/**/*
+!artifacts/**/
+!artifacts/**/.gitkeep
+
+# Runtime outputs
+experiments/*.db
+logs/**/*.log
+mlruns/
+
+# Local data science workspace
+notebooks/
+.ipynb_checkpoints/
+
+# Python virtualenv and bytecode
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Test, coverage, and tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Build/distribution metadata
+build/
+dist/
+.eggs/
+*.egg
+*.egg-info/
+pip-wheel-metadata/
+.Python
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Editor and OS junk
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
