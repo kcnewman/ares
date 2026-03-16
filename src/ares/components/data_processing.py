@@ -92,7 +92,7 @@ class DataProcessor:
             return (None, None)
 
         try:
-            result = self.maps_client.geocode(loc_lower, region="gh")
+            result = self.maps_client.geocode(loc_lower, region="gh")  # type: ignore
             if result:
                 lat = result[0]["geometry"]["location"]["lat"]
                 lng = result[0]["geometry"]["location"]["lng"]

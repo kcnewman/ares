@@ -1,6 +1,6 @@
-from ares.config.configuration import ConfigurationManager
-from ares.components.data_validation import DataValidation
 from ares import logger
+from ares.components.data_validation import DataValidation
+from ares.config.configuration import ConfigurationManager
 
 STAGE_NAME = "Data Validation"
 
@@ -12,7 +12,9 @@ class DataValidationPipeline:
         data_validation = DataValidation(config=data_validation_config)
         is_valid = data_validation.validate()
         if not is_valid:
-            raise RuntimeError("Data validation failed. Check status output for details.")
+            raise RuntimeError(
+                "Data validation failed. Check status output for details."
+            )
 
 
 if __name__ == "__main__":

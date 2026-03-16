@@ -1,6 +1,6 @@
-from ares.config.configuration import ConfigurationManager
-from ares.components.data_split import DataSplit
 from ares import logger
+from ares.components.data_split import DataSplit
+from ares.config.configuration import ConfigurationManager
 
 STAGE_NAME = "Data Splitting"
 

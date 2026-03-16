@@ -1,7 +1,9 @@
-import pytest
-import numpy as np
 from unittest.mock import patch
+
+import numpy as np
+import pytest
 from box import ConfigBox
+
 from ares.components.feature_engineering import EngineerFeatures
 from ares.utils.volatility import shrink_to_global
 

@@ -1,6 +1,6 @@
-from ares.config.configuration import ConfigurationManager
-from ares.components.model_evaluation import ModelEvaluation
 from ares import logger
+from ares.components.model_evaluation import ModelEvaluation
+from ares.config.configuration import ConfigurationManager
 
 STAGE_NAME = "Model Evaluation"
 

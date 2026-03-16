@@ -1,6 +1,7 @@
+from unittest.mock import mock_open, patch
+
 import pytest
-import pandas as pd
-from unittest.mock import patch, mock_open
+
 from ares.components.data_validation import DataValidation
 
 

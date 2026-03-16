@@ -1,4 +1,3 @@
-from ares.entity.config_entity import DataValidationConfig
 import pandas as pd
 from pandas.api.types import (
     is_bool_dtype,
@@ -7,6 +6,8 @@ from pandas.api.types import (
     is_object_dtype,
     is_string_dtype,
 )
+
+from ares.entity.config_entity import DataValidationConfig
 
 
 class DataValidation:

@@ -4,21 +4,22 @@ Inference pipeline for Housing Regression MLE.
 - Calculates IQR-based price bands.
 """
 
-import pandas as pd
-import numpy as np
-from joblib import load
 import argparse
-from pathlib import Path
 from functools import lru_cache
+from pathlib import Path
 
-from ares.config.configuration import ConfigurationManager
+import numpy as np
+import pandas as pd
+from joblib import load
+
+from ares import logger
 from ares.components.feature_engineering import EngineerFeatures
+from ares.config.configuration import ConfigurationManager
 from ares.utils.volatility import (
     classify_volatility_tier,
     derive_volatility_thresholds,
     log_iqr_to_relative_pct,
 )
-from ares import logger
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MODEL = PROJECT_ROOT / "artifacts" / "model_trainer" / "model.joblib"

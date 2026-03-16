@@ -1,6 +1,6 @@
-from ares.config.configuration import ConfigurationManager
-from ares.components.feature_engineering import EngineerFeatures
 from ares import logger
+from ares.components.feature_engineering import EngineerFeatures
+from ares.config.configuration import ConfigurationManager
 
 STAGE_NAME = "Feature Engineering"
 
