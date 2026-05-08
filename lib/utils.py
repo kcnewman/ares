@@ -4,6 +4,7 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Any
 
 
 def setup_logger(name="ares"):
@@ -38,13 +39,13 @@ def setup_logger(name="ares"):
 logger = setup_logger()
 
 
-def save_json(path: Path, data: dict):
+def save_json(path: Path, data: dict[str, Any]):
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(data, f, indent=2)
 
 
-def load_json(path: Path) -> dict:
+def load_json(path: Path) -> dict[str, Any]:
     with open(path) as f:
         return json.load(f)
 

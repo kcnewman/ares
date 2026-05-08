@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,7 +13,9 @@ DEFAULT_MODEL_DIR = Path("models")
 
 
 @lru_cache(maxsize=1)
-def load_model_and_metadata(model_dir: Path = DEFAULT_MODEL_DIR):
+def load_model_and_metadata(
+    model_dir: Path = DEFAULT_MODEL_DIR,
+) -> tuple[Any, dict[str, Any]]:
     model_path = model_dir / "model.joblib"
     metadata_path = model_dir / "metadata.json"
 
@@ -45,14 +48,14 @@ def predict(
     log_preds = model.predict(X)
 
     global_iqr = metadata.get("global_stats", {}).get("iqr_log_price", 0.5)
-    loc_iqr_values = (
+    loc_iqr_values = np.asarray(
         features["loc_volatility"].values
         if "loc_volatility" in features.columns
         else np.full(len(log_preds), global_iqr)
     )
     loc_volatility = np.where(loc_iqr_values > 0, loc_iqr_values, global_iqr)
 
-    n_listings = (
+    n_listings = np.asarray(
         features["loc_count"].values
         if "loc_count" in features.columns
         else np.full(len(log_preds), 0)
@@ -90,7 +93,9 @@ def predict(
     return results
 
 
-def predict_from_dict(features: dict, model_dir: Path = DEFAULT_MODEL_DIR) -> dict:
+def predict_from_dict(
+    features: dict[str, Any], model_dir: Path = DEFAULT_MODEL_DIR
+) -> dict[str, Any]:
     df = pd.DataFrame([features])
     result = predict(df, model_dir)
     row = result.iloc[0]

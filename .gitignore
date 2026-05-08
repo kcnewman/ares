@@ -13,3 +13,12 @@ models/amenity_tiers.json
 dist/
 .pytest_cache/
 .mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.db
+.DS_Store
+*.swp
+*.swo
+.idea/
+basedpyrightconfig.json

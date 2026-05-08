@@ -83,7 +83,6 @@ def get_required_session_data() -> tuple[dict[str, Any], dict[str, Any]]:
     if st.button("\u2190 Go to Predictor"):
         st.switch_page(PAGE_PREDICTOR)
     st.stop()
-    raise RuntimeError("Prediction result is required before rendering the report.")
 
 
 def build_prediction_context(

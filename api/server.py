@@ -86,18 +86,18 @@ def compute_segment(
 
 
 @app.get("/")
-def root():
+def root() -> dict[str, str]:
     return {"message": "ARES API is running"}
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, Any]:
     model_path = MODEL_DIR / "model.joblib"
     return {"status": "active", "model_exists": model_path.exists()}
 
 
 @app.post("/predict", response_model=PredictionResponse)
-async def get_prediction(features: HouseFeatures):
+async def get_prediction(features: HouseFeatures) -> PredictionResponse:
     try:
         data = features.model_dump(by_alias=True)
         result = predict_from_dict(data, MODEL_DIR)
@@ -110,7 +110,7 @@ async def get_prediction(features: HouseFeatures):
 
 
 @app.post("/explain", response_model=ExplainResponse)
-async def get_explanation(features: HouseFeatures):
+async def get_explanation(features: HouseFeatures) -> ExplainResponse:
     try:
         data = features.model_dump(by_alias=True)
         prediction = predict_from_dict(data, MODEL_DIR)
@@ -135,11 +135,23 @@ async def get_explanation(features: HouseFeatures):
                 "confidence": "Moderate",
             }
 
+        key_factors_raw = explanation.get("key_factors", [])
+        key_factors = []
+        if isinstance(key_factors_raw, list):
+            for f in key_factors_raw:
+                if isinstance(f, dict):
+                    key_factors.append(
+                        Factor(
+                            factor=str(f.get("factor", "")),
+                            impact=str(f.get("impact", "")),
+                            direction=f.get("direction", "neutral"),
+                        )
+                    )
         return ExplainResponse(
-            summary=explanation.get("summary", ""),
-            key_factors=[Factor(**f) for f in explanation.get("key_factors", [])],
-            risks=explanation.get("risks", []),
-            confidence=explanation.get("confidence", "Moderate"),
+            summary=str(explanation.get("summary", "")),
+            key_factors=key_factors,
+            risks=list(explanation.get("risks", [])) if isinstance(explanation.get("risks"), list) else [],
+            confidence=str(explanation.get("confidence", "Moderate")),
         )
     except HTTPException:
         raise

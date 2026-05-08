@@ -86,10 +86,16 @@ def render_navigation() -> None:
 
 def render_intro() -> None:
     st.markdown("## Market Explorer")
+    intro_style = (
+        "<p style='color:var(--t2);font-size:0.9rem;"
+        "margin-top:-0.4rem;margin-bottom:0;'>"
+    )
+    intro_text = (
+        "Filter the dataset and explore rental price distributions "
+        "across Greater Accra."
+    )
     st.markdown(
-        "<p style='color:var(--t2);font-size:0.9rem;margin-top:-0.4rem;margin-bottom:0;'>"
-        "Filter the dataset and explore rental price distributions across Greater Accra."
-        "</p>",
+        intro_style + intro_text + "</p>",
         unsafe_allow_html=True,
     )
     st.markdown("---")
@@ -341,7 +347,8 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     chart_gap("0.5rem")
     section_heading("Advanced Insights")
     page_note(
-        "Derived from current filters. Segment metrics use sample thresholds to avoid noisy results."
+        "Derived from current filters. Segment metrics use "
+        "sample thresholds to avoid noisy results."
     )
 
     render_amenity_premium_chart(df)
@@ -919,7 +926,7 @@ def render_compact_bar(
     )
     compact_layout = {**PLOTLY_LAYOUT, "margin": dict(l=0, r=0, t=36, b=0)}
     fig.update_layout(
-        **compact_layout,
+        compact_layout,
         height=min(300, max(220, len(grouped) * 24 + 65)),
         title=dict(text=title, font_size=11, x=0, xanchor="left"),
         bargap=0.2,
@@ -1046,8 +1053,9 @@ def render_location_skew_stability(df: pd.DataFrame) -> None:
     )
     st.plotly_chart(skew_fig, width="stretch", config=CHART_CFG)
     st.caption(
-        "Read it this way: upper-right locations are both skewed and volatile; "
-        "lower-left locations are relatively stable and less skewed."
+        "Read it this way: upper-right locations are both "
+        "skewed and volatile; lower-left locations are relatively "
+        "stable and less skewed."
     )
 
 
@@ -1103,8 +1111,8 @@ def render_segment_leaderboard(df: pd.DataFrame) -> None:
 
     st.dataframe(leaderboard, hide_index=True, width="stretch")
     st.caption(
-        "Use this as a shortlist: pair high-median segments with volatility to "
-        "avoid segments that are expensive but unstable."
+        "Use this as a shortlist: pair high-median segments with "
+        "volatility to avoid segments that are expensive but unstable."
     )
 
 
@@ -1256,15 +1264,16 @@ def render_segment_percentile_map(df: pd.DataFrame) -> None:
     )
     st.plotly_chart(percentile_fig, width="stretch", config=CHART_CFG)
     st.caption(
-        "Upper-right segments are both premium-priced and relatively volatile in the "
-        "current market slice."
+        "Upper-right segments are both premium-priced and relatively "
+        "volatile in the current market slice."
     )
 
 
 def render_segments_tab(df: pd.DataFrame) -> None:
     section_heading("Median vs. Mean Rent by Location")
     page_note(
-        "Top 15 locations. Gap between median and mean signals skew from luxury listings."
+        "Top 15 locations. Gap between median and mean signals "
+        "skew from luxury listings."
     )
 
     location_stats = (
@@ -1332,8 +1341,8 @@ def render_segments_tab(df: pd.DataFrame) -> None:
     )
     st.plotly_chart(compare_fig, width="stretch", config=CHART_CFG)
     st.caption(
-        "If mean is much higher than median, a few expensive listings are pulling "
-        "the average upward."
+        "If mean is much higher than median, a few expensive "
+        "listings are pulling the average upward."
     )
     chart_gap()
 
@@ -1545,10 +1554,11 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
                 ),
             )
         )
-        bubble_fig.update_layout(**map_layout)
+        bubble_fig.update_layout(map_layout)
         st.plotly_chart(bubble_fig, width="stretch", config=map_config)
         st.caption(
-            "Bubble size = listing count, color = median rent. Hover or zoom to inspect hotspots."
+            "Bubble size = listing count, color = median rent. "
+            "Hover or zoom to inspect hotspots."
         )
     else:
         density_fig = px.density_mapbox(
@@ -1575,7 +1585,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
             },
         )
         density_fig.update_layout(
-            **map_layout,
+            map_layout,
             coloraxis_colorbar=dict(
                 title="Weighted Density",
                 tickfont=dict(size=10),
@@ -1584,7 +1594,8 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
         )
         st.plotly_chart(density_fig, width="stretch", config=map_config)
         st.caption(
-            "Density is weighted by listing price. Increase radius for smoother market clusters."
+            "Density is weighted by listing price. "
+            "Increase radius for smoother market clusters."
         )
 
     chart_gap("1.0rem")

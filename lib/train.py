@@ -9,6 +9,8 @@ from joblib import dump
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
 
+from typing import Any
+
 from lib.features import (
     clean_dataframe,
     compute_location_stats,
@@ -19,7 +21,7 @@ from lib.utils import logger, save_json
 
 DEFAULT_DATA_PATH = Path("data/raw.csv")
 DEFAULT_MODEL_DIR = Path("models")
-CATBOOST_PARAMS = {
+CATBOOST_PARAMS: dict[str, Any] = {
     "learning_rate": 0.06099,
     "depth": 6,
     "l2_leaf_reg": 3.0,
@@ -33,8 +35,11 @@ CATBOOST_PARAMS = {
 
 
 def train(
-    data_path: Path, model_dir: Path, test_size: float = 0.2, random_state: int = 2025
-):
+    data_path: Path,
+    model_dir: Path,
+    test_size: float = 0.2,
+    random_state: int = 2025,
+) -> dict[str, Any]:
     logger.info(f"Loading data from {data_path}")
     df = pd.read_csv(data_path)
     logger.info(f"Loaded {len(df)} rows")
@@ -49,6 +54,8 @@ def train(
     train_df, test_df = train_test_split(
         df, test_size=test_size, random_state=random_state
     )
+    assert isinstance(train_df, pd.DataFrame)
+    assert isinstance(test_df, pd.DataFrame)
     logger.info(f"Train: {len(train_df)} rows, Test: {len(test_df)} rows")
 
     location_stats = compute_location_stats(train_df)
@@ -57,7 +64,9 @@ def train(
         train_df, location_stats=location_stats, fit=True
     )
     test_features, _ = prepare_features(
-        test_df, location_stats=location_stats, categories=metadata["categories"]
+        test_df,
+        location_stats=location_stats,
+        categories=metadata["categories"],
     )
 
     feature_cols = metadata["feature_columns"]
@@ -66,7 +75,9 @@ def train(
     X_test = test_features[feature_cols]
     y_test = test_features["log_price"]
 
-    logger.info(f"Feature matrix: {X_train.shape[1]} features, {X_train.shape[0]} rows")
+    n_features = X_train.shape[1]
+    n_rows = X_train.shape[0]
+    logger.info(f"Feature matrix: {n_features} features, {n_rows} rows")
 
     model = CatBoostRegressor(**CATBOOST_PARAMS)
     model.fit(X_train, y_train, eval_set=(X_test, y_test))
@@ -77,8 +88,11 @@ def train(
         "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
         "r2": float(r2_score(y_test, y_pred)),
     }
+    mae_val = metrics["mae"]
+    rmse_val = metrics["rmse"]
+    r2_val = metrics["r2"]
     logger.info(
-        f"Test metrics: MAE={metrics['mae']:.4f}, RMSE={metrics['rmse']:.4f}, R²={metrics['r2']:.4f}"
+        f"Test metrics: MAE={mae_val:.4f}, RMSE={rmse_val:.4f}, R²={r2_val:.4f}"
     )
 
     model_dir.mkdir(parents=True, exist_ok=True)
@@ -88,12 +102,12 @@ def train(
 
     global_log_prices = train_df["price"].apply(lambda x: np.log(max(x, 1)))
     metadata["location_stats"] = location_stats
+    p75 = float(np.percentile(global_log_prices, 75))
+    p25 = float(np.percentile(global_log_prices, 25))
     metadata["global_stats"] = {
         "median_log_price": float(np.median(global_log_prices)),
         "std_log_price": float(np.std(global_log_prices)),
-        "iqr_log_price": float(
-            np.percentile(global_log_prices, 75) - np.percentile(global_log_prices, 25)
-        ),
+        "iqr_log_price": float(p75 - p25),
     }
     metadata["metrics"] = metrics
     metadata["catboost_params"] = CATBOOST_PARAMS
@@ -108,7 +122,7 @@ def train(
     return metrics
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default=str(DEFAULT_DATA_PATH))
     parser.add_argument("--model-dir", type=str, default=str(DEFAULT_MODEL_DIR))

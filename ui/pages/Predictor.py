@@ -156,15 +156,14 @@ def call_predict_api(payload: dict[str, int | str]) -> dict[str, Any]:
             response = httpx.post(f"{API_URL}/predict", json=payload, timeout=15)
             response.raise_for_status()
             return response.json()
-        except HTTPError as exc:
-            status_code = exc.response.status_code if exc.response else "unknown"
-            st.error(f"API error {status_code}. Check backend logs.")
-            st.stop()
         except RequestError as exc:
             st.error(f"Could not reach the backend: {exc}")
             st.stop()
-
-    raise RuntimeError("Prediction flow stopped before returning a response.")
+        except HTTPError as exc:
+            resp = getattr(exc, "response", None)
+            status_code = resp.status_code if resp else "unknown"
+            st.error(f"API error {status_code}. Check backend logs.")
+            st.stop()
 
 
 def store_result(

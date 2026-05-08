@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pandas as pd
@@ -49,21 +50,21 @@ LUXURY_AMENITIES = {
     "wi_fi",
 }
 
-PLOTLY_LAYOUT = dict(
-    font_family="Manrope, sans-serif",
-    font_color="#3f3f46",
-    font_size=12,
-    plot_bgcolor="#ffffff",
-    paper_bgcolor="#ffffff",
-    margin=dict(l=0, r=0, t=28, b=0),
-    showlegend=False,
-    hoverlabel=dict(
-        bgcolor="#18181b",
-        font_color="#ffffff",
-        font_family="Manrope, sans-serif",
-        font_size=12,
-    ),
-)
+PLOTLY_LAYOUT: dict[str, Any] = {
+    "font_family": "Manrope, sans-serif",
+    "font_color": "#3f3f46",
+    "font_size": 12,
+    "plot_bgcolor": "#ffffff",
+    "paper_bgcolor": "#ffffff",
+    "margin": {"l": 0, "r": 0, "t": 28, "b": 0},
+    "showlegend": False,
+    "hoverlabel": {
+        "bgcolor": "#18181b",
+        "font_color": "#ffffff",
+        "font_family": "Manrope, sans-serif",
+        "font_size": 12,
+    },
+}
 GRID_COLOR = "#f0f0ee"
 BAR_COLOR = "#18181b"
 BAR_DIM = "#d4d4d8"
@@ -436,7 +437,7 @@ def insight_box_html(
     seg_median: float,
     seg_q25: float,
     seg_q75: float,
-    est_price: float,
+    _est_price: float,
     confidence: str,
 ) -> str:
     c_color = {
@@ -505,7 +506,7 @@ def load_market_data() -> pd.DataFrame | None:
 
 
 @st.cache_data(show_spinner=False)
-def load_schema() -> dict:
+def load_schema() -> dict[str, list[str]]:
     df = load_market_data()
     if df is None:
         return {}

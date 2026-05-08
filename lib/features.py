@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
@@ -36,19 +38,21 @@ def remove_price_outliers(df: pd.DataFrame, multiplier: float = 1.5) -> pd.DataF
     prices = df["price"].dropna()
     if prices.empty:
         return df
-    log_prices = np.log(prices.clip(lower=1))
-    q1 = log_prices.quantile(0.25)
-    q3 = log_prices.quantile(0.75)
+    prices_clipped = prices.clip(lower=1)
+    log_prices_series = prices_clipped.apply(np.log)
+    log_prices = np.asarray(log_prices_series)
+    q1 = float(np.percentile(log_prices, 25))
+    q3 = float(np.percentile(log_prices, 75))
     iqr = q3 - q1
     lower = q1 - multiplier * iqr
     upper = q3 + multiplier * iqr
     before = len(df)
-    df = df[log_prices.between(lower, upper)].copy()
+    df = df[log_prices_series.between(lower, upper)].copy()
     logger.info(f"Removed {before - len(df)} price outliers (multiplier={multiplier})")
     return df
 
 
-def compute_location_stats(df: pd.DataFrame) -> dict:
+def compute_location_stats(df: pd.DataFrame) -> dict[str, dict[str, float | int]]:
     stats = {}
     if "loc" not in df.columns or "price" not in df.columns:
         return stats
@@ -78,10 +82,10 @@ def compute_location_stats(df: pd.DataFrame) -> dict:
 
 def prepare_features(
     df: pd.DataFrame,
-    location_stats: dict | None = None,
-    categories: dict | None = None,
+    location_stats: dict[str, Any] | None = None,
+    categories: dict[str, Any] | None = None,
     fit: bool = False,
-) -> pd.DataFrame:
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     df = df.copy()
 
     if "price" in df.columns:

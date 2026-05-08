@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from lib.utils import logger
 
@@ -11,25 +12,25 @@ CACHE_DIR = Path(os.environ.get("CACHE_DIR", "models"))
 
 
 class JsonFileCache:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         self.path = path
         self._data = self._load()
 
-    def _load(self) -> dict:
+    def _load(self) -> dict[str, Any]:
         if self.path.exists():
             with open(self.path) as f:
                 return json.load(f)
         return {}
 
-    def _save(self):
+    def _save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         with open(self.path, "w") as f:
             json.dump(self._data, f, indent=2)
 
-    def get(self, key: str):
+    def get(self, key: str) -> Any:
         return self._data.get(key)
 
-    def set(self, key: str, value):
+    def set(self, key: str, value: Any) -> None:
         self._data[key] = value
         self._save()
 
@@ -58,7 +59,7 @@ AMENITY_TIER_PROMPT = """Classify this amenity/feature in a rental property in G
 Return ONLY "luxury" or "standard", nothing else."""
 
 
-def _get_groq_client():
+def _get_groq_client() -> Any | None:
     if not GROQ_API_KEY:
         return None
     try:
@@ -124,8 +125,10 @@ def classify_amenity(amenity: str) -> str:
 
 
 def explain_prediction(
-    property_details: dict, prediction: dict, market_context: dict | None = None
-) -> dict:
+    property_details: dict[str, Any],
+    prediction: dict[str, float],
+    market_context: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     context_str = ""
     if market_context:
         context_str = (
