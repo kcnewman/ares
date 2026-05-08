@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
 
-# Bind to 0.0.0.0 so it's accessible within the container network
-# We use a port (8000) different from the Streamlit port (8080)
-uvicorn ares.api.main:app --host 0.0.0.0 --port 8000 &
+uvicorn api.app:app --host 0.0.0.0 --port 8000 &
 
-# Wait for the backend to initialize
-sleep 3
+for i in $(seq 1 30); do
+    if curl -sf http://127.0.0.1:8000/health > /dev/null 2>&1; then
+        echo "API is ready"
+        break
+    fi
+    echo "Waiting for API... attempt $i"
+    sleep 1
+done
 
-# Start Streamlit on the port defined by the Docker ENV (default 8080)
-streamlit run app.py --server.port=${PORT:-8080} --server.address=0.0.0.0
+exec streamlit run ui/app.py --server.port=${PORT:-8080} --server.address=0.0.0.0

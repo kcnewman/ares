@@ -1,8 +1,9 @@
+import json
 from unittest.mock import mock_open, patch
 
 import pytest
 
-from ares.components.data_validation import DataValidation
+from core.pipeline.data import validate
 
 
 @pytest.mark.parametrize(
@@ -20,39 +21,72 @@ def test_validation_failure_scenarios(
     mock_val_config, valid_df, modification, expected_error
 ):
     test_df = modification(valid_df.copy())
+    config = {
+        "data_validation": {
+            "data_dir": "dummy.csv",
+            "status_file": "status.txt",
+            "root_dir": ".",
+        }
+    }
 
     with (
-        patch("pandas.read_csv", return_value=test_df),
+        patch("core.pipeline.data.pd.read_csv", return_value=test_df),
+        patch("core.pipeline.data.load_schema", return_value={"COLUMNS": mock_val_config.all_schema}),
         patch("builtins.open", mock_open()) as m_file,
+        patch("core.pipeline.data.create_directories"),
     ):
-        validator = DataValidation(mock_val_config)
-        assert validator.validate() is False
+        assert validate(config) is False
 
-        # Verify the specific error message was written to the status file
         handle = m_file()
-        handle.write.assert_any_call(f"Details: {expected_error}")
+        written = "".join(call[0][0] for call in handle.write.call_args_list)
+        status = json.loads(written)
+        assert status["passed"] is False
+        assert expected_error in status["detail"]
 
 
 def test_validate_success(mock_val_config, valid_df):
+    config = {
+        "data_validation": {
+            "data_dir": "dummy.csv",
+            "status_file": "status.txt",
+            "root_dir": ".",
+        }
+    }
+
     with (
-        patch("pandas.read_csv", return_value=valid_df),
+        patch("core.pipeline.data.pd.read_csv", return_value=valid_df),
+        patch("core.pipeline.data.load_schema", return_value={"COLUMNS": mock_val_config.all_schema}),
         patch("builtins.open", mock_open()) as m_file,
+        patch("core.pipeline.data.create_directories"),
     ):
-        validator = DataValidation(mock_val_config)
-        assert validator.validate() is True
+        assert validate(config) is True
 
         handle = m_file()
-        handle.write.assert_any_call("Validation status: True\n")
+        written = "".join(call[0][0] for call in handle.write.call_args_list)
+        status = json.loads(written)
+        assert status["passed"] is True
 
 
-def test_validate_critical_exception(mock_val_config):
+def test_validate_critical_exception():
+    config = {
+        "data_validation": {
+            "data_dir": "dummy.csv",
+            "status_file": "status.txt",
+            "root_dir": ".",
+        }
+    }
+
     with (
-        patch("pandas.read_csv", side_effect=Exception("Disk Error")),
+        patch("core.pipeline.data.pd.read_csv", side_effect=Exception("Disk Error")),
+        patch("core.pipeline.data.load_schema"),
         patch("builtins.open", mock_open()) as m_file,
+        patch("core.pipeline.data.create_directories"),
     ):
-        validator = DataValidation(mock_val_config)
         with pytest.raises(Exception):
-            validator.validate()
+            validate(config)
 
         handle = m_file()
-        handle.write.assert_any_call("Validation status: False\n")
+        written = "".join(call[0][0] for call in handle.write.call_args_list)
+        status = json.loads(written)
+        assert status["passed"] is False
+        assert "Disk Error" in status["detail"]

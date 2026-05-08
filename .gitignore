@@ -3,9 +3,13 @@ artifacts/**/*
 !artifacts/**/
 !artifacts/**/.gitkeep
 
+# Generated archives and reports
+artifacts.zip
+reports/
+
 # Runtime outputs
 experiments/*.db
-logs/**/*.log
+logs/
 mlruns/
 
 # Local data science workspace
@@ -46,3 +50,6 @@ pip-wheel-metadata/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# uv 
+uv.lock

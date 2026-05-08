@@ -1,38 +1,46 @@
+import json
 from unittest.mock import mock_open, patch
 
 import pytest
 
-from ares.components.data_split import DataSplit
+from core.pipeline.data import split
 
 
 @pytest.mark.parametrize(
     "file_exists, file_content, should_read, expected_exception",
     [
-        (False, "", False, FileNotFoundError),  # status file missing
-        (True, "Validation status: False", False, RuntimeError),  # validation failed
-        (True, "Validation status: True", True, None),  # validation passed
+        (False, "", False, FileNotFoundError),
+        (True, json.dumps({"passed": False, "detail": "bad data"}), False, RuntimeError),
+        (True, json.dumps({"passed": True, "detail": "ok"}), True, None),
     ],
 )
 def test_split_flow(
-    mock_split_config,
     valid_df,
     file_exists,
     file_content,
     should_read,
     expected_exception,
 ):
+    config = {
+        "data_split": {
+            "root_dir": "output",
+            "data_dir": "data.csv",
+            "status_file": "status.txt",
+        }
+    }
+
     with (
         patch("os.path.exists", return_value=file_exists),
         patch("builtins.open", mock_open(read_data=file_content)),
-        patch("pandas.read_csv", return_value=valid_df) as mock_read,
+        patch("core.pipeline.data.pd.read_csv", return_value=valid_df) as mock_read,
         patch("pandas.DataFrame.to_csv"),
+        patch("core.pipeline.data.create_directories"),
     ):
-        ds = DataSplit(mock_split_config)
         if expected_exception is None:
-            ds.split()
+            split(config)
         else:
             with pytest.raises(expected_exception):
-                ds.split()
+                split(config)
 
         if should_read:
             mock_read.assert_called_once()
@@ -40,16 +48,23 @@ def test_split_flow(
             mock_read.assert_not_called()
 
 
-def test_split_logic_and_grouping(mock_split_config, valid_df):
-    """Checks if 'rare' localities are grouped into 'OTHER' before splitting."""
+def test_split_logic_and_grouping(valid_df):
+    config = {
+        "data_split": {
+            "root_dir": "output",
+            "data_dir": "data.csv",
+            "status_file": "status.txt",
+        }
+    }
+
     with (
         patch("os.path.exists", return_value=True),
-        patch("builtins.open", mock_open(read_data="Validation status: True")),
-        patch("pandas.read_csv", return_value=valid_df),
+        patch("builtins.open", mock_open(read_data=json.dumps({"passed": True, "detail": "ok"}))),
+        patch("core.pipeline.data.pd.read_csv", return_value=valid_df),
         patch("pandas.DataFrame.to_csv") as mock_csv,
+        patch("core.pipeline.data.create_directories"),
     ):
-        ds = DataSplit(mock_split_config)
-        ds.split()
+        split(config)
 
         assert mock_csv.call_count == 2
 

@@ -3,13 +3,13 @@ artifacts_root: artifacts
 data_validation:
   root_dir: artifacts/data_validation
   data_dir: artifacts/data/raw.csv
-  STATUS_FILE: artifacts/data_validation/status.txt
+  status_file: artifacts/data_validation/status.txt
 
 data_split:
   root_dir: artifacts/data_split
   data_dir: artifacts/data/raw.csv
   status_file: artifacts/data_validation/status.txt
-  
+
 data_processing:
   root_dir: artifacts/data_processing
   data_dir: artifacts/data/raw.csv
@@ -22,8 +22,19 @@ feature_engineering:
   train: artifacts/data_processing/preprocessed_train.csv
   test: artifacts/data_processing/preprocessed_eval.csv
   schema: artifacts/cache/schema.json
-  geocode_cache: artifacts/cache/geocode_cache.json  
-  
+  geocode_cache: artifacts/cache/geocode_cache.json
+
+model:
+  CatBoost:
+    learning_rate: 0.06099
+    depth: 6
+    l2_leaf_reg: 3.0
+    subsample: 0.8
+    random_strength: 1.0
+    min_data_in_leaf: 1
+    random_seed: 42
+    allow_writing_files: false
+
 model_trainer:
   root_dir: artifacts/model_trainer
   train: artifacts/feature_engineering/features_train.csv
