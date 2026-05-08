@@ -1,12 +1,14 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
-import requests
+import httpx
 import streamlit as st
-from requests import RequestException
-from utils import (
+from httpx import HTTPError, RequestError
+
+from ui.utils import (
     AMENITY_LABELS,
-    BACKEND_URL,
+    API_URL,
+    LUXURY_AMENITIES,
     PAGE_EXPLORER,
     PAGE_REPORT,
     check_api,
@@ -18,8 +20,8 @@ from utils import (
 
 def configure_page() -> None:
     st.set_page_config(
-        page_title="ARES · Predictor",
-        page_icon="🏠",
+        page_title="ARES \u00b7 Predictor",
+        page_icon="\U0001f3e0",
         layout="centered",
         initial_sidebar_state="collapsed",
     )
@@ -35,12 +37,12 @@ def init_session_state() -> None:
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Explorer", key="pred_expl", width="stretch"):
+        if st.button("\u2190 Explorer", key="pred_expl", width="stretch"):
             st.switch_page(PAGE_EXPLORER)
     with right_col:
         has_report = st.session_state.get("prediction_result") is not None
         if st.button(
-            "Last Report →",
+            "Last Report \u2192",
             key="pred_report",
             width="stretch",
             disabled=not has_report,
@@ -67,14 +69,14 @@ def render_intro() -> None:
 def load_runtime_schema() -> dict[str, Any]:
     if not check_api():
         st.error(
-            "⚠️ Backend API is offline. Start the FastAPI service to use the predictor."
+            "\u26a0\ufe0f Backend API is offline. Start the FastAPI service to use the predictor."
         )
         st.stop()
 
     schema = load_schema()
-    if schema is None:
+    if not schema:
         st.error(
-            "⚠️ Schema file missing at the configured SCHEMA_PATH. Check your setup."
+            "\u26a0\ufe0f Market data not found. Ensure data/raw.csv is available."
         )
         st.stop()
 
@@ -89,37 +91,37 @@ def render_form(
 
         left_col, right_col = st.columns(2, gap="medium")
         with left_col:
-            location_options = sorted(schema["mappings"]["location_class"])
+            location_options = schema.get("loc", [""])
             location = st.selectbox("Location", options=location_options)
 
-            property_options = schema["mappings"]["property_density"]
+            property_options = schema.get("house_type", [""])
             property_type = st.selectbox("Property Type", options=property_options)
 
-            condition_options = schema["mappings"]["condition_transform"]
+            condition_options = schema.get("condition", [""])
             condition = st.selectbox("Condition", options=condition_options)
 
         with right_col:
-            furnishing_options = schema["mappings"]["furnishing_transform"]
+            furnishing_options = schema.get("furnishing", [""])
             furnishing = st.selectbox("Furnishing", options=furnishing_options)
-            bedrooms = st.number_input("Bedrooms", min_value=0, value=1, step=1)
-            bathrooms = st.number_input("Bathrooms", min_value=0, value=1, step=1)
+            bedrooms = int(st.number_input("Bedrooms", min_value=0, value=1, step=1))
+            bathrooms = int(st.number_input("Bathrooms", min_value=0, value=1, step=1))
 
         st.markdown("---")
         section_heading("Amenities")
 
-        luxury_amenities = schema["lists"]["amenities"]["luxury"]
-        standard_amenities = schema["lists"]["amenities"]["standard"]
+        luxury_amenities = [c for c in AMENITY_LABELS if c in LUXURY_AMENITIES]
+        standard_amenities = [c for c in AMENITY_LABELS if c not in LUXURY_AMENITIES]
         all_amenities = [*luxury_amenities, *standard_amenities]
 
         amenity_inputs: dict[str, bool] = {}
         amenity_columns = st.columns(3, gap="small")
         for index, amenity in enumerate(all_amenities):
-            label = str(AMENITY_LABELS.get(amenity, amenity.replace("_", " ").title()))
+            label = AMENITY_LABELS.get(amenity, amenity.replace("_", " ").title())
             with amenity_columns[index % 3]:
                 amenity_inputs[amenity] = st.checkbox(label, key=f"am_{amenity}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        submitted = st.form_submit_button("Generate Valuation →", width="stretch")
+        submitted = st.form_submit_button("Generate Valuation \u2192", width="stretch")
 
     form_data: dict[str, str | int] = {
         "location": location,
@@ -141,26 +143,28 @@ def build_payload(
         "condition": str(form_data["condition"]),
         "furnishing": str(form_data["furnishing"]),
         "loc": str(form_data["location"]),
-        "bathrooms": form_data["bathrooms"],
-        "bedrooms": form_data["bedrooms"],
+        "bathrooms": int(form_data["bathrooms"]),
+        "bedrooms": int(form_data["bedrooms"]),
     }
     payload.update({key: int(value) for key, value in amenity_inputs.items()})
     return payload
 
 
 def call_predict_api(payload: dict[str, int | str]) -> dict[str, Any]:
-    with st.spinner("Running valuation model…"):
+    with st.spinner("Running valuation model\u2026"):
         try:
-            response = requests.post(f"{BACKEND_URL}/predict", json=payload, timeout=10)
+            response = httpx.post(f"{API_URL}/predict", json=payload, timeout=15)
             response.raise_for_status()
             return response.json()
-        except requests.HTTPError as exc:
+        except HTTPError as exc:
             status_code = exc.response.status_code if exc.response else "unknown"
             st.error(f"API error {status_code}. Check backend logs.")
             st.stop()
-        except RequestException as exc:
+        except RequestError as exc:
             st.error(f"Could not reach the backend: {exc}")
             st.stop()
+
+    raise RuntimeError("Prediction flow stopped before returning a response.")
 
 
 def store_result(
@@ -174,10 +178,10 @@ def store_result(
         "property_type": form_data["property_type"],
         "condition": form_data["condition"],
         "furnishing": form_data["furnishing"],
-        "bedrooms": form_data["bedrooms"],
-        "bathrooms": form_data["bathrooms"],
+        "bedrooms": int(form_data["bedrooms"]),
+        "bathrooms": int(form_data["bathrooms"]),
         "amenities": {key: value for key, value in amenity_inputs.items() if value},
-        "generated_at": datetime.now(timezone.utc).strftime("%d %b %Y · %H:%M"),
+        "generated_at": datetime.now().strftime("%d %b %Y \u00b7 %H:%M"),
     }
     st.session_state.scroll_uid += 1
 
@@ -194,7 +198,7 @@ def main() -> None:
     if not submitted:
         return
 
-    if form_data["bedrooms"] == 0 and form_data["bathrooms"] == 0:
+    if int(form_data["bedrooms"]) == 0 and int(form_data["bathrooms"]) == 0:
         st.error("Provide at least one bedroom or bathroom.")
         st.stop()
 

@@ -1,28 +1,38 @@
 name: Deploy to Cloud Run
+
 on:
   push:
     paths:
-      - 'artifacts.zip'
+      - 'data/raw.csv'
       - 'Dockerfile'
       - 'entrypoint.sh'
       - 'pyproject.toml'
       - 'uv.lock'
-      - 'app.py'
-      - 'utils.py'
-      - 'pages/**'
-      - 'src/**'
-      - '.streamlit/**'
+      - 'lib/**'
+      - 'api/**'
+      - 'ui/**'
     branches:
       - main
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        run: uv sync --dev
+      - name: Run lint
+        run: uv run ruff check .
+      - name: Run tests
+        run: uv run pytest -q --cov=lib --cov=api --cov=ui
 
-      - name: Unzip Artifacts
-        run: unzip -o artifacts.zip
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
 
       - id: 'auth'
         uses: 'google-github-actions/auth@v2'
@@ -38,9 +48,10 @@ jobs:
           docker build -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ares-repo/ares-app:${{ github.sha }} .
           docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ares-repo/ares-app:${{ github.sha }}
 
-      - name: Run
+      - name: Deploy
         run: |
           gcloud run deploy ares-service \
             --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/ares-repo/ares-app:${{ github.sha }} \
             --region us-central1 \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --set-env-vars=GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}

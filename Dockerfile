@@ -4,33 +4,26 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential gcc && rm -rf /var/lib/apt/lists/*
 
-ENV UV_PYTHON=python3.12 \
-    UV_COMPILE_BYTECODE=1 \
-    PYTHONUNBUFFERED=1
+ENV UV_PYTHON=python3.12 UV_COMPILE_BYTECODE=1 PYTHONUNBUFFERED=1
 
 COPY pyproject.toml uv.lock* ./
-RUN mkdir -p core/pipeline api ui
+
 RUN uv sync --frozen --no-dev
 
-COPY core/ ./core/
-COPY api/ ./api/
-COPY ui/ ./ui/
-COPY config/ ./config/
-COPY .streamlit/ ./.streamlit/
-COPY artifacts/ ./artifacts/
+COPY lib/ lib/
+COPY api/ api/
+COPY ui/ ui/
+COPY data/ data/
+COPY .streamlit/ .streamlit/
+COPY entrypoint.sh /entrypoint.sh
 
-ENV BACKEND_URL="http://127.0.0.1:8000" \
-    PORT=8080 \
-    PATH="/app/.venv/bin:$PATH"
+ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8080
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -sf http://127.0.0.1:8000/health || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]

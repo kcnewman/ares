@@ -1,33 +1,13 @@
-volumes:
-  artifacts_data:
-
 services:
-  api:
+  app:
     build: .
     ports:
       - "8080:8080"
     environment:
-      - LLM_SERVICE_URL=http://llm-service:8001
-      - GROQ_API_KEY=${GROQ_API_KEY}
-    depends_on:
-      llm-service:
-        condition: service_healthy
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.3-70b-versatile}
+      - BACKEND_URL=http://127.0.0.1:8000
+      - PORT=8080
     volumes:
-      - artifacts_data:/app/artifacts
-
-  llm-service:
-    build:
-      context: .
-      dockerfile: llm/Dockerfile
-    ports:
-      - "8001:8001"
-    environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GROQ_MODEL=llama-3.3-70b-versatile
-      - CACHE_DIR=/data/cache
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-      interval: 10s
-      retries: 5
-    volumes:
-      - artifacts_data:/data/cache
+      - ./models:/app/models
+      - ./data:/app/data

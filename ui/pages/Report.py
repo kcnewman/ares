@@ -1,15 +1,13 @@
-import os
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
-import httpx
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import (
+
+from ui.utils import (
     AMENITY_LABELS,
-    BACKEND_URL,
     BAR_COLOR,
     CHART_CFG,
     GRID_COLOR,
@@ -28,8 +26,6 @@ from utils import (
     scroll_to_top,
     section_heading,
 )
-
-LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:8001")
 
 
 @dataclass(frozen=True)
@@ -62,8 +58,8 @@ class SegmentSummary:
 
 def configure_page() -> None:
     st.set_page_config(
-        page_title="ARES · Valuation Report",
-        page_icon="📊",
+        page_title="ARES \u00b7 Valuation Report",
+        page_icon="\U0001f4ca",
         layout="centered",
         initial_sidebar_state="collapsed",
     )
@@ -84,32 +80,34 @@ def get_required_session_data() -> tuple[dict[str, Any], dict[str, Any]]:
         return result, inputs
 
     st.warning("No valuation data found. Run a prediction first.")
-    if st.button("← Go to Predictor"):
+    if st.button("\u2190 Go to Predictor"):
         st.switch_page(PAGE_PREDICTOR)
     st.stop()
+    raise RuntimeError("Prediction result is required before rendering the report.")
 
 
 def build_prediction_context(
     result: dict[str, Any],
     inputs: dict[str, Any],
 ) -> PredictionContext:
+    volatility_pct = float(result.get("market_volatility_pct", 0))
+    volatility_tier = str(result.get("market_volatility_tier", "Moderate")).title()
+
     return PredictionContext(
-        estimated_price=result.get("estimated_price", 0),
-        lower_band=result.get("lower_band", 0),
-        upper_band=result.get("upper_band", 0),
-        volatility_pct=result.get("market_volatility_pct", 0),
-        volatility_tier=str(result.get("market_volatility_tier", "Moderate")).title(),
-        location=inputs.get("location", "—"),
-        property_type=inputs.get("property_type", "—"),
-        condition=inputs.get("condition", "—"),
-        furnishing=inputs.get("furnishing", "—"),
-        bedrooms=inputs.get("bedrooms", 0),
-        bathrooms=inputs.get("bathrooms", 0),
-        amenities=inputs.get("amenities", {}),
+        estimated_price=float(result.get("estimated_price", 0)),
+        lower_band=float(result.get("lower_band", 0)),
+        upper_band=float(result.get("upper_band", 0)),
+        volatility_pct=volatility_pct,
+        volatility_tier=volatility_tier,
+        location=str(inputs.get("location", "\u2014")),
+        property_type=str(inputs.get("property_type", "\u2014")),
+        condition=str(inputs.get("condition", "\u2014")),
+        furnishing=str(inputs.get("furnishing", "\u2014")),
+        bedrooms=int(inputs.get("bedrooms", 0)),
+        bathrooms=int(inputs.get("bathrooms", 0)),
+        amenities=dict(inputs.get("amenities", {})),
         generated_at=str(
-            inputs.get(
-                "generated_at", datetime.now(timezone.utc).strftime("%d %b %Y · %H:%M")
-            )
+            inputs.get("generated_at", datetime.now().strftime("%d %b %Y \u00b7 %H:%M"))
         ),
     )
 
@@ -161,10 +159,10 @@ def build_comparables_dataset(
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Predictor", key="rpt_pred", width="stretch"):
+        if st.button("\u2190 Predictor", key="rpt_pred", width="stretch"):
             st.switch_page(PAGE_PREDICTOR)
     with right_col:
-        if st.button("Explorer →", key="rpt_expl", width="stretch"):
+        if st.button("Explorer \u2192", key="rpt_expl", width="stretch"):
             st.switch_page(PAGE_EXPLORER)
 
 
@@ -196,10 +194,10 @@ def render_result_and_metadata(
         unsafe_allow_html=True,
     )
 
-    market_count = f"{len(market_data):,}" if market_data is not None else "—"
+    market_count = f"{len(market_data):,}" if market_data is not None else "\u2014"
     st.markdown(
         '<div class="report-meta">'
-        f"Generated {context.generated_at} &nbsp;·&nbsp; Market snapshot: {market_count} listings"
+        f"Generated {context.generated_at} &nbsp;\u00b7&nbsp; Market snapshot: {market_count} listings"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -258,7 +256,7 @@ def render_insights_tab(
         plot_data,
         x="price",
         nbins=30,
-        labels={"price": "Monthly Rent (₵)"},
+        labels={"price": "Monthly Rent (\u20b5)"},
         color_discrete_sequence=[BAR_COLOR],
     )
     figure.add_vline(
@@ -280,11 +278,11 @@ def render_insights_tab(
         line_width=0,
     )
     figure.update_layout(
-        **PLOTLY_LAYOUT,  # type: ignore[arg-type]
+        **PLOTLY_LAYOUT,
         xaxis=dict(
-            tickprefix="₵",
+            tickprefix="\u20b5",
             showgrid=False,
-            title="Monthly Rent (₵)",
+            title="Monthly Rent (\u20b5)",
             title_font_size=11,
         ),
         yaxis=dict(
@@ -328,14 +326,14 @@ def render_comparables_table(
         "bathrooms": "Baths",
         "condition": "Condition",
         "furnishing": "Furnishing",
-        "price": "Rent (₵/mo)",
+        "price": "Rent (\u20b5/mo)",
     }
     if "url" in comparables.columns:
         display_columns["url"] = "Listing URL"
     display_frame = comparables[list(display_columns)].rename(columns=display_columns)
     for column_name in ["Type", "Condition", "Furnishing"]:
         display_frame[column_name] = display_frame[column_name].str.title()
-    display_frame["Rent (₵/mo)"] = comparables["price"].map("₵{:,.0f}".format)
+    display_frame["Rent (\u20b5/mo)"] = comparables["price"].map("\u20b5{:,.0f}".format)
     if "Listing URL" in display_frame.columns:
         display_frame["Listing URL"] = (
             display_frame["Listing URL"].fillna("").astype(str).str.strip()
@@ -363,97 +361,6 @@ def render_comparables_table(
         )
 
 
-def _fetch_explanation(context: PredictionContext) -> dict | None:
-    try:
-        payload = {
-            "house_type": context.property_type,
-            "condition": context.condition,
-            "furnishing": context.furnishing,
-            "loc": context.location,
-            "bathrooms": context.bathrooms,
-            "bedrooms": context.bedrooms,
-            "24_hour_electricity": context.amenities.get("24_hour_electricity", 0),
-            "air_conditioning": context.amenities.get("air_conditioning", 0),
-            "apartment": context.amenities.get("apartment", 0),
-            "balcony": context.amenities.get("balcony", 0),
-            "chandelier": context.amenities.get("chandelier", 0),
-            "dining_area": context.amenities.get("dining_area", 0),
-            "dishwasher": context.amenities.get("dishwasher", 0),
-            "hot_water": context.amenities.get("hot_water", 0),
-            "kitchen_cabinets": context.amenities.get("kitchen_cabinets", 0),
-            "kitchen_shelf": context.amenities.get("kitchen_shelf", 0),
-            "microwave": context.amenities.get("microwave", 0),
-            "pop_ceiling": context.amenities.get("pop_ceiling", 0),
-            "pre_paid_meter": context.amenities.get("pre_paid_meter", 0),
-            "refrigerator": context.amenities.get("refrigerator", 0),
-            "tv": context.amenities.get("tv", 0),
-            "tiled_floor": context.amenities.get("tiled_floor", 0),
-            "wardrobe": context.amenities.get("wardrobe", 0),
-            "wi_fi": context.amenities.get("wi_fi", 0),
-        }
-        resp = httpx.post(f"{BACKEND_URL}/explain", json=payload, timeout=15)
-        if resp.status_code == 200:
-            return resp.json()
-    except Exception:
-        pass
-    return None
-
-
-def render_ai_explanation(explanation: dict | None) -> None:
-    if explanation is None:
-        return
-
-    st.markdown("---")
-    section_heading("AI Market Analysis")
-
-    conf = explanation.get("confidence", "")
-    conf_color = {"High": "var(--green)", "Moderate": "var(--amber)", "Low": "var(--red)"}.get(conf, "var(--t2)")
-    conf_html = f'<span style="color:{conf_color};font-weight:700;">{conf}</span>'
-
-    st.markdown(
-        f"<div style='background:var(--surface);border:1px solid var(--bd);"
-        f"border-radius:var(--rl);padding:1.25rem 1.5rem;margin-bottom:1rem;'>"
-        f"<p style='font-size:0.9rem;line-height:1.6;color:var(--t2);margin:0 0 1rem;'>"
-        f"{explanation.get('summary', '')}</p>",
-        unsafe_allow_html=True,
-    )
-
-    key_factors = explanation.get("key_factors", [])
-    if key_factors:
-        bullets = []
-        for f in key_factors:
-            icon = {"up": "▲", "down": "▼", "neutral": "◆"}.get(f.get("direction", "neutral"), "◆")
-            color = {"up": "var(--red)", "down": "var(--green)", "neutral": "var(--t3)"}.get(f.get("direction", "neutral"), "var(--t3)")
-            bullets.append(
-                f"<li style='margin-bottom:0.35rem;font-size:0.88rem;'>"
-                f"<span style='color:{color};margin-right:0.4rem;'>{icon}</span>"
-                f"<strong>{f.get('factor', '')}</strong>: {f.get('impact', '')}</li>"
-            )
-        st.markdown(
-            f"<div style='margin-bottom:0.75rem;'><div class='eyebrow' style='margin-bottom:0.4rem;'>"
-            f"Key Factors</div><ul style='margin:0;padding-left:0;list-style:none;'>{''.join(bullets)}</ul></div>",
-            unsafe_allow_html=True,
-        )
-
-    risks = explanation.get("risks", [])
-    if risks:
-        risk_items = "".join(f"<li style='font-size:0.85rem;margin-bottom:0.2rem;'>{r}</li>" for r in risks)
-        st.markdown(
-            f"<div style='background:#fef2f2;border:1px solid #fecaca;border-radius:var(--r);"
-            f"padding:0.75rem 1rem;margin-bottom:0.75rem;'>"
-            f"<div class='eyebrow' style='color:var(--red);margin-bottom:0.3rem;'>Risks & Uncertainties</div>"
-            f"<ul style='margin:0;padding-left:1.2rem;color:var(--t2);'>{risk_items}</ul></div>",
-            unsafe_allow_html=True,
-        )
-
-    st.markdown(
-        f"<div style='display:flex;justify-content:flex-end;gap:0.5rem;align-items:center;'>"
-        f"<span style='font-size:0.72rem;color:var(--t3);'>Confidence: {conf_html}</span></div>"
-        f"</div>",
-        unsafe_allow_html=True,
-    )
-
-
 def main() -> None:
     configure_page()
     maybe_scroll_to_top()
@@ -466,9 +373,6 @@ def main() -> None:
     render_header(context)
     render_result_and_metadata(context, market_data, segment)
     render_property_chips(context)
-
-    explanation = _fetch_explanation(context)
-    render_ai_explanation(explanation)
 
     section_heading("Market Analysis")
     render_insights_tab(market_data, context, segment)

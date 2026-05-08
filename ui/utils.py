@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import json
-import os
 from pathlib import Path
 
+import httpx
 import pandas as pd
-import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
@@ -14,14 +12,10 @@ PAGE_EXPLORER = "pages/Explorer.py"
 PAGE_PREDICTOR = "pages/Predictor.py"
 PAGE_REPORT = "pages/Report.py"
 
-PROJECT_ROOT = Path(__file__).resolve().parent
-BACKEND_URL = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
-DATA_PATH = os.getenv("DATA_PATH", "artifacts/data_processing/preprocessed_train.csv")
-SCHEMA_PATH = os.getenv("SCHEMA_PATH", "artifacts/cache/schema.json")
-FULL_DATA_URL = (
-    "https://github.com/kcnewman/ScrapeAccraProperties/tree/main/outputs/data"
-)
-PROJECT_GITHUB_URL = "https://github.com/kcnewman/ares"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+API_URL = "http://127.0.0.1:8000"
+DATA_PATH = "data/raw.csv"
+SCHEMA_PATH = "artifacts/cache/schema.json"
 
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",
@@ -43,6 +37,18 @@ AMENITY_LABELS: dict[str, str] = {
     "wardrobe": "Wardrobe",
     "wi_fi": "Wi-Fi",
 }
+AMENITY_COLS = list(AMENITY_LABELS.keys())
+LUXURY_AMENITIES = {
+    "air_conditioning",
+    "chandelier",
+    "dishwasher",
+    "hot_water",
+    "microwave",
+    "refrigerator",
+    "tv",
+    "wi_fi",
+}
+
 PLOTLY_LAYOUT = dict(
     font_family="Manrope, sans-serif",
     font_color="#3f3f46",
@@ -359,17 +365,17 @@ def stat_row_html(stats: list[tuple[str, str, str]]) -> str:
 def workflow_card_html() -> str:
     steps = [
         (
-            "01 · Explore",
+            "01 \u00b7 Explore",
             "Market Explorer",
             "Browse 19k+ listings with live filters and segment breakdowns.",
         ),
         (
-            "02 · Predict",
+            "02 \u00b7 Predict",
             "Run Predictor",
             "Input property details and run the ML valuation model.",
         ),
         (
-            "03 · Review",
+            "03 \u00b7 Review",
             "Valuation Report",
             "Estimated rent with uncertainty band and market context.",
         ),
@@ -402,9 +408,9 @@ def result_card_html(
     }.get(tier, "var(--t2)")
     metrics = [
         f'<div><div class="ml">Price Range</div>'
-        f'<div class="mv">₵{low:,.0f} – ₵{high:,.0f}</div></div>',
+        f'<div class="mv">\u20b5{low:,.0f} \u2013 \u20b5{high:,.0f}</div></div>',
         f'<div><div class="ml">Market Spread (IQR)</div>'
-        f'<div class="mv" style="color:{vol_color};">{vol_pct:.1f}% · {tier}</div></div>',
+        f'<div class="mv" style="color:{vol_color};">{vol_pct:.1f}% \u00b7 {tier}</div></div>',
     ]
     if seg_median is not None and seg_median > 0:
         delta = price - seg_median
@@ -418,7 +424,7 @@ def result_card_html(
     return (
         '<div class="result-card">'
         '<div class="eyebrow">Estimated Market Rent</div>'
-        f'<div class="price">₵{price:,.2f}'
+        f'<div class="price">\u20b5{price:,.2f}'
         '<span style="font-size:1rem;font-weight:400;color:var(--t3)"> /mo</span></div>'
         f'<div class="metric-row">{"".join(metrics)}</div></div>'
     )
@@ -441,8 +447,8 @@ def insight_box_html(
     items = [
         ("Baseline Segment", seg_label),
         ("Segment Size", f"{seg_n:,} listings"),
-        ("Segment Median", f"₵{seg_median:,.0f}"),
-        ("IQR", f"₵{seg_q25:,.0f} – ₵{seg_q75:,.0f}"),
+        ("Segment Median", f"\u20b5{seg_median:,.0f}"),
+        ("IQR", f"\u20b5{seg_q25:,.0f} \u2013 \u20b5{seg_q75:,.0f}"),
         ("Confidence", f'<span style="color:{c_color};">{confidence}</span>'),
     ]
     inner = "".join(
@@ -474,25 +480,6 @@ def _normalize_col(name: str) -> str:
     return name.strip().lower().replace("-", "_").replace(" ", "_")
 
 
-def _candidate_market_paths() -> list[Path]:
-    configured_path = Path(DATA_PATH).expanduser()
-    candidates = [
-        configured_path,
-        PROJECT_ROOT / configured_path,
-        PROJECT_ROOT / "artifacts/data_processing/preprocessed_train.csv",
-        PROJECT_ROOT / "artifacts/data/preprocessed_train.csv",
-        PROJECT_ROOT / "artifacts/data/raw.csv",
-    ]
-    return candidates
-
-
-def _resolve_market_data_path() -> Path | None:
-    for candidate in _candidate_market_paths():
-        if candidate.exists() and candidate.is_file():
-            return candidate
-    return None
-
-
 @st.cache_data(show_spinner=False)
 def _read_market_data(path: str, modified_ns: int) -> pd.DataFrame | None:
     del modified_ns
@@ -504,37 +491,37 @@ def _read_market_data(path: str, modified_ns: int) -> pd.DataFrame | None:
             return None
         df["price"] = pd.to_numeric(df["price"], errors="coerce")
         return df.dropna(subset=["price"])
-    except (
-        FileNotFoundError,
-        OSError,
-        KeyError,
-        pd.errors.EmptyDataError,
-        pd.errors.ParserError,
-    ):
+    except Exception:
         return None
 
 
 def load_market_data() -> pd.DataFrame | None:
-    resolved_path = _resolve_market_data_path()
-    if resolved_path is None:
+    data_path = Path(DATA_PATH)
+    if not data_path.exists():
+        data_path = PROJECT_ROOT / DATA_PATH
+    if not data_path.exists() or not data_path.is_file():
         return None
-    return _read_market_data(str(resolved_path), resolved_path.stat().st_mtime_ns)
+    return _read_market_data(str(data_path), data_path.stat().st_mtime_ns)
+
+
+@st.cache_data(show_spinner=False)
+def load_schema() -> dict:
+    df = load_market_data()
+    if df is None:
+        return {}
+    schema: dict[str, list[str]] = {}
+    for col in ["loc", "house_type", "condition", "furnishing"]:
+        if col in df.columns:
+            schema[col] = sorted(df[col].astype(str).str.lower().str.strip().unique())
+    return schema
 
 
 def check_api() -> bool:
     try:
-        response = requests.get(f"{BACKEND_URL}/health", timeout=2)
-        return response.status_code == 200
-    except requests.RequestException:
+        resp = httpx.get(f"{API_URL}/health", timeout=3)
+        return resp.status_code == 200
+    except Exception:
         return False
-
-
-def load_schema() -> dict | None:
-    try:
-        with open(SCHEMA_PATH, encoding="utf-8") as file:
-            return json.load(file)
-    except (FileNotFoundError, OSError, json.JSONDecodeError):
-        return None
 
 
 def compute_segment(
@@ -545,7 +532,7 @@ def compute_segment(
 ) -> tuple[pd.DataFrame, str]:
     """
     Tightest segment >= 5 listings.
-    Fallback: (loc+type+furn) → (loc+type) → (loc) → full df.
+    Fallback: (loc+type+furn) \u2192 (loc+type) \u2192 (loc) \u2192 full df.
     """
     candidates = [
         (

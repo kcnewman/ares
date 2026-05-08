@@ -1,16 +1,16 @@
 from dataclasses import dataclass
-from typing import Any
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from utils import (
+import streamlit.delta_generator as st_dg
+
+from ui.utils import (
     AMENITY_LABELS,
     BAR_COLOR,
     BAR_DIM,
     CHART_CFG,
-    FULL_DATA_URL,
     GRID_COLOR,
     PAGE_HOME,
     PAGE_PREDICTOR,
@@ -24,7 +24,7 @@ from utils import (
     section_heading,
 )
 
-ALL_OPTION = "__all__"
+ALL_OPTION = "All"
 LISTINGS_SAMPLE_SIZE = 500
 LISTINGS_SAMPLE_RANDOM_STATE = 42
 
@@ -66,8 +66,8 @@ class PriceSummary:
 
 def configure_page() -> None:
     st.set_page_config(
-        page_title="ARES · Market Explorer",
-        page_icon="🔍",
+        page_title="ARES \u00b7 Market Explorer",
+        page_icon="\U0001f50d",
         layout="centered",
         initial_sidebar_state="collapsed",
     )
@@ -77,10 +77,10 @@ def configure_page() -> None:
 def render_navigation() -> None:
     left_col, right_col = st.columns(2, gap="small")
     with left_col:
-        if st.button("← Home", key="ex_home", width="stretch"):
+        if st.button("\u2190 Home", key="ex_home", width="stretch"):
             st.switch_page(PAGE_HOME)
     with right_col:
-        if st.button("Predictor →", key="ex_pred", width="stretch"):
+        if st.button("Predictor \u2192", key="ex_pred", width="stretch"):
             st.switch_page(PAGE_PREDICTOR)
 
 
@@ -98,10 +98,7 @@ def render_intro() -> None:
 def load_data() -> pd.DataFrame:
     data = load_market_data()
     if data is None:
-        st.error(
-            "Market data unavailable. "
-            "Set the `DATA_PATH` environment variable to point to `preprocessed_train.csv`."
-        )
+        st.error("Market data unavailable. Ensure data/raw.csv is available.")
         st.stop()
     return data
 
@@ -153,7 +150,7 @@ def render_filter_form(options: FilterOptions) -> FilterState:
             )
         with row_2_col_3:
             selected_price = st.slider(
-                "Price Range (₵/mo)",
+                "Price Range (\u20b5/mo)",
                 options.price_min,
                 options.price_max,
                 (options.price_min, options.price_max),
@@ -163,7 +160,7 @@ def render_filter_form(options: FilterOptions) -> FilterState:
             "Required Amenities",
             options=options.amenities,
             format_func=lambda amenity: str(AMENITY_LABELS.get(amenity, amenity)),
-            placeholder="Select amenities to require…",
+            placeholder="Select amenities to require\u2026",
         )
 
         apply_col, _ = st.columns([1, 4])
@@ -227,9 +224,9 @@ def render_summary_metrics(summary: PriceSummary) -> None:
         metric_bar_html(
             [
                 ("Listings", f"{summary.listing_count:,}"),
-                ("Median Rent", f"₵{summary.q50:,.0f}"),
-                ("IQR", f"₵{summary.q25:,.0f} – ₵{summary.q75:,.0f}"),
-                ("Std. Dev.", f"₵{summary.std:,.0f}"),
+                ("Median Rent", f"\u20b5{summary.q50:,.0f}"),
+                ("IQR", f"\u20b5{summary.q25:,.0f} \u2013 \u20b5{summary.q75:,.0f}"),
+                ("Std. Dev.", f"\u20b5{summary.std:,.0f}"),
             ]
         ),
         unsafe_allow_html=True,
@@ -242,7 +239,9 @@ def chart_gap(height: str = "1.25rem") -> None:
 
 def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     section_heading("Price Distribution")
-    page_note(f"{summary.listing_count:,} listings · IQR fences shown as dashed lines.")
+    page_note(
+        f"{summary.listing_count:,} listings \u00b7 IQR fences shown as dashed lines."
+    )
 
     p99 = df["price"].quantile(0.99)
     hist_df = df[df["price"] <= p99]
@@ -253,7 +252,7 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
         hist_df,
         x="price",
         nbins=35,
-        labels={"price": "Monthly Rent (₵)"},
+        labels={"price": "Monthly Rent (\u20b5)"},
         color_discrete_sequence=[BAR_COLOR],
     )
     dist_fig.add_vline(
@@ -289,9 +288,9 @@ def render_overview_tab(df: pd.DataFrame, summary: PriceSummary) -> None:
     dist_fig.update_layout(
         **PLOTLY_LAYOUT,
         xaxis=dict(
-            tickprefix="₵",
+            tickprefix="\u20b5",
             showgrid=False,
-            title="Monthly Rent (₵)",
+            title="Monthly Rent (\u20b5)",
             title_font_size=11,
         ),
         yaxis=dict(
@@ -414,7 +413,7 @@ def render_amenity_premium_chart(df: pd.DataFrame) -> None:
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Uplift: %{x:.1f}%<br>"
-                "Median delta: ₵%{customdata[0]:,.0f}<br>"
+                "Median delta: \u20b5%{customdata[0]:,.0f}<br>"
                 "With amenity: %{customdata[1]:,}<br>"
                 "Without amenity: %{customdata[2]:,}<extra></extra>"
             ),
@@ -523,7 +522,7 @@ def render_unit_economics(df: pd.DataFrame) -> None:
                     font_size=10,
                 ),
                 xaxis=dict(
-                    tickprefix="₵",
+                    tickprefix="\u20b5",
                     title=None,
                     showgrid=True,
                     gridcolor=GRID_COLOR,
@@ -581,7 +580,7 @@ def render_unit_economics(df: pd.DataFrame) -> None:
                     font_size=10,
                 ),
                 xaxis=dict(
-                    tickprefix="₵",
+                    tickprefix="\u20b5",
                     title=None,
                     showgrid=True,
                     gridcolor=GRID_COLOR,
@@ -619,7 +618,7 @@ def render_segment_volatility(df: pd.DataFrame) -> None:
     ) * 100
     segment_stats["segment"] = (
         segment_stats["loc"].str.title()
-        + " · "
+        + " \u00b7 "
         + segment_stats["house_type"].str.title()
     )
     segment_stats = (
@@ -638,7 +637,7 @@ def render_segment_volatility(df: pd.DataFrame) -> None:
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Volatility: %{x:.1f}%<br>"
-                "Median rent: ₵%{customdata[1]:,.0f}<br>"
+                "Median rent: \u20b5%{customdata[1]:,.0f}<br>"
                 "Listings: %{customdata[0]:,}<extra></extra>"
             ),
         )
@@ -724,7 +723,7 @@ def render_furnishing_premium(df: pd.DataFrame) -> None:
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Premium: %{x:.1f}%<br>"
-                "Median delta: ₵%{customdata[0]:,.0f}<br>"
+                "Median delta: \u20b5%{customdata[0]:,.0f}<br>"
                 "Furnished: %{customdata[1]:,}<br>"
                 "Unfurnished: %{customdata[2]:,}<extra></extra>"
             ),
@@ -781,7 +780,9 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
         segment_df["q75"] - segment_df["q25"]
     ) / segment_df["median_rent"]
     segment_df["segment"] = (
-        segment_df["loc"].str.title() + " · " + segment_df["house_type"].str.title()
+        segment_df["loc"].str.title()
+        + " \u00b7 "
+        + segment_df["house_type"].str.title()
     )
     segment_df = segment_df.nlargest(35, "listing_count")
 
@@ -795,7 +796,7 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
         custom_data=["amenity_score"],
         color_continuous_scale=[[0, "#d4d4d8"], [1, "#18181b"]],
         labels={
-            "median_rent": "Median Rent (₵)",
+            "median_rent": "Median Rent (\u20b5)",
             "listing_count": "Listings",
             "volatility_score": "Volatility",
         },
@@ -803,7 +804,7 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
     matrix_fig.update_traces(
         hovertemplate=(
             "<b>%{hovertext}</b><br>"
-            "Median rent: ₵%{x:,.0f}<br>"
+            "Median rent: \u20b5%{x:,.0f}<br>"
             "Listings: %{y:,}<br>"
             "Avg. amenities: %{customdata[0]:.2f}<br>"
             "Volatility: %{marker.color:.2f}<extra></extra>"
@@ -812,7 +813,9 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
     matrix_fig.update_layout(
         **PLOTLY_LAYOUT,
         height=520,
-        xaxis=dict(tickprefix="₵", showgrid=True, gridcolor=GRID_COLOR, title=None),
+        xaxis=dict(
+            tickprefix="\u20b5", showgrid=True, gridcolor=GRID_COLOR, title=None
+        ),
         yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, title=None),
         coloraxis_colorbar=dict(title="Volatility"),
     )
@@ -853,14 +856,14 @@ def render_bed_bath_heatmap(df: pd.DataFrame) -> None:
         labels={
             "x": "Bathrooms",
             "y": "Bedrooms",
-            "color": "Median Rent (₵)",
+            "color": "Median Rent (\u20b5)",
         },
     )
     heatmap_fig.update_traces(
         hovertemplate=(
             "Bedrooms: %{y}<br>"
             "Bathrooms: %{x}<br>"
-            "Median rent: ₵%{z:,.0f}<extra></extra>"
+            "Median rent: \u20b5%{z:,.0f}<extra></extra>"
         )
     )
     heatmap_fig.update_layout(
@@ -876,7 +879,7 @@ def render_compact_bar(
     df: pd.DataFrame,
     group_column: str,
     title: str,
-    column: Any,
+    column: st_dg.DeltaGenerator,
     note: str | None = None,
 ) -> None:
     grouped = (
@@ -908,7 +911,7 @@ def render_compact_bar(
             customdata=grouped[["count", "confidence"]],
             hovertemplate=(
                 "<b>%{y}</b><br>"
-                "Median: ₵%{x:,.0f}<br>"
+                "Median: \u20b5%{x:,.0f}<br>"
                 "Listings: %{customdata[0]:,}<br>"
                 "Confidence: %{customdata[1]}<extra></extra>"
             ),
@@ -921,7 +924,7 @@ def render_compact_bar(
         title=dict(text=title, font_size=11, x=0, xanchor="left"),
         bargap=0.2,
         xaxis=dict(
-            tickprefix="₵",
+            tickprefix="\u20b5",
             showgrid=True,
             gridcolor=GRID_COLOR,
             title=None,
@@ -965,7 +968,7 @@ def build_location_type_segment_stats(
     segment_stats["confidence"] = segment_stats["count"].apply(confidence_tier)
     segment_stats["segment"] = (
         segment_stats["loc"].str.title()
-        + " · "
+        + " \u00b7 "
         + segment_stats["house_type"].str.title()
     )
     return segment_stats
@@ -1029,7 +1032,7 @@ def render_location_skew_stability(df: pd.DataFrame) -> None:
             "Skew: %{x:.1f}%<br>"
             "Spread: %{y:.1f}%<br>"
             "Listings: %{customdata[0]:,}<br>"
-            "Median rent: ₵%{customdata[1]:,.0f}<br>"
+            "Median rent: \u20b5%{customdata[1]:,.0f}<br>"
             "Confidence: %{customdata[2]}<extra></extra>"
         )
     )
@@ -1089,7 +1092,7 @@ def render_segment_leaderboard(df: pd.DataFrame) -> None:
             "confidence": "Confidence",
         }
     )
-    leaderboard["Median Rent"] = leaderboard["Median Rent"].map("₵{:,.0f}".format)
+    leaderboard["Median Rent"] = leaderboard["Median Rent"].map("\u20b5{:,.0f}".format)
     leaderboard["Volatility"] = leaderboard["Volatility"].map("{:.1f}%".format)
     leaderboard["Median Percentile"] = leaderboard["Median Percentile"].map(
         "{:.0f}th".format
@@ -1140,7 +1143,7 @@ def render_segment_comparison_panel(df: pd.DataFrame) -> None:
     metric_col_1, metric_col_2, metric_col_3 = st.columns(3, gap="small")
     metric_col_1.metric(
         "Median Gap (A-B)",
-        f"₵{median_gap:,.0f}",
+        f"\u20b5{median_gap:,.0f}",
         delta=f"{median_gap:+,.0f}",
     )
     metric_col_2.metric(
@@ -1165,7 +1168,7 @@ def render_segment_comparison_panel(df: pd.DataFrame) -> None:
                 "Confidence",
             ],
             "Segment A": [
-                f"₵{segment_a['median']:,.0f}",
+                f"\u20b5{segment_a['median']:,.0f}",
                 f"{segment_a['volatility_pct']:.1f}%",
                 f"{int(segment_a['count']):,}",
                 f"{segment_a['median_pct']:.0f}th",
@@ -1173,7 +1176,7 @@ def render_segment_comparison_panel(df: pd.DataFrame) -> None:
                 str(segment_a["confidence"]),
             ],
             "Segment B": [
-                f"₵{segment_b['median']:,.0f}",
+                f"\u20b5{segment_b['median']:,.0f}",
                 f"{segment_b['volatility_pct']:.1f}%",
                 f"{int(segment_b['count']):,}",
                 f"{segment_b['median_pct']:.0f}th",
@@ -1224,7 +1227,7 @@ def render_segment_percentile_map(df: pd.DataFrame) -> None:
             "<b>%{hovertext}</b><br>"
             "Median percentile: %{x:.0f}th<br>"
             "Volatility percentile: %{y:.0f}th<br>"
-            "Median rent: ₵%{customdata[0]:,.0f}<br>"
+            "Median rent: \u20b5%{customdata[0]:,.0f}<br>"
             "Volatility: %{customdata[1]:.1f}%<br>"
             "Listings: %{customdata[2]:,}<br>"
             "Confidence: %{customdata[3]}<extra></extra>"
@@ -1287,7 +1290,7 @@ def render_segments_tab(df: pd.DataFrame) -> None:
             customdata=location_stats[["count", "confidence"]],
             hovertemplate=(
                 "<b>%{y}</b><br>"
-                "Median: ₵%{x:,.0f}<br>"
+                "Median: \u20b5%{x:,.0f}<br>"
                 "Listings: %{customdata[0]:,}<br>"
                 "Confidence: %{customdata[1]}<extra></extra>"
             ),
@@ -1303,7 +1306,7 @@ def render_segments_tab(df: pd.DataFrame) -> None:
             customdata=location_stats[["count", "confidence"]],
             hovertemplate=(
                 "<b>%{y}</b><br>"
-                "Mean: ₵%{x:,.0f}<br>"
+                "Mean: \u20b5%{x:,.0f}<br>"
                 "Listings: %{customdata[0]:,}<br>"
                 "Confidence: %{customdata[1]}<extra></extra>"
             ),
@@ -1322,7 +1325,9 @@ def render_segments_tab(df: pd.DataFrame) -> None:
             x=1,
             font_size=11,
         ),
-        xaxis=dict(tickprefix="₵", showgrid=True, gridcolor=GRID_COLOR, title=None),
+        xaxis=dict(
+            tickprefix="\u20b5", showgrid=True, gridcolor=GRID_COLOR, title=None
+        ),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(size=11)),
     )
     st.plotly_chart(compare_fig, width="stretch", config=CHART_CFG)
@@ -1439,7 +1444,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
                 ("Mapped Listings", f"{len(map_df):,}"),
                 ("Mapped Locations", f"{location_points['loc'].nunique():,}"),
                 ("Coverage", f"{coverage_pct:.1f}%"),
-                ("Median Mapped Rent", f"₵{map_df['price'].median():,.0f}"),
+                ("Median Mapped Rent", f"\u20b5{map_df['price'].median():,.0f}"),
             ]
         ),
         unsafe_allow_html=True,
@@ -1513,8 +1518,8 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
                     allowoverlap=True,
                     showscale=True,
                     colorbar=dict(
-                        title="Median Rent (₵)",
-                        tickprefix="₵",
+                        title="Median Rent (\u20b5)",
+                        tickprefix="\u20b5",
                     ),
                 ),
                 customdata=hotspot_points[
@@ -1532,8 +1537,8 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
                 hovertemplate=(
                     "<b>%{customdata[0]}</b><br>"
                     "Listings: %{customdata[1]:,}<br>"
-                    "Median rent: ₵%{customdata[2]:,.0f}<br>"
-                    "IQR: ₵%{customdata[3]:,.0f} - ₵%{customdata[4]:,.0f}<br>"
+                    "Median rent: \u20b5%{customdata[2]:,.0f}<br>"
+                    "IQR: \u20b5%{customdata[3]:,.0f} - \u20b5%{customdata[4]:,.0f}<br>"
                     "Primary type: %{customdata[5]}<br>"
                     "Top types: %{customdata[6]}<br>"
                     "Type variety: %{customdata[7]}<extra></extra>"
@@ -1592,7 +1597,7 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
     hotspot_df = location_points.sort_values("listings", ascending=False).head(10)[
         ["location_label", "listings", "median_rent"]
     ]
-    hotspot_df["median_rent"] = hotspot_df["median_rent"].map("₵{:,.0f}".format)
+    hotspot_df["median_rent"] = hotspot_df["median_rent"].map("\u20b5{:,.0f}".format)
     hotspot_df = hotspot_df.rename(
         columns={
             "location_label": "Location",
@@ -1663,12 +1668,6 @@ def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
         f"Showing a representative sample of up to {LISTINGS_SAMPLE_SIZE:,} "
         f"from {listing_count:,} filtered listings."
     )
-    st.markdown(
-        "<p style='color:var(--t3);font-size:0.78rem;margin:-0.25rem 0 0.7rem;'>"
-        f"Full source data: <a href='{FULL_DATA_URL}' target='_blank'>"
-        "ScrapeAccraProperties outputs</a></p>",
-        unsafe_allow_html=True,
-    )
 
     display_columns = {
         "loc": "Location",
@@ -1677,14 +1676,16 @@ def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
         "bathrooms": "Baths",
         "condition": "Condition",
         "furnishing": "Furnishing",
-        "price": "Rent (₵/mo)",
+        "price": "Rent (\u20b5/mo)",
     }
     sampled_df = build_representative_sample(df)
     display_frame = sampled_df[list(display_columns)].rename(columns=display_columns)
     for column_name in ["Location", "Type", "Condition", "Furnishing"]:
         if column_name in display_frame.columns:
             display_frame[column_name] = display_frame[column_name].str.title()
-    display_frame["Rent (₵/mo)"] = display_frame["Rent (₵/mo)"].map("₵{:,.0f}".format)
+    display_frame["Rent (\u20b5/mo)"] = display_frame["Rent (\u20b5/mo)"].map(
+        "\u20b5{:,.0f}".format
+    )
     st.dataframe(
         display_frame.reset_index(drop=True),
         width="stretch",
