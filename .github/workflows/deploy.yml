@@ -26,11 +26,11 @@ jobs:
       - name: Install Python
         run: uv python install 3.12
       - name: Install dependencies
-        run: uv sync --dev
+        run: uv sync --extra dev
       - name: Run lint
-        run: uv run ruff check .
+        run: uvx ruff check .
       - name: Run tests
-        run: uv run pytest -q --cov=lib --cov=api --cov=ui
+        run: uv run --extra dev pytest -q --cov=lib --cov=api --cov=ui
 
   deploy:
     needs: test
