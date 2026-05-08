@@ -4,10 +4,6 @@ __pycache__/
 .venv*/
 venv/
 logs/
-models/model.joblib
-models/metadata.json
-models/location_tiers.json
-models/amenity_tiers.json
 .env
 *.egg-info/
 dist/

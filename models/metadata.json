@@ -1,0 +1,541 @@
+{
+  "categories": {
+    "house_type": [
+      "apartment",
+      "bedsitter",
+      "block of flats",
+      "bungalow",
+      "chalet",
+      "condo",
+      "duplex",
+      "farm house",
+      "house",
+      "maisonette",
+      "mansion",
+      "mini flat",
+      "penthouse",
+      "room & parlour",
+      "shared apartment",
+      "studio apartment",
+      "townhouse / terrace",
+      "townhouse/terrace",
+      "villa"
+    ],
+    "condition": [
+      "fairly used",
+      "newly-built",
+      "old",
+      "renovated"
+    ],
+    "furnishing": [
+      "furnished",
+      "semi-furnished",
+      "unfurnished"
+    ]
+  },
+  "feature_columns": [
+    "bedrooms",
+    "bathrooms",
+    "24_hour_electricity",
+    "air_conditioning",
+    "apartment",
+    "balcony",
+    "chandelier",
+    "dining_area",
+    "dishwasher",
+    "hot_water",
+    "kitchen_cabinets",
+    "kitchen_shelf",
+    "microwave",
+    "pop_ceiling",
+    "pre_paid_meter",
+    "refrigerator",
+    "tv",
+    "tiled_floor",
+    "wardrobe",
+    "wi_fi",
+    "total_amenities",
+    "luxury_count",
+    "loc_median_price",
+    "loc_volatility",
+    "loc_count",
+    "house_type_apartment",
+    "house_type_bedsitter",
+    "house_type_block of flats",
+    "house_type_bungalow",
+    "house_type_chalet",
+    "house_type_condo",
+    "house_type_duplex",
+    "house_type_farm house",
+    "house_type_house",
+    "house_type_maisonette",
+    "house_type_mansion",
+    "house_type_mini flat",
+    "house_type_penthouse",
+    "house_type_room & parlour",
+    "house_type_shared apartment",
+    "house_type_studio apartment",
+    "house_type_townhouse / terrace",
+    "house_type_townhouse/terrace",
+    "house_type_villa",
+    "condition_fairly used",
+    "condition_newly-built",
+    "condition_old",
+    "condition_renovated",
+    "furnishing_furnished",
+    "furnishing_semi-furnished",
+    "furnishing_unfurnished"
+  ],
+  "location_stats": {
+    "abelemkpe": {
+      "count": 28,
+      "median_log_price": 9.685181739868758,
+      "std_log_price": 1.059010563540809,
+      "iqr_log_price": 1.59005727043089
+    },
+    "ablekuma": {
+      "count": 101,
+      "median_log_price": 7.358081923667735,
+      "std_log_price": 0.6410932406756287,
+      "iqr_log_price": 0.8209805520698303
+    },
+    "abokobi station": {
+      "count": 41,
+      "median_log_price": 7.605894485413263,
+      "std_log_price": 0.7963736101201492,
+      "iqr_log_price": 0.9162907318741542
+    },
+    "accra metropolitan": {
+      "count": 240,
+      "median_log_price": 8.671040418611462,
+      "std_log_price": 1.1263351112346354,
+      "iqr_log_price": 1.739233609024068
+    },
+    "achimota": {
+      "count": 145,
+      "median_log_price": 8.772648560628888,
+      "std_log_price": 0.8104032065576536,
+      "iqr_log_price": 1.3121863889661682
+    },
+    "adabraka": {
+      "count": 1,
+      "median_log_price": 8.294049640102028,
+      "std_log_price": 0.0,
+      "iqr_log_price": 0.0
+    },
+    "adenta": {
+      "count": 299,
+      "median_log_price": 7.941643542874742,
+      "std_log_price": 0.6968925897426566,
+      "iqr_log_price": 0.7985076962177713
+    },
+    "adjiriganor": {
+      "count": 198,
+      "median_log_price": 9.103846806030957,
+      "std_log_price": 0.854740708679629,
+      "iqr_log_price": 1.224058351374838
+    },
+    "agbogba": {
+      "count": 21,
+      "median_log_price": 7.949992497916052,
+      "std_log_price": 0.49841745077311617,
+      "iqr_log_price": 0.5596157879354227
+    },
+    "airport residential area": {
+      "count": 174,
+      "median_log_price": 9.986139202062164,
+      "std_log_price": 0.8669965431876414,
+      "iqr_log_price": 1.182075770898333
+    },
+    "alajo": {
+      "count": 4,
+      "median_log_price": 7.960787178451758,
+      "std_log_price": 0.4269334445967174,
+      "iqr_log_price": 0.39215397947845965
+    },
+    "amrahia": {
+      "count": 22,
+      "median_log_price": 7.963982328542917,
+      "std_log_price": 0.674278299050133,
+      "iqr_log_price": 0.9945915822112932
+    },
+    "anyaa market": {
+      "count": 16,
+      "median_log_price": 7.536030227711267,
+      "std_log_price": 0.9647586888084716,
+      "iqr_log_price": 1.017657008901196
+    },
+    "ashaiman municipal": {
+      "count": 39,
+      "median_log_price": 7.467209697889209,
+      "std_log_price": 0.9507764707453281,
+      "iqr_log_price": 1.2283678864106502
+    },
+    "ashaley botwe": {
+      "count": 229,
+      "median_log_price": 8.45810924370589,
+      "std_log_price": 0.8155969814591246,
+      "iqr_log_price": 1.280933845462065
+    },
+    "ashomang estate": {
+      "count": 66,
+      "median_log_price": 7.655159971918899,
+      "std_log_price": 0.6875495150256548,
+      "iqr_log_price": 0.9144302073425443
+    },
+    "asylum down": {
+      "count": 5,
+      "median_log_price": 8.503960439063054,
+      "std_log_price": 1.3104822131776825,
+      "iqr_log_price": 0.5928905768202952
+    },
+    "awoshie": {
+      "count": 22,
+      "median_log_price": 7.778914516727827,
+      "std_log_price": 0.5498800641242786,
+      "iqr_log_price": 0.4054651081081637
+    },
+    "burma camp": {
+      "count": 28,
+      "median_log_price": 8.59927551429436,
+      "std_log_price": 0.7820021606983288,
+      "iqr_log_price": 0.9959854084658364
+    },
+    "cantonments": {
+      "count": 137,
+      "median_log_price": 10.665032651684806,
+      "std_log_price": 0.4470548947999178,
+      "iqr_log_price": 0.6241543090729937
+    },
+    "danfa": {
+      "count": 4,
+      "median_log_price": 6.739222985301091,
+      "std_log_price": 0.2940802311028425,
+      "iqr_log_price": 0.2549083465699482
+    },
+    "dansoman": {
+      "count": 70,
+      "median_log_price": 7.857839627059501,
+      "std_log_price": 0.8527193326486158,
+      "iqr_log_price": 0.9808292530117262
+    },
+    "darkuman": {
+      "count": 1,
+      "median_log_price": 8.699514748210191,
+      "std_log_price": 0.0,
+      "iqr_log_price": 0.0
+    },
+    "dodowa": {
+      "count": 14,
+      "median_log_price": 7.092202306165841,
+      "std_log_price": 0.9128006004190867,
+      "iqr_log_price": 1.1555117640840082
+    },
+    "dome market": {
+      "count": 60,
+      "median_log_price": 8.203218953755002,
+      "std_log_price": 0.7491407400903184,
+      "iqr_log_price": 0.8754687373538994
+    },
+    "dzorwulu": {
+      "count": 78,
+      "median_log_price": 9.616542366757672,
+      "std_log_price": 0.9384891263992942,
+      "iqr_log_price": 1.60472714048373
+    },
+    "east legon": {
+      "count": 585,
+      "median_log_price": 9.415409068286284,
+      "std_log_price": 0.9515597843035716,
+      "iqr_log_price": 1.2729656758128876
+    },
+    "ga east municipal": {
+      "count": 45,
+      "median_log_price": 7.96823023593483,
+      "std_log_price": 0.8831528857016839,
+      "iqr_log_price": 0.9734491457141043
+    },
+    "ga south municipal": {
+      "count": 48,
+      "median_log_price": 7.507537094680074,
+      "std_log_price": 0.6028981849696811,
+      "iqr_log_price": 0.7033526791900089
+    },
+    "ga west municipal": {
+      "count": 139,
+      "median_log_price": 7.685325957143081,
+      "std_log_price": 0.6852587197877344,
+      "iqr_log_price": 0.8472978603872034
+    },
+    "gbawe": {
+      "count": 44,
+      "median_log_price": 7.463525157464364,
+      "std_log_price": 0.7258905454534027,
+      "iqr_log_price": 0.9077500383979258
+    },
+    "haatso": {
+      "count": 53,
+      "median_log_price": 8.32272029596489,
+      "std_log_price": 0.8003432398471746,
+      "iqr_log_price": 0.8754687373538994
+    },
+    "kaneshie": {
+      "count": 10,
+      "median_log_price": 7.659819530209511,
+      "std_log_price": 1.0818060138230754,
+      "iqr_log_price": 0.7774694046918871
+    },
+    "kasoa": {
+      "count": 115,
+      "median_log_price": 7.018901495129479,
+      "std_log_price": 0.620733198645488,
+      "iqr_log_price": 0.762140052046897
+    },
+    "kokomlemle": {
+      "count": 2,
+      "median_log_price": 9.474211240047335,
+      "std_log_price": 0.23838081142988943,
+      "iqr_log_price": 0.1685606882668278
+    },
+    "kotobabi": {
+      "count": 4,
+      "median_log_price": 8.184241647457283,
+      "std_log_price": 0.553455802867814,
+      "iqr_log_price": 0.8659960924402297
+    },
+    "kwashieman": {
+      "count": 3,
+      "median_log_price": 7.505008435391488,
+      "std_log_price": 0.16609332197106466,
+      "iqr_log_price": 0.14384103622588995
+    },
+    "labadi": {
+      "count": 23,
+      "median_log_price": 8.472262939881114,
+      "std_log_price": 0.7827348823719155,
+      "iqr_log_price": 0.9507871676176318
+    },
+    "labone": {
+      "count": 39,
+      "median_log_price": 10.477299414723163,
+      "std_log_price": 0.6460245615798726,
+      "iqr_log_price": 0.9332251809148229
+    },
+    "lapaz": {
+      "count": 49,
+      "median_log_price": 7.804143038196849,
+      "std_log_price": 0.6356987093516062,
+      "iqr_log_price": 0.7221347174331978
+    },
+    "lartebiokorshie": {
+      "count": 5,
+      "median_log_price": 8.26295688061236,
+      "std_log_price": 1.20861911689202,
+      "iqr_log_price": 0.0
+    },
+    "madina": {
+      "count": 41,
+      "median_log_price": 7.549781838254707,
+      "std_log_price": 0.7983335183315146,
+      "iqr_log_price": 1.0701556565915968
+    },
+    "mamprobi": {
+      "count": 3,
+      "median_log_price": 7.1238923745549885,
+      "std_log_price": 0.32792573700719935,
+      "iqr_log_price": 0.2839920188029694
+    },
+    "mataheko": {
+      "count": 4,
+      "median_log_price": 7.426441034206707,
+      "std_log_price": 1.0564078638678667,
+      "iqr_log_price": 0.6050618081134731
+    },
+    "mccarthy hill": {
+      "count": 6,
+      "median_log_price": 7.873321051206452,
+      "std_log_price": 1.0253291414151016,
+      "iqr_log_price": 1.4594326117914846
+    },
+    "nii boi town": {
+      "count": 2,
+      "median_log_price": 8.006367567650246,
+      "std_log_price": 0.0,
+      "iqr_log_price": 0.0
+    },
+    "nima": {
+      "count": 7,
+      "median_log_price": 9.786783798001588,
+      "std_log_price": 0.7509189162821269,
+      "iqr_log_price": 1.2497056679954408
+    },
+    "ningo-prampram": {
+      "count": 17,
+      "median_log_price": 7.850625506214044,
+      "std_log_price": 0.8454444142403055,
+      "iqr_log_price": 0.7576857016975174
+    },
+    "nkrumah circle": {
+      "count": 1,
+      "median_log_price": 8.922658299524402,
+      "std_log_price": 0.0,
+      "iqr_log_price": 0.0
+    },
+    "north industrial area": {
+      "count": 2,
+      "median_log_price": 9.339981670941224,
+      "std_log_price": 0.6479153900466003,
+      "iqr_log_price": 0.458145365937078
+    },
+    "north legon": {
+      "count": 31,
+      "median_log_price": 8.917139414496145,
+      "std_log_price": 0.8573269831359602,
+      "iqr_log_price": 1.0388271155528699
+    },
+    "north ridge": {
+      "count": 13,
+      "median_log_price": 10.657767685931118,
+      "std_log_price": 0.47461156774294644,
+      "iqr_log_price": 0.7214106458328047
+    },
+    "nungua central": {
+      "count": 22,
+      "median_log_price": 8.02682286106785,
+      "std_log_price": 0.7011820383932984,
+      "iqr_log_price": 0.6582066949661556
+    },
+    "odorkor": {
+      "count": 6,
+      "median_log_price": 7.740483166031896,
+      "std_log_price": 0.9895645073406365,
+      "iqr_log_price": 1.1030538432231918
+    },
+    "ofankor": {
+      "count": 46,
+      "median_log_price": 8.245023208603891,
+      "std_log_price": 0.8020533862802782,
+      "iqr_log_price": 0.8537158931064921
+    },
+    "old ashomang": {
+      "count": 12,
+      "median_log_price": 7.7546819530846784,
+      "std_log_price": 0.3657825078747832,
+      "iqr_log_price": 0.4612509959367159
+    },
+    "osu": {
+      "count": 38,
+      "median_log_price": 9.481021251602868,
+      "std_log_price": 0.875151053314417,
+      "iqr_log_price": 1.2322513045490027
+    },
+    "oyarifa": {
+      "count": 159,
+      "median_log_price": 8.401709046914656,
+      "std_log_price": 0.7419684085902363,
+      "iqr_log_price": 0.8472978603872043
+    },
+    "oyibi": {
+      "count": 65,
+      "median_log_price": 7.410684674599014,
+      "std_log_price": 0.7000126309847208,
+      "iqr_log_price": 0.9162907318741551
+    },
+    "pokuase": {
+      "count": 93,
+      "median_log_price": 7.72642464603749,
+      "std_log_price": 0.6422470934678532,
+      "iqr_log_price": 0.6931471805599445
+    },
+    "roman ridge": {
+      "count": 16,
+      "median_log_price": 10.310663899561643,
+      "std_log_price": 1.0861802158192118,
+      "iqr_log_price": 1.581735437961834
+    },
+    "santa maria": {
+      "count": 3,
+      "median_log_price": 7.640163471427544,
+      "std_log_price": 0.48503274895587406,
+      "iqr_log_price": 0.4581453659370762
+    },
+    "sowutwuom": {
+      "count": 17,
+      "median_log_price": 7.447005774139165,
+      "std_log_price": 0.8291391816730631,
+      "iqr_log_price": 0.7339691750802002
+    },
+    "spintex": {
+      "count": 638,
+      "median_log_price": 8.537531331985615,
+      "std_log_price": 0.8325777293077903,
+      "iqr_log_price": 1.1470161795212892
+    },
+    "taifa-burkina": {
+      "count": 26,
+      "median_log_price": 7.470183812368613,
+      "std_log_price": 0.949381243922425,
+      "iqr_log_price": 1.3217558399823188
+    },
+    "tantra hills": {
+      "count": 49,
+      "median_log_price": 8.612779503080175,
+      "std_log_price": 0.8085253467773663,
+      "iqr_log_price": 1.2992829841302616
+    },
+    "tema metropolitan": {
+      "count": 263,
+      "median_log_price": 8.344307015698108,
+      "std_log_price": 0.926017658977443,
+      "iqr_log_price": 1.0296194171811583
+    },
+    "tesano": {
+      "count": 28,
+      "median_log_price": 9.305965246566444,
+      "std_log_price": 0.7691103377556984,
+      "iqr_log_price": 0.7909925149246035
+    },
+    "teshie": {
+      "count": 441,
+      "median_log_price": 8.253960437021894,
+      "std_log_price": 1.1066481877848848,
+      "iqr_log_price": 1.6739764335716716
+    },
+    "weija": {
+      "count": 155,
+      "median_log_price": 7.581919949643238,
+      "std_log_price": 0.7455474115171171,
+      "iqr_log_price": 0.9162907318741542
+    },
+    "west legon": {
+      "count": 69,
+      "median_log_price": 8.96323782634871,
+      "std_log_price": 1.0024489514934865,
+      "iqr_log_price": 1.5040773967762746
+    }
+  },
+  "global_stats": {
+    "median_log_price": 8.34283980427146,
+    "std_log_price": 1.1638337516369424,
+    "iqr_log_price": 1.770587340305159
+  },
+  "metrics": {
+    "mae": 0.3468949237967538,
+    "rmse": 0.45472392243629645,
+    "r2": 0.8472971098314217
+  },
+  "catboost_params": {
+    "learning_rate": 0.06099,
+    "depth": 6,
+    "l2_leaf_reg": 3.0,
+    "subsample": 0.8,
+    "random_strength": 1.0,
+    "min_data_in_leaf": 1,
+    "random_seed": 42,
+    "allow_writing_files": false,
+    "verbose": 100
+  },
+  "training_date": "2026-05-08T22:08:06.114196",
+  "n_train": 5480,
+  "n_test": 1371
+}
