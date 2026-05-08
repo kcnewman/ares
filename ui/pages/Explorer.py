@@ -5,19 +5,18 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-
 from utils import (
     AMENITY_LABELS,
     BAR_COLOR,
     BAR_DIM,
     CHART_CFG,
     FULL_DATA_URL,
-    confidence_tier,
     GRID_COLOR,
     PAGE_HOME,
     PAGE_PREDICTOR,
     PLOTLY_LAYOUT,
     RED,
+    confidence_tier,
     inject_styles,
     load_market_data,
     metric_bar_html,
@@ -486,20 +485,17 @@ def render_unit_economics(df: pd.DataFrame) -> None:
         if loc_stats.empty:
             st.info("No location-level sample met the minimum threshold.")
         else:
-            loc_plot = (
-                loc_stats.assign(
-                    segment=loc_stats["loc"].str.title(),
-                    **{
-                        "Price / Bedroom": loc_stats["pp_bed"],
-                        "Price / Bathroom": loc_stats["pp_bath"],
-                    },
-                )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]]
-                .melt(
-                    id_vars=["segment", "count"],
-                    value_vars=["Price / Bedroom", "Price / Bathroom"],
-                    var_name="metric",
-                    value_name="value",
-                )
+            loc_plot = loc_stats.assign(
+                segment=loc_stats["loc"].str.title(),
+                **{
+                    "Price / Bedroom": loc_stats["pp_bed"],
+                    "Price / Bathroom": loc_stats["pp_bath"],
+                },
+            )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]].melt(
+                id_vars=["segment", "count"],
+                value_vars=["Price / Bedroom", "Price / Bathroom"],
+                var_name="metric",
+                value_name="value",
             )
             segment_order = loc_stats.sort_values("pp_bed")["loc"].str.title().tolist()
             loc_fig = px.bar(
@@ -545,20 +541,17 @@ def render_unit_economics(df: pd.DataFrame) -> None:
         if type_stats.empty:
             st.info("No property-type sample met the minimum threshold.")
         else:
-            type_plot = (
-                type_stats.assign(
-                    segment=type_stats["house_type"].str.title(),
-                    **{
-                        "Price / Bedroom": type_stats["pp_bed"],
-                        "Price / Bathroom": type_stats["pp_bath"],
-                    },
-                )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]]
-                .melt(
-                    id_vars=["segment", "count"],
-                    value_vars=["Price / Bedroom", "Price / Bathroom"],
-                    var_name="metric",
-                    value_name="value",
-                )
+            type_plot = type_stats.assign(
+                segment=type_stats["house_type"].str.title(),
+                **{
+                    "Price / Bedroom": type_stats["pp_bed"],
+                    "Price / Bathroom": type_stats["pp_bath"],
+                },
+            )[["segment", "count", "Price / Bedroom", "Price / Bathroom"]].melt(
+                id_vars=["segment", "count"],
+                value_vars=["Price / Bedroom", "Price / Bathroom"],
+                var_name="metric",
+                value_name="value",
             )
             segment_order = (
                 type_stats.sort_values("pp_bed")["house_type"].str.title().tolist()
@@ -600,7 +593,9 @@ def render_unit_economics(df: pd.DataFrame) -> None:
 
 def render_segment_volatility(df: pd.DataFrame) -> None:
     section_heading("Segment Volatility Score")
-    page_note("Volatility score = IQR / median rent by location + property type segment.")
+    page_note(
+        "Volatility score = IQR / median rent by location + property type segment."
+    )
 
     segment_stats = (
         df.groupby(["loc", "house_type"])["price"]
@@ -612,7 +607,9 @@ def render_segment_volatility(df: pd.DataFrame) -> None:
         )
         .reset_index()
     )
-    segment_stats = segment_stats[(segment_stats["count"] >= 8) & (segment_stats["median"] > 0)]
+    segment_stats = segment_stats[
+        (segment_stats["count"] >= 8) & (segment_stats["median"] > 0)
+    ]
     if segment_stats.empty:
         st.info("Not enough segment depth to compute volatility scores.")
         return
@@ -621,7 +618,9 @@ def render_segment_volatility(df: pd.DataFrame) -> None:
         (segment_stats["q75"] - segment_stats["q25"]) / segment_stats["median"]
     ) * 100
     segment_stats["segment"] = (
-        segment_stats["loc"].str.title() + " · " + segment_stats["house_type"].str.title()
+        segment_stats["loc"].str.title()
+        + " · "
+        + segment_stats["house_type"].str.title()
     )
     segment_stats = (
         segment_stats.nlargest(12, "count")
@@ -676,7 +675,10 @@ def render_furnishing_premium(df: pd.DataFrame) -> None:
     count_pivot = furnishing_df.pivot_table(
         index="loc", columns="furnishing", values="price", aggfunc="size", fill_value=0
     )
-    if "furnished" not in median_pivot.columns or "unfurnished" not in median_pivot.columns:
+    if (
+        "furnished" not in median_pivot.columns
+        or "unfurnished" not in median_pivot.columns
+    ):
         st.info("Need both furnished and unfurnished samples to compute premium.")
         return
 
@@ -716,7 +718,9 @@ def render_furnishing_premium(df: pd.DataFrame) -> None:
                 BAR_COLOR if premium >= 0 else RED
                 for premium in premium_df["premium_pct"]
             ],
-            customdata=premium_df[["premium_abs", "furnished_count", "unfurnished_count"]],
+            customdata=premium_df[
+                ["premium_abs", "furnished_count", "unfurnished_count"]
+            ],
             hovertemplate=(
                 "<b>%{y}</b><br>"
                 "Premium: %{x:.1f}%<br>"
@@ -774,8 +778,8 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
         return
 
     segment_df["volatility_score"] = (
-        (segment_df["q75"] - segment_df["q25"]) / segment_df["median_rent"]
-    )
+        segment_df["q75"] - segment_df["q25"]
+    ) / segment_df["median_rent"]
     segment_df["segment"] = (
         segment_df["loc"].str.title() + " · " + segment_df["house_type"].str.title()
     )
@@ -817,10 +821,17 @@ def render_opportunity_matrix(df: pd.DataFrame) -> None:
 
 def render_bed_bath_heatmap(df: pd.DataFrame) -> None:
     section_heading("Bedroom-Bathroom Price Grid")
-    page_note("Median rent by bedroom and bathroom combination. Minimum 8 listings per cell.")
+    page_note(
+        "Median rent by bedroom and bathroom combination. Minimum 8 listings per cell."
+    )
 
     grid_df = (
-        df[(df["bedrooms"] > 0) & (df["bathrooms"] > 0) & (df["bedrooms"] <= 6) & (df["bathrooms"] <= 6)]
+        df[
+            (df["bedrooms"] > 0)
+            & (df["bathrooms"] > 0)
+            & (df["bedrooms"] <= 6)
+            & (df["bathrooms"] <= 6)
+        ]
         .groupby(["bedrooms", "bathrooms"])["price"]
         .agg(count="count", median="median")
         .reset_index()
@@ -953,7 +964,9 @@ def build_location_type_segment_stats(
     )
     segment_stats["confidence"] = segment_stats["count"].apply(confidence_tier)
     segment_stats["segment"] = (
-        segment_stats["loc"].str.title() + " · " + segment_stats["house_type"].str.title()
+        segment_stats["loc"].str.title()
+        + " · "
+        + segment_stats["house_type"].str.title()
     )
     return segment_stats
 
@@ -1222,8 +1235,12 @@ def render_segment_percentile_map(df: pd.DataFrame) -> None:
     percentile_fig.update_layout(
         **PLOTLY_LAYOUT,
         height=430,
-        xaxis=dict(range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR),
-        yaxis=dict(range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR),
+        xaxis=dict(
+            range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR
+        ),
+        yaxis=dict(
+            range=[0, 100], ticksuffix="th", showgrid=True, gridcolor=GRID_COLOR
+        ),
         legend=dict(
             orientation="h",
             yanchor="bottom",
@@ -1358,7 +1375,9 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
 
     required_columns = {"lat", "lng"}
     if not required_columns.issubset(df.columns):
-        st.info("Map unavailable: this dataset does not include `lat` and `lng` columns.")
+        st.info(
+            "Map unavailable: this dataset does not include `lat` and `lng` columns."
+        )
         return
 
     map_df = df.copy()
@@ -1472,10 +1491,14 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
         if listing_max == listing_min:
             hotspot_points["marker_size"] = 24.0
         else:
-            hotspot_points["marker_size"] = 14 + (
-                (hotspot_points["listings"] - listing_min)
-                / (listing_max - listing_min)
-            ) * 30
+            hotspot_points["marker_size"] = (
+                14
+                + (
+                    (hotspot_points["listings"] - listing_min)
+                    / (listing_max - listing_min)
+                )
+                * 30
+            )
 
         bubble_fig = go.Figure(
             go.Scattermapbox(
@@ -1566,11 +1589,9 @@ def render_map_tab(df: pd.DataFrame, listing_count: int) -> None:
         "Locations with the highest number of mapped listings in this filter slice."
     )
 
-    hotspot_df = (
-        location_points.sort_values("listings", ascending=False)
-        .head(10)
-        [["location_label", "listings", "median_rent"]]
-    )
+    hotspot_df = location_points.sort_values("listings", ascending=False).head(10)[
+        ["location_label", "listings", "median_rent"]
+    ]
     hotspot_df["median_rent"] = hotspot_df["median_rent"].map("₵{:,.0f}".format)
     hotspot_df = hotspot_df.rename(
         columns={
@@ -1595,7 +1616,9 @@ def build_representative_sample(
         return df.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
     if not set(stratify_cols).issubset(df.columns):
-        return df.sample(n=sample_size, random_state=random_state).reset_index(drop=True)
+        return df.sample(n=sample_size, random_state=random_state).reset_index(
+            drop=True
+        )
 
     sampled_df = df.copy()
     sampled_df["_stratum"] = (
@@ -1625,7 +1648,9 @@ def build_representative_sample(
         )
 
     if not sampled_parts:
-        return df.sample(n=sample_size, random_state=random_state).reset_index(drop=True)
+        return df.sample(n=sample_size, random_state=random_state).reset_index(
+            drop=True
+        )
 
     sampled_rows = pd.concat(sampled_parts, axis=0)
     sampled_rows = sampled_rows.sample(frac=1, random_state=random_state)
@@ -1655,10 +1680,7 @@ def render_listings_tab(df: pd.DataFrame, listing_count: int) -> None:
         "price": "Rent (₵/mo)",
     }
     sampled_df = build_representative_sample(df)
-    display_frame = (
-        sampled_df[list(display_columns)]
-        .rename(columns=display_columns)
-    )
+    display_frame = sampled_df[list(display_columns)].rename(columns=display_columns)
     for column_name in ["Location", "Type", "Condition", "Furnishing"]:
         if column_name in display_frame.columns:
             display_frame[column_name] = display_frame[column_name].str.title()

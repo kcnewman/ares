@@ -5,7 +5,6 @@ from typing import Any
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-
 from utils import (
     AMENITY_LABELS,
     BAR_COLOR,
@@ -103,7 +102,9 @@ def build_prediction_context(
         bathrooms=inputs.get("bathrooms", 0),
         amenities=inputs.get("amenities", {}),
         generated_at=str(
-            inputs.get("generated_at", datetime.now(timezone.utc).strftime("%d %b %Y · %H:%M"))
+            inputs.get(
+                "generated_at", datetime.now(timezone.utc).strftime("%d %b %Y · %H:%M")
+            )
         ),
     )
 

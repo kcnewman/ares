@@ -24,7 +24,9 @@ load_dotenv()
 def _build_maps_client() -> googlemaps.Client | None:
     api_key = os.getenv("GOOGLE_MAPS_KEY")
     if not api_key:
-        logger.warning("GOOGLE_MAPS_KEY is not configured. Geocoding fallback will be skipped.")
+        logger.warning(
+            "GOOGLE_MAPS_KEY is not configured. Geocoding fallback will be skipped."
+        )
         return None
     try:
         return googlemaps.Client(key=api_key)
@@ -64,7 +66,9 @@ def _clean_strings(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _rename_columns(data: pd.DataFrame) -> pd.DataFrame:
-    new_cols = {col: col.lower().replace(" ", "_").replace("-", "_") for col in data.columns}
+    new_cols = {
+        col: col.lower().replace(" ", "_").replace("-", "_") for col in data.columns
+    }
     return data.rename(columns=new_cols)
 
 
@@ -72,12 +76,16 @@ def _clean_dataframe(data: pd.DataFrame) -> pd.DataFrame:
     data = data.copy()
     data = _rename_columns(data)
     drop_list = ["fetch_date", "property_size", "locality_grouped"]
-    data = data.drop(columns=[c for c in drop_list if c in data.columns], errors="ignore")
+    data = data.drop(
+        columns=[c for c in drop_list if c in data.columns], errors="ignore"
+    )
     data = _clean_strings(data)
     return data
 
 
-def _filter_price_outliers(data: pd.DataFrame, l1: float | None = None, l2: float | None = None) -> pd.DataFrame:
+def _filter_price_outliers(
+    data: pd.DataFrame, l1: float | None = None, l2: float | None = None
+) -> pd.DataFrame:
     data = data[data["price"] > 0].copy()
     x = np.log(data["price"])
     if l1 is None or l2 is None:
@@ -144,7 +152,9 @@ def split(config: dict) -> None:
     with open(status_file) as f:
         status = json.load(f)
         if not status.get("passed", False):
-            raise RuntimeError(f"Data Validation failed: {status.get('detail', 'Unknown error')}")
+            raise RuntimeError(
+                f"Data Validation failed: {status.get('detail', 'Unknown error')}"
+            )
 
     logger.info("Validation passed. Starting data split...")
     data = pd.read_csv(section["data_dir"])
@@ -165,7 +175,9 @@ def split(config: dict) -> None:
     logger.info(f"Split complete. Train: {train_df.shape}, Test: {eval_df.shape}")
 
 
-def _add_lat_lng(data: pd.DataFrame, maps_client, geocode_cache: dict, cache_path) -> pd.DataFrame:
+def _add_lat_lng(
+    data: pd.DataFrame, maps_client, geocode_cache: dict, cache_path
+) -> pd.DataFrame:
     if "loc" not in data.columns:
         return data
 
@@ -231,7 +243,9 @@ def process(config: dict) -> None:
     train.dropna(inplace=True)
     test.dropna(inplace=True)
 
-    train.to_csv(os.path.join(section["root_dir"], "preprocessed_train.csv"), index=False)
+    train.to_csv(
+        os.path.join(section["root_dir"], "preprocessed_train.csv"), index=False
+    )
     test.to_csv(os.path.join(section["root_dir"], "preprocessed_eval.csv"), index=False)
 
     logger.info(f"Preprocessing complete. Train: {train.shape}, Test: {test.shape}")

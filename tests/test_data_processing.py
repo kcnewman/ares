@@ -2,7 +2,12 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from core.pipeline.data import _add_lat_lng, _clean_dataframe, _filter_price_outliers, process
+from core.pipeline.data import (
+    _add_lat_lng,
+    _clean_dataframe,
+    _filter_price_outliers,
+    process,
+)
 
 
 def test_string_cleaning_and_renaming(dirty_df):
@@ -30,7 +35,9 @@ def test_geocoding_logic(mock_save):
     df = pd.DataFrame({"loc": ["Accra", "accra", "Legon"]})
     cache = {"accra": {"lat": 5.6, "lng": -0.1}}
 
-    result = _add_lat_lng(df, maps_client=None, geocode_cache=cache, cache_path="cache.json")
+    result = _add_lat_lng(
+        df, maps_client=None, geocode_cache=cache, cache_path="cache.json"
+    )
 
     assert result["lat"].iloc[0] == 5.6
     assert result["lat"].iloc[1] == 5.6

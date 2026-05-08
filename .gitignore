@@ -51,5 +51,5 @@ pip-wheel-metadata/
 .DS_Store
 Thumbs.db
 
-# uv 
+# uv
 uv.lock

@@ -6,8 +6,8 @@ import pytest
 
 from core.pipeline.features import (
     _add_amenity_features,
-    _add_unit_density,
     _add_elite_features,
+    _add_unit_density,
     _haversine_distance,
     fit_features,
 )

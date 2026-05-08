@@ -6,9 +6,13 @@ import pytest
 
 @pytest.fixture
 def mock_val_config():
-    return type("MockValConfig", (), {
-        "all_schema": {"id": "int64", "locality": "object", "price": "float64"},
-    })()
+    return type(
+        "MockValConfig",
+        (),
+        {
+            "all_schema": {"id": "int64", "locality": "object", "price": "float64"},
+        },
+    )()
 
 
 @pytest.fixture

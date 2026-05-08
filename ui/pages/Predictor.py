@@ -4,7 +4,6 @@ from typing import Any
 import requests
 import streamlit as st
 from requests import RequestException
-
 from utils import (
     AMENITY_LABELS,
     BACKEND_URL,
@@ -120,9 +119,7 @@ def render_form(
                 amenity_inputs[amenity] = st.checkbox(label, key=f"am_{amenity}")
 
         st.markdown("<br>", unsafe_allow_html=True)
-        submitted = st.form_submit_button(
-            "Generate Valuation →", width="stretch"
-        )
+        submitted = st.form_submit_button("Generate Valuation →", width="stretch")
 
     form_data: dict[str, str | int] = {
         "location": location,

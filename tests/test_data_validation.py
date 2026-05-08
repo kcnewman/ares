@@ -31,7 +31,10 @@ def test_validation_failure_scenarios(
 
     with (
         patch("core.pipeline.data.pd.read_csv", return_value=test_df),
-        patch("core.pipeline.data.load_schema", return_value={"COLUMNS": mock_val_config.all_schema}),
+        patch(
+            "core.pipeline.data.load_schema",
+            return_value={"COLUMNS": mock_val_config.all_schema},
+        ),
         patch("builtins.open", mock_open()) as m_file,
         patch("core.pipeline.data.create_directories"),
     ):
@@ -55,7 +58,10 @@ def test_validate_success(mock_val_config, valid_df):
 
     with (
         patch("core.pipeline.data.pd.read_csv", return_value=valid_df),
-        patch("core.pipeline.data.load_schema", return_value={"COLUMNS": mock_val_config.all_schema}),
+        patch(
+            "core.pipeline.data.load_schema",
+            return_value={"COLUMNS": mock_val_config.all_schema},
+        ),
         patch("builtins.open", mock_open()) as m_file,
         patch("core.pipeline.data.create_directories"),
     ):

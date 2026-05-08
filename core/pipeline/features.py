@@ -5,7 +5,11 @@ import pandas as pd
 
 from core.common import create_directories, load_json, save_json
 from core.logger import logger
-from core.volatility import compute_log_iqr, derive_volatility_thresholds, shrink_to_global
+from core.volatility import (
+    compute_log_iqr,
+    derive_volatility_thresholds,
+    shrink_to_global,
+)
 
 DEFAULT_COORDS = (5.550, -0.201)
 AIRPORT_COORDS = (5.605, -0.166)
@@ -82,7 +86,9 @@ def fit_features(config: dict) -> None:
 
     locality_agg["loc_std_dev"] = locality_agg.apply(
         lambda row: shrink_to_global(
-            local_value=float(row["std_log"]) if pd.notna(row["std_log"]) else float(global_std),
+            local_value=float(row["std_log"])
+            if pd.notna(row["std_log"])
+            else float(global_std),
             n_listings=float(row["n_listings"]),
             global_value=float(global_std),
             k_smoothing=K_SMOOTHING,
@@ -92,7 +98,9 @@ def fit_features(config: dict) -> None:
     )
     locality_agg["loc_iqr"] = locality_agg.apply(
         lambda row: shrink_to_global(
-            local_value=float(row["iqr_log"]) if pd.notna(row["iqr_log"]) else float(global_iqr),
+            local_value=float(row["iqr_log"])
+            if pd.notna(row["iqr_log"])
+            else float(global_iqr),
             n_listings=float(row["n_listings"]),
             global_value=float(global_iqr),
             k_smoothing=K_SMOOTHING,
@@ -115,11 +123,22 @@ def fit_features(config: dict) -> None:
     save_json(root_dir / "loc_iqr.json", loc_iqr)
     save_json(root_dir / "loc_luxury_median.json", loc_luxury_median)
     save_json(root_dir / "global_ref.json", global_ref)
-    save_json(root_dir / "global_lux_median.json", {"global_lux_median": global_lux_median})
+    save_json(
+        root_dir / "global_lux_median.json", {"global_lux_median": global_lux_median}
+    )
 
     pipeline = _build_pipeline_dict(
-        schema, geocode_cache, lat_map, lng_map, global_ref,
-        class_pi, loc_pi, loc_iqr, stats_map, loc_luxury_median, global_lux_median,
+        schema,
+        geocode_cache,
+        lat_map,
+        lng_map,
+        global_ref,
+        class_pi,
+        loc_pi,
+        loc_iqr,
+        stats_map,
+        loc_luxury_median,
+        global_lux_median,
     )
     train_features = transform_features(train, pipeline)
     train_features["log_price"] = train["log_price"]
@@ -129,7 +148,9 @@ def fit_features(config: dict) -> None:
     train_features.to_csv(root_dir / "features_train.csv", index=False)
     test_features.to_csv(root_dir / "features_test.csv", index=False)
 
-    logger.info(f"Feature engineering complete. Train: {train_features.shape}, Test: {test_features.shape}")
+    logger.info(
+        f"Feature engineering complete. Train: {train_features.shape}, Test: {test_features.shape}"
+    )
 
 
 def make_feature_pipeline(config: dict) -> dict:
@@ -166,14 +187,32 @@ def transform_features(df: pd.DataFrame, pipeline: dict) -> pd.DataFrame:
     data = _add_unit_density(data, schema)
     data = _map_locality_class(data, schema)
 
-    data["class_pi"] = data["loc_class"].map(pipeline["class_pi"]).fillna(pipeline["global_ref"].get("median", 0))
-    data["loc_pi"] = data["loc"].map(pipeline["loc_pi"]).fillna(pipeline["global_ref"].get("median", 0))
-    data["loc_price_volatility"] = data["loc"].map(pipeline["loc_iqr"]).fillna(pipeline["global_ref"].get("iqr", 0.5))
-    data["loc_std_dev"] = data["loc"].map(pipeline["stats_map"]).fillna(pipeline["global_ref"].get("std", 0))
+    data["class_pi"] = (
+        data["loc_class"]
+        .map(pipeline["class_pi"])
+        .fillna(pipeline["global_ref"].get("median", 0))
+    )
+    data["loc_pi"] = (
+        data["loc"]
+        .map(pipeline["loc_pi"])
+        .fillna(pipeline["global_ref"].get("median", 0))
+    )
+    data["loc_price_volatility"] = (
+        data["loc"]
+        .map(pipeline["loc_iqr"])
+        .fillna(pipeline["global_ref"].get("iqr", 0.5))
+    )
+    data["loc_std_dev"] = (
+        data["loc"]
+        .map(pipeline["stats_map"])
+        .fillna(pipeline["global_ref"].get("std", 0))
+    )
 
     data = _add_elite_features(data, pipeline)
     data["condition"] = data["condition"].map(schema["mappings"]["condition_transform"])
-    data["furnishing"] = data["furnishing"].map(schema["mappings"]["furnishing_transform"])
+    data["furnishing"] = data["furnishing"].map(
+        schema["mappings"]["furnishing_transform"]
+    )
 
     if "price" in data.columns:
         data["log_price"] = np.log(data["price"])
@@ -210,14 +249,18 @@ def _add_amenity_features(data: pd.DataFrame, schema: dict) -> pd.DataFrame:
 def _add_unit_density(data: pd.DataFrame, schema: dict) -> pd.DataFrame:
     if "house_type" not in data.columns:
         return data
-    data["unit_density"] = data["house_type"].map(schema["mappings"]["property_density"])
+    data["unit_density"] = data["house_type"].map(
+        schema["mappings"]["property_density"]
+    )
     return data
 
 
 def _map_locality_class(data: pd.DataFrame, schema: dict) -> pd.DataFrame:
     if "loc_class" in data.columns:
         return data
-    data["loc_class"] = data["loc"].map(schema["mappings"]["location_class"]).fillna("other")
+    data["loc_class"] = (
+        data["loc"].map(schema["mappings"]["location_class"]).fillna("other")
+    )
     return data
 
 

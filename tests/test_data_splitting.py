@@ -10,7 +10,12 @@ from core.pipeline.data import split
     "file_exists, file_content, should_read, expected_exception",
     [
         (False, "", False, FileNotFoundError),
-        (True, json.dumps({"passed": False, "detail": "bad data"}), False, RuntimeError),
+        (
+            True,
+            json.dumps({"passed": False, "detail": "bad data"}),
+            False,
+            RuntimeError,
+        ),
         (True, json.dumps({"passed": True, "detail": "ok"}), True, None),
     ],
 )
@@ -59,7 +64,10 @@ def test_split_logic_and_grouping(valid_df):
 
     with (
         patch("os.path.exists", return_value=True),
-        patch("builtins.open", mock_open(read_data=json.dumps({"passed": True, "detail": "ok"}))),
+        patch(
+            "builtins.open",
+            mock_open(read_data=json.dumps({"passed": True, "detail": "ok"})),
+        ),
         patch("core.pipeline.data.pd.read_csv", return_value=valid_df),
         patch("pandas.DataFrame.to_csv") as mock_csv,
         patch("core.pipeline.data.create_directories"),

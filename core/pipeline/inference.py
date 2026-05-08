@@ -9,7 +9,11 @@ from joblib import load
 from core.config import load_config
 from core.logger import logger
 from core.pipeline.features import make_feature_pipeline, transform_features
-from core.volatility import classify_volatility_tier, derive_volatility_thresholds, log_iqr_to_relative_pct
+from core.volatility import (
+    classify_volatility_tier,
+    derive_volatility_thresholds,
+    log_iqr_to_relative_pct,
+)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_MODEL = PROJECT_ROOT / "artifacts" / "model_trainer" / "model.joblib"
@@ -56,8 +60,7 @@ def predict(
 
         schema = feature_pipeline["schema"]
         training_features = [
-            col for col in schema["lists"]["required_columns"]
-            if col != "log_price"
+            col for col in schema["lists"]["required_columns"] if col != "log_price"
         ]
         model_input = transformed_data[training_features]
 
@@ -89,8 +92,15 @@ def predict(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ARES Inference Pipeline")
-    parser.add_argument("--input", type=str, required=True, help="Path to raw CSV input")
-    parser.add_argument("--model", type=str, default=str(DEFAULT_MODEL), help="Path to .joblib model file")
+    parser.add_argument(
+        "--input", type=str, required=True, help="Path to raw CSV input"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=str(DEFAULT_MODEL),
+        help="Path to .joblib model file",
+    )
     args = parser.parse_args()
 
     DEFAULT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
@@ -99,7 +109,14 @@ if __name__ == "__main__":
     preds_df = predict(raw_df, args.model)
 
     final_output = pd.concat([raw_df, preds_df], axis=1)
-    display_cols = ["loc", "house_type", "bedrooms", "lower_band", "estimated_price", "upper_band"]
+    display_cols = [
+        "loc",
+        "house_type",
+        "bedrooms",
+        "lower_band",
+        "estimated_price",
+        "upper_band",
+    ]
 
     print("\n--- Ares Prediction Results ---")
     print(final_output[display_cols].head())

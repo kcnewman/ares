@@ -55,7 +55,12 @@ def evaluate_model(config: dict) -> None:
     test_x = test_data.drop([target_col], axis=1)
     test_y = test_data[[target_col]]
 
-    mlflow.set_tracking_uri(section.get("mlflow_uri", os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///experiments/mlflow.db")))
+    mlflow.set_tracking_uri(
+        section.get(
+            "mlflow_uri",
+            os.environ.get("MLFLOW_TRACKING_URI", "sqlite:///experiments/mlflow.db"),
+        )
+    )
     mlflow.set_experiment("Model_Evaluation_Experiment")
 
     with mlflow.start_run():

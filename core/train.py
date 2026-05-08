@@ -36,7 +36,9 @@ def _compress_artifacts() -> None:
                         normalized_path in csv_allowlist
                     )
                     if include_file:
-                        arcname = os.path.relpath(file_path, os.path.join(directory_to_zip, ".."))
+                        arcname = os.path.relpath(
+                            file_path, os.path.join(directory_to_zip, "..")
+                        )
                         zipf.write(file_path, arcname)
 
         logger.info(f"Artifacts compressed into {output_zip} .")

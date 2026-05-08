@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import streamlit as st
-
 from utils import (
     PAGE_EXPLORER,
     PAGE_PREDICTOR,
