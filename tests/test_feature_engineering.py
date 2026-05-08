@@ -23,7 +23,12 @@ def fe_config():
             "schema": "schema.json",
             "geocode_cache": "cache.json",
             "root_dir": Path("output"),
-        }
+            "k_smoothing": 50,
+            "elite_lux_threshold": 5,
+            "elite_loc_pi_threshold": 0.8,
+            "elite_areas_override": [],
+        },
+        "llm_service_url": "http://test-llm:8001",
     }
 
 
@@ -34,7 +39,8 @@ def test_math_logic_and_geo():
 
 def test_elite_features_are_computed(feature_schema, feature_df):
 
-    prepared_df = _add_amenity_features(feature_df, feature_schema)
+    luxury_cols = feature_schema["lists"]["amenities"]["luxury"]
+    prepared_df = _add_amenity_features(feature_df, luxury_cols)
     prepared_df = _add_unit_density(prepared_df, feature_schema)
     prepared_df["loc_pi"] = 0.9
     prepared_df["class_pi"] = 0.8
@@ -78,6 +84,8 @@ def test_full_pipeline_persistence(fe_config, feature_schema, feature_df):
         patch("core.pipeline.features.save_json") as mock_save,
         patch("pandas.DataFrame.to_csv") as mock_csv,
         patch("core.pipeline.features.create_directories"),
+        patch("core.pipeline.features._fetch_location_tiers", return_value={"accra": {"tier": "established", "is_elite": False}, "east_legon": {"tier": "prime", "is_elite": True}}),
+        patch("core.pipeline.features._fetch_amenity_tiers", return_value={"pool": "luxury", "wifi": "standard"}),
     ):
         fit_features(fe_config)
 

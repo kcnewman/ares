@@ -15,8 +15,10 @@ from pandas.api.types import (
 from sklearn.model_selection import train_test_split
 
 from core.common import create_directories, load_json, save_json
-from core.config import load_schema
+from core.config import load_config, load_schema
 from core.logger import logger
+
+DEFAULT_COORDS = (5.550, -0.201)
 
 load_dotenv()
 
@@ -72,10 +74,10 @@ def _rename_columns(data: pd.DataFrame) -> pd.DataFrame:
     return data.rename(columns=new_cols)
 
 
-def _clean_dataframe(data: pd.DataFrame) -> pd.DataFrame:
+def _clean_dataframe(data: pd.DataFrame, drop_list: list[str] | None = None) -> pd.DataFrame:
     data = data.copy()
     data = _rename_columns(data)
-    drop_list = ["fetch_date", "property_size", "locality_grouped"]
+    drop_list = drop_list or ["fetch_date", "property_size", "locality_grouped"]
     data = data.drop(
         columns=[c for c in drop_list if c in data.columns], errors="ignore"
     )
@@ -84,15 +86,16 @@ def _clean_dataframe(data: pd.DataFrame) -> pd.DataFrame:
 
 
 def _filter_price_outliers(
-    data: pd.DataFrame, l1: float | None = None, l2: float | None = None
+    data: pd.DataFrame, l1: float | None = None, l2: float | None = None,
+    multiplier: float = 1.5,
 ) -> pd.DataFrame:
     data = data[data["price"] > 0].copy()
     x = np.log(data["price"])
     if l1 is None or l2 is None:
         q1, q3 = np.percentile(x, [25, 75])
         iqr = q3 - q1
-        l1 = q1 - 1.5 * iqr
-        l2 = q3 + 1.5 * iqr
+        l1 = q1 - multiplier * iqr
+        l2 = q3 + multiplier * iqr
     return data[(x >= l1) & (x <= l2)]
 
 
@@ -159,15 +162,17 @@ def split(config: dict) -> None:
     logger.info("Validation passed. Starting data split...")
     data = pd.read_csv(section["data_dir"])
 
-    min_listings = 50
+    min_listings = config.get("data_split", {}).get("min_listings", 50)
     locality_counts = data["locality"].value_counts()
     rare_localities = locality_counts[locality_counts < min_listings].index
     data["locality_grouped"] = data["locality"].where(
         ~data["locality"].isin(rare_localities), other="OTHER"
     )
 
+    test_size = config.get("data_split", {}).get("test_size", 0.2)
+    random_state = config.get("data_split", {}).get("random_state", 2025)
     train_df, eval_df = train_test_split(
-        data, test_size=0.2, random_state=2025, stratify=data["locality_grouped"]
+        data, test_size=test_size, random_state=random_state, stratify=data["locality_grouped"]
     )
 
     train_df.to_csv(os.path.join(section["root_dir"], "train.csv"), index=False)
@@ -181,29 +186,34 @@ def _add_lat_lng(
     if "loc" not in data.columns:
         return data
 
-    def get_lat_lng(location: str):
-        if pd.isna(location):
-            return None, None
-        loc_lower = location.lower().strip()
-        if loc_lower in geocode_cache:
-            res = geocode_cache[loc_lower]
-            return res["lat"], res["lng"]
+    locations = data["loc"].dropna().astype(str).str.strip().str.lower().unique()
+    loc_to_coords = {}
+    dirty = False
+
+    for loc in locations:
+        if loc in geocode_cache:
+            res = geocode_cache[loc]
+            loc_to_coords[loc] = (res["lat"], res["lng"])
+            continue
         if maps_client is None:
-            return None, None
+            loc_to_coords[loc] = (None, None)
+            continue
         try:
-            result = maps_client.geocode(loc_lower, region="gh")
+            result = maps_client.geocode(loc, region="gh")
             if result:
                 lat = result[0]["geometry"]["location"]["lat"]
                 lng = result[0]["geometry"]["location"]["lng"]
-                geocode_cache[loc_lower] = {"lat": lat, "lng": lng}
-                save_json(cache_path, geocode_cache)
-                return lat, lng
+                geocode_cache[loc] = {"lat": lat, "lng": lng}
+                loc_to_coords[loc] = (lat, lng)
+                dirty = True
+                continue
         except Exception as e:
-            logger.error(f"Error geocoding {location}: {e}")
-        return None, None
+            logger.error(f"Error geocoding {loc}: {e}")
+        loc_to_coords[loc] = (None, None)
 
-    locations = data["loc"].dropna().astype(str).str.strip().str.lower().unique()
-    loc_to_coords = {loc: get_lat_lng(loc) for loc in locations}
+    if dirty:
+        save_json(cache_path, geocode_cache)
+
     coords = data["loc"].astype(str).str.strip().str.lower().map(loc_to_coords)
     data = data.copy()
     data["lat"] = coords.str[0]
@@ -211,9 +221,60 @@ def _add_lat_lng(
     return data
 
 
+AMENITY_KEYWORDS = [
+    "electricity", "air_conditioning", "apartment", "balcony", "chandelier",
+    "dining_area", "dishwasher", "hot_water", "kitchen_cabinets", "kitchen_shelf",
+    "microwave", "pop_ceiling", "pre_paid_meter", "refrigerator", "tv",
+    "tiled_floor", "wardrobe", "wi_fi",
+]
+
+LUXURY_AMENITIES = {
+    "air_conditioning", "chandelier", "dishwasher", "hot_water", "microwave",
+    "refrigerator", "tv", "wi_fi",
+}
+
+
+def _build_runtime_schema(train: pd.DataFrame) -> dict:
+    schema = load_schema()
+    columns = {k.lower().replace(" ", "_").replace("-", "_"): v for k, v in schema["COLUMNS"].items()}
+
+    base = {"COLUMNS": columns, "TARGET_COLUMN": schema["TARGET_COLUMN"]}
+
+    locations = sorted(train["loc"].dropna().unique()) if "loc" in train.columns else []
+    house_types = sorted(train["house_type"].dropna().unique()) if "house_type" in train.columns else []
+    conditions = sorted(train["condition"].dropna().unique()) if "condition" in train.columns else []
+    furnish_opts = sorted(train["furnishing"].dropna().unique()) if "furnishing" in train.columns else []
+
+    cond_map = {v: i for i, v in enumerate(conditions)}
+    furn_map = {v: i for i, v in enumerate(furnish_opts)}
+    density_map = {t: 1 for t in house_types}
+
+    amenity_cols = [c for c in columns if any(kw in c for kw in AMENITY_KEYWORDS)]
+    lux_cols = [c for c in amenity_cols if c in LUXURY_AMENITIES]
+    std_cols = [c for c in amenity_cols if c not in LUXURY_AMENITIES]
+
+    feature_cols = [c for c in train.columns if c not in ("price", "url", "fetch_date", "locality", "Property Size", "property_size", "locality_grouped")]
+
+    location_class = {loc: "other" for loc in locations}
+
+    base["mappings"] = {
+        "location_class": location_class,
+        "condition_transform": cond_map,
+        "furnishing_transform": furn_map,
+        "property_density": density_map,
+    }
+    base["lists"] = {
+        "amenities": {"luxury": lux_cols, "standard": std_cols},
+        "required_columns": feature_cols,
+        "elite_areas": [],
+    }
+    return base
+
+
 def process(config: dict) -> None:
     section = config["data_processing"]
     create_directories([section["root_dir"]])
+    create_directories(["artifacts/cache"])
 
     train = pd.read_csv(section["train"])
     test = pd.read_csv(section["test"])
@@ -230,18 +291,30 @@ def process(config: dict) -> None:
     x = np.log(train_pos["price"])
     q1, q3 = np.percentile(x, [25, 75])
     iqr = q3 - q1
-    l1, l2 = q1 - 1.5 * iqr, q3 + 1.5 * iqr
-    train = _filter_price_outliers(train, l1, l2)
-    test = _filter_price_outliers(test, l1, l2)
+    multiplier = config.get("data_processing", {}).get("outlier_iqr_multiplier", 1.5)
+    l1, l2 = q1 - multiplier * iqr, q3 + multiplier * iqr
+    train = _filter_price_outliers(train, l1, l2, multiplier=multiplier)
+    test = _filter_price_outliers(test, l1, l2, multiplier=multiplier)
 
-    train = _clean_dataframe(train)
-    test = _clean_dataframe(test)
+    drop_columns = config.get("data_processing", {}).get("drop_columns", ["fetch_date", "property_size", "locality_grouped"])
+    train = _clean_dataframe(train, drop_list=drop_columns)
+    test = _clean_dataframe(test, drop_list=drop_columns)
 
     train = _add_lat_lng(train, maps_client, geocode_cache, section["geocode_cache"])
     test = _add_lat_lng(test, maps_client, geocode_cache, section["geocode_cache"])
 
+    if "lat" in train.columns:
+        train["lat"] = train["lat"].fillna(DEFAULT_COORDS[0])
+        train["lng"] = train["lng"].fillna(DEFAULT_COORDS[1])
+    if "lat" in test.columns:
+        test["lat"] = test["lat"].fillna(DEFAULT_COORDS[0])
+        test["lng"] = test["lng"].fillna(DEFAULT_COORDS[1])
+
     train.dropna(inplace=True)
     test.dropna(inplace=True)
+
+    runtime_schema = _build_runtime_schema(train)
+    save_json("artifacts/cache/schema.json", runtime_schema)
 
     train.to_csv(
         os.path.join(section["root_dir"], "preprocessed_train.csv"), index=False

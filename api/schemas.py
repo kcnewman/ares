@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -38,3 +40,16 @@ class PredictionResponse(BaseModel):
     market_volatility_idx: float
     market_volatility_pct: float
     market_volatility_tier: str
+
+
+class Factor(BaseModel):
+    factor: str
+    impact: str
+    direction: Literal["up", "down", "neutral"]
+
+
+class ExplainResponse(BaseModel):
+    summary: str
+    key_factors: list[Factor]
+    risks: list[str]
+    confidence: str

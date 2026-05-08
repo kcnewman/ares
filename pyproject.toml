@@ -18,8 +18,10 @@ dependencies = [
     "python-dotenv",
     "pydantic",
     "requests",
+    "httpx",
     "plotly",
     "starlette",
+    "groq>=1.2.0",
 ]
 
 [dependency-groups]

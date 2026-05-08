@@ -1,0 +1,14 @@
+[project]
+name = "ares-llm"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+    "groq",
+]
+
+[build-system]
+requires = ["setuptools>=45"]
+build-backend = "setuptools.build_meta"

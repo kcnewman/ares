@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from joblib import load
 
+from core.common import load_json
 from core.config import load_config
 from core.logger import logger
 from core.pipeline.features import make_feature_pipeline, transform_features
@@ -58,10 +59,13 @@ def predict(
         )
         volatility_pct = spread.apply(log_iqr_to_relative_pct)
 
-        schema = feature_pipeline["schema"]
-        training_features = [
-            col for col in schema["lists"]["required_columns"] if col != "log_price"
-        ]
+        root_dir = feature_pipeline.get("root_dir", PROJECT_ROOT / "artifacts" / "feature_engineering")
+        feature_cols_path = Path(root_dir) / "feature_columns.json"
+        try:
+            feature_cols_data = load_json(feature_cols_path)
+            training_features = feature_cols_data.get("columns", [])
+        except Exception:
+            training_features = [c for c in transformed_data.columns if c != "log_price"]
         model_input = transformed_data[training_features]
 
         model = load(model_path)

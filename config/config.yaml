@@ -9,6 +9,9 @@ data_split:
   root_dir: artifacts/data_split
   data_dir: artifacts/data/raw.csv
   status_file: artifacts/data_validation/status.txt
+  min_listings: 50
+  test_size: 0.2
+  random_state: 2025
 
 data_processing:
   root_dir: artifacts/data_processing
@@ -16,6 +19,11 @@ data_processing:
   train: artifacts/data_split/train.csv
   test: artifacts/data_split/eval.csv
   geocode_cache: artifacts/cache/geocode_cache.json
+  drop_columns:
+    - fetch_date
+    - property_size
+    - locality_grouped
+  outlier_iqr_multiplier: 1.5
 
 feature_engineering:
   root_dir: artifacts/feature_engineering
@@ -23,6 +31,10 @@ feature_engineering:
   test: artifacts/data_processing/preprocessed_eval.csv
   schema: artifacts/cache/schema.json
   geocode_cache: artifacts/cache/geocode_cache.json
+  k_smoothing: 50
+  elite_lux_threshold: 5
+  elite_loc_pi_threshold: 0.8
+  elite_areas_override: []
 
 model:
   CatBoost:
@@ -40,6 +52,8 @@ model_trainer:
   train: artifacts/feature_engineering/features_train.csv
   test: artifacts/feature_engineering/features_test.csv
   model_name: model.joblib
+
+llm_service_url: http://localhost:8001
 
 model_evaluation:
   root_dir: artifacts/model_evaluation
