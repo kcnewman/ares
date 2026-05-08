@@ -33,6 +33,12 @@ class HouseFeatures(BaseModel):
         populate_by_name = True
 
 
+class Factor(BaseModel):
+    factor: str
+    impact: str
+    direction: Literal["up", "down", "neutral"]
+
+
 class PredictionResponse(BaseModel):
     estimated_price: float
     lower_band: float
@@ -42,13 +48,13 @@ class PredictionResponse(BaseModel):
     market_volatility_tier: str
 
 
-class Factor(BaseModel):
-    factor: str
-    impact: str
-    direction: Literal["up", "down", "neutral"]
-
-
 class ExplainResponse(BaseModel):
+    estimated_price: float
+    lower_band: float
+    upper_band: float
+    market_volatility_idx: float
+    market_volatility_pct: float
+    market_volatility_tier: str
     summary: str
     key_factors: list[Factor]
     risks: list[str]

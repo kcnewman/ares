@@ -111,10 +111,10 @@ def render_form(
         all_amenities = [*AMENITY_LABELS]
 
         amenity_inputs: dict[str, bool] = {}
-        amenity_columns = st.columns(6, gap="small")
+        amenity_columns = st.columns(3, gap="small")
         for index, amenity in enumerate(all_amenities):
             label = AMENITY_LABELS.get(amenity, amenity.replace("_", " ").title())
-            with amenity_columns[index % 6]:
+            with amenity_columns[index % 3]:
                 amenity_inputs[amenity] = st.checkbox(label, key=f"am_{amenity}")
         submitted = st.form_submit_button("Generate Valuation \u2192", width="stretch")
 
@@ -148,7 +148,7 @@ def build_payload(
 def call_predict_api(payload: dict[str, int | str]) -> dict[str, Any]:
     with st.spinner("Running valuation model\u2026"):
         try:
-            response = httpx.post(f"{API_URL}/predict", json=payload, timeout=15)
+            response = httpx.post(f"{API_URL}/explain", json=payload, timeout=15)
             response.raise_for_status()
             return response.json()
         except RequestError as exc:

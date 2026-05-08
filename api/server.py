@@ -127,30 +127,33 @@ async def get_explanation(features: HouseFeatures) -> ExplainResponse:
 
             explanation = explain_prediction(data, prediction, segment)
         except Exception as e:
-            logger.warning(f"LLM explanation failed, using fallback: {e}")
-            explanation = {
-                "summary": f"This {house_type} in {loc} is estimated at GHS {prediction['estimated_price']:,.0f}, based on {segment.get('count', 0):,} comparable listings.",
+            logger.warning(f"LLM explanation failed: {e}")
+            explanation: dict[str, Any] = {
+                "summary": "AI explanation is not available.",
                 "key_factors": [],
                 "risks": [],
                 "confidence": "Moderate",
             }
 
-        key_factors_raw = explanation.get("key_factors", [])
-        key_factors = []
-        if isinstance(key_factors_raw, list):
-            for f in key_factors_raw:
-                if isinstance(f, dict):
-                    key_factors.append(
-                        Factor(
-                            factor=str(f.get("factor", "")),
-                            impact=str(f.get("impact", "")),
-                            direction=f.get("direction", "neutral"),
-                        )
-                    )
+        key_factors = [
+            Factor(
+                factor=str(f["factor"]),
+                impact=str(f["impact"]),
+                direction=f.get("direction", "neutral"),
+            )
+            for f in (explanation.get("key_factors") or [])
+            if isinstance(f, dict) and "factor" in f and "impact" in f
+        ]
         return ExplainResponse(
+            estimated_price=prediction["estimated_price"],
+            lower_band=prediction["lower_band"],
+            upper_band=prediction["upper_band"],
+            market_volatility_idx=prediction["market_volatility_idx"],
+            market_volatility_pct=prediction["market_volatility_pct"],
+            market_volatility_tier=prediction["market_volatility_tier"],
             summary=str(explanation.get("summary", "")),
             key_factors=key_factors,
-            risks=list(explanation.get("risks", [])) if isinstance(explanation.get("risks"), list) else [],
+            risks=explanation.get("risks", []),
             confidence=str(explanation.get("confidence", "Moderate")),
         )
     except HTTPException:

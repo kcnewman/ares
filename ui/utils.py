@@ -21,7 +21,6 @@ SCHEMA_PATH = "artifacts/cache/schema.json"
 AMENITY_LABELS: dict[str, str] = {
     "24_hour_electricity": "24h Electricity",
     "air_conditioning": "Air Conditioning",
-    "apartment": "Apartment",
     "balcony": "Balcony",
     "chandelier": "Chandelier",
     "dining_area": "Dining Area",

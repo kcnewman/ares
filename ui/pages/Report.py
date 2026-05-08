@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
@@ -43,6 +43,10 @@ class PredictionContext:
     bathrooms: int
     amenities: dict[str, Any]
     generated_at: str
+    summary: str = ""
+    key_factors: list[dict[str, str]] = field(default_factory=list)
+    risks: list[str] = field(default_factory=list)
+    confidence: str = "Moderate"
 
 
 @dataclass(frozen=True)
@@ -91,6 +95,20 @@ def build_prediction_context(
 ) -> PredictionContext:
     volatility_pct = float(result.get("market_volatility_pct", 0))
     volatility_tier = str(result.get("market_volatility_tier", "Moderate")).title()
+    key_factors_raw = result.get("key_factors", [])
+    key_factors = (
+        [
+            {
+                "factor": str(kf.get("factor", "")),
+                "impact": str(kf.get("impact", "")),
+                "direction": str(kf.get("direction", "neutral")),
+            }
+            for kf in key_factors_raw
+            if isinstance(kf, dict)
+        ]
+        if isinstance(key_factors_raw, list)
+        else []
+    )
 
     return PredictionContext(
         estimated_price=float(result.get("estimated_price", 0)),
@@ -108,6 +126,10 @@ def build_prediction_context(
         generated_at=str(
             inputs.get("generated_at", datetime.now().strftime("%d %b %Y \u00b7 %H:%M"))
         ),
+        summary=str(result.get("summary", "")),
+        key_factors=key_factors,
+        risks=list(result.get("risks", [])),
+        confidence=str(result.get("confidence", "Moderate")),
     )
 
 
@@ -360,6 +382,60 @@ def render_comparables_table(
         )
 
 
+def render_explanation(context: PredictionContext) -> None:
+    if not context.summary and not context.key_factors and not context.risks:
+        return
+
+    section_heading("AI Explanation")
+
+    if context.summary:
+        st.markdown(
+            f"<p style='color:var(--t1);font-size:0.95rem;line-height:1.6;margin-bottom:1rem;'>{context.summary}</p>",
+            unsafe_allow_html=True,
+        )
+
+    if context.key_factors:
+        for kf in context.key_factors:
+            direction = kf.get("direction", "neutral")
+            icon = {"up": "\u2191", "down": "\u2193", "neutral": "\u2192"}.get(
+                direction, "\u2192"
+            )
+            st.markdown(
+                f"<div style='display:flex;align-items:baseline;gap:0.5rem;padding:0.3rem 0;'>"
+                f"<span style='font-size:0.85rem;'>{icon}</span>"
+                f"<span style='font-weight:600;font-size:0.88rem;'>{kf.get('factor', '')}</span>"
+                f"<span style='color:var(--t3);font-size:0.82rem;'>{kf.get('impact', '')}</span>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+    if context.risks:
+        st.markdown(
+            "<p style='font-size:0.82rem;font-weight:700;color:var(--amber);margin:0.75rem 0 0.25rem;'>"
+            "\u26a0 Risks</p>",
+            unsafe_allow_html=True,
+        )
+        for risk in context.risks:
+            st.markdown(
+                f"<p style='font-size:0.85rem;color:var(--t2);margin:0.1rem 0;'>{risk}</p>",
+                unsafe_allow_html=True,
+            )
+
+    if context.confidence:
+        c_color = {
+            "High": "var(--green)",
+            "Moderate": "var(--amber)",
+            "Low": "var(--red)",
+        }.get(context.confidence, "inherit")
+        st.markdown(
+            f"<p style='font-size:0.82rem;margin:0.75rem 0 0;'>"
+            f"Confidence: <span style='font-weight:700;color:{c_color};'>{context.confidence}</span></p>",
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
+
+
 def main() -> None:
     configure_page()
     maybe_scroll_to_top()
@@ -372,6 +448,8 @@ def main() -> None:
     render_header(context)
     render_result_and_metadata(context, market_data, segment)
     render_property_chips(context)
+
+    render_explanation(context)
 
     section_heading("Market Analysis")
     render_insights_tab(market_data, context, segment)
