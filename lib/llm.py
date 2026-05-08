@@ -57,7 +57,7 @@ def explain_prediction(
             "Then list key factors driving the price (max 3), risks to the valuation (max 2), "
             "and assign confidence as High/Moderate/Low based on listing count.\n\n"
             "Respond ONLY with JSON:\n"
-            '{"summary": "...", "key_factors": [{"factor": "...", "impact": "...", "direction": "up"|"down"|"neutral"}], "risks": ["..."], "confidence": "..."}'
+            '{"summary":"...","key_factors":[{"factor":"...","impact":"...","direction":"up"|"down"|"neutral"}],"risks":["..."],"confidence":"..."}'
         )
     else:
         confidence = "Moderate"

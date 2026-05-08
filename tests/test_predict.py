@@ -54,8 +54,8 @@ def mock_model_and_metadata():
 class _MockModel:
     """Mock CatBoost model returning constant predictions."""
 
-    def predict(self, X):
-        return np.full(len(X), 7.5)
+    def predict(self, x):
+        return np.full(len(x), 7.5)
 
 
 def _make_row(**overrides):

@@ -44,8 +44,8 @@ def predict(
         if col not in features.columns:
             features[col] = 0
 
-    X = features[feature_columns]
-    log_preds = model.predict(X)
+    x = features[feature_columns]
+    log_preds = model.predict(x)
 
     global_iqr = metadata.get("global_stats", {}).get("iqr_log_price", 0.5)
     loc_iqr_values = np.asarray(

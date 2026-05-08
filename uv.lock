@@ -86,7 +86,7 @@ requires-dist = [
     { name = "basedpyright", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "catboost", specifier = "==1.2.8" },
     { name = "fastapi", specifier = "==0.128.0" },
-    { name = "groq", specifier = ">=1.2.0" },
+    { name = "groq", specifier = "==1.2.0" },
     { name = "httpx", specifier = "==0.28.1" },
     { name = "joblib", specifier = "==1.5.3" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },

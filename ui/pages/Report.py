@@ -15,7 +15,6 @@ from ui.utils import (
     PAGE_PREDICTOR,
     PLOTLY_LAYOUT,
     RED,
-    chip_grid_html,
     compute_segment,
     confidence_tier,
     inject_styles,
@@ -215,16 +214,6 @@ def render_result_and_metadata(
         unsafe_allow_html=True,
     )
 
-    market_count = f"{len(market_data):,}" if market_data is not None else "\u2014"
-    st.markdown(
-        '<div class="report-meta">'
-        f"Generated {context.generated_at} &nbsp;\u00b7&nbsp; Market snapshot: {market_count} listings"
-        "</div>",
-        unsafe_allow_html=True,
-    )
-
-
-def render_property_chips(context: PredictionContext) -> None:
     chips = [
         ("Location", context.location.title()),
         ("Property Type", context.property_type.title()),
@@ -240,8 +229,31 @@ def render_property_chips(context: PredictionContext) -> None:
         )
         chips.append(("Amenities", amenity_names))
 
-    st.markdown(chip_grid_html(chips), unsafe_allow_html=True)
-    st.markdown("---")
+    chip_style = (
+        "background:var(--bg);border:1px solid var(--bd);"
+        "border-radius:4px;padding:0.15rem 0.55rem;"
+        "font-size:0.75rem;white-space:nowrap;"
+    )
+    st.markdown(
+        '<div style="display:flex;flex-wrap:wrap;gap:0.35rem;'
+        'justify-content:center;margin:-0.5rem 0 1rem;">'
+        + "".join(
+            f'<span style="{chip_style}">'
+            f'<span style="color:var(--t3);font-weight:600;">{lbl}</span>'
+            f" {val}</span>"
+            for lbl, val in chips
+        )
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+
+    market_count = f"{len(market_data):,}" if market_data is not None else "\u2014"
+    st.markdown(
+        '<div class="report-meta">'
+        f"Generated {context.generated_at} &nbsp;\u00b7&nbsp; Market snapshot: {market_count} listings"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
 
 def render_insights_tab(
@@ -447,7 +459,6 @@ def main() -> None:
     render_navigation()
     render_header(context)
     render_result_and_metadata(context, market_data, segment)
-    render_property_chips(context)
 
     render_explanation(context)
 

@@ -8,7 +8,6 @@ from httpx import HTTPError, RequestError
 from ui.utils import (
     AMENITY_LABELS,
     API_URL,
-    LUXURY_AMENITIES,
     PAGE_EXPLORER,
     PAGE_REPORT,
     check_api,

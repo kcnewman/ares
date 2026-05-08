@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -8,8 +9,6 @@ from catboost import CatBoostRegressor
 from joblib import dump
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.model_selection import train_test_split
-
-from typing import Any
 
 from lib.features import (
     clean_dataframe,
@@ -70,19 +69,19 @@ def train(
     )
 
     feature_cols = metadata["feature_columns"]
-    X_train = train_features[feature_cols]
+    x_train = train_features[feature_cols]
     y_train = train_features["log_price"]
-    X_test = test_features[feature_cols]
+    x_test = test_features[feature_cols]
     y_test = test_features["log_price"]
 
-    n_features = X_train.shape[1]
-    n_rows = X_train.shape[0]
+    n_features = x_train.shape[1]
+    n_rows = x_train.shape[0]
     logger.info(f"Feature matrix: {n_features} features, {n_rows} rows")
 
     model = CatBoostRegressor(**CATBOOST_PARAMS)
-    model.fit(X_train, y_train, eval_set=(X_test, y_test))
+    model.fit(x_train, y_train, eval_set=(x_test, y_test))
 
-    y_pred = model.predict(X_test)
+    y_pred = model.predict(x_test)
     metrics = {
         "mae": float(mean_absolute_error(y_test, y_pred)),
         "rmse": float(np.sqrt(mean_squared_error(y_test, y_pred))),
