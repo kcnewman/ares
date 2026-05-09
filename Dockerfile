@@ -19,6 +19,7 @@ COPY data/ data/
 COPY models/ models/
 COPY .streamlit/ .streamlit/
 COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 ENV PATH="/app/.venv/bin:$PATH"
 
