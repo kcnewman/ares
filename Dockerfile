@@ -10,7 +10,7 @@ ENV UV_PYTHON=python3.12 UV_COMPILE_BYTECODE=1 PYTHONUNBUFFERED=1
 
 COPY pyproject.toml uv.lock* ./
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev --no-install-project
 
 COPY lib/ lib/
 COPY api/ api/
@@ -18,6 +18,8 @@ COPY ui/ ui/
 COPY data/ data/
 COPY models/ models/
 COPY .streamlit/ .streamlit/
+
+RUN uv sync --frozen --no-dev
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
